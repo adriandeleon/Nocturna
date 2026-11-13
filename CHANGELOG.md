@@ -26,3 +26,5 @@ one-line summary written for users.
   minutes. Monterrey stations come ready to pick.
 - **Starts on its own while charging,** as the Android screen saver or with *Open when charging*, which opens
   the clock when you plug in a locked phone.
+- **An About screen in Settings** with the version, links to the source code, bug reports and the licence, and
+  credits for the open-source libraries and the weather data.

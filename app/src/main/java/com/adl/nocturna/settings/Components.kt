@@ -1,5 +1,8 @@
 package com.adl.nocturna.settings
 
+import android.content.Context
+import android.content.Intent
+import androidx.core.net.toUri
 import androidx.compose.foundation.border
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -120,4 +123,9 @@ fun ColorRow(colors: List<Int>, selected: Int, onSelect: (Int) -> Unit) {
             )
         }
     }
+}
+
+/** Opens [url] in the browser; does nothing when no app can handle it. */
+fun Context.openUrl(url: String) {
+    runCatching { startActivity(Intent(Intent.ACTION_VIEW, url.toUri())) }
 }
