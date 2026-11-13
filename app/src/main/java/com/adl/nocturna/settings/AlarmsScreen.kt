@@ -23,6 +23,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.OutlinedIconToggleButton
@@ -49,9 +51,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.adl.nocturna.alarm.AlarmService
 import com.adl.nocturna.data.Alarm
 import com.adl.nocturna.data.AlarmStore
 import com.adl.nocturna.data.SettingsStore
+import com.adl.nocturna.data.Station
 import com.adl.nocturna.ui.currentLocale
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -112,7 +116,7 @@ fun AlarmsScreen(padding: PaddingValues) {
             }
             items(alarms, key = { it.id }) { alarm ->
                 AlarmCard(
-                    alarm, s.use24h, locale,
+                    alarm, s.use24h, locale, s.stations,
                     onEditTime = { editing = alarm },
                     onDelete = {
                         val removed = AlarmStore.delete(alarm.id) ?: return@AlarmCard
@@ -163,7 +167,14 @@ fun AlarmsScreen(padding: PaddingValues) {
 }
 
 @Composable
-private fun AlarmCard(alarm: Alarm, use24h: Boolean, locale: Locale, onEditTime: () -> Unit, onDelete: () -> Unit) {
+private fun AlarmCard(
+    alarm: Alarm,
+    use24h: Boolean,
+    locale: Locale,
+    stations: List<Station>,
+    onEditTime: () -> Unit,
+    onDelete: () -> Unit,
+) {
     val muted = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
     Card(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp)) {
         Column(Modifier.padding(16.dp)) {
@@ -197,11 +208,40 @@ private fun AlarmCard(alarm: Alarm, use24h: Boolean, locale: Locale, onEditTime:
                     ) { Text(day.getDisplayName(TextStyle.NARROW, locale), fontSize = 13.sp) }
                 }
             }
+            SoundPicker(alarm, stations)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 LabelField(alarm, Modifier.weight(1f).padding(top = 8.dp))
                 TextButton(onClick = onDelete) { Text("Delete", color = MaterialTheme.colorScheme.error) }
             }
         }
+    }
+}
+
+/** Chooses what the alarm plays: the alarm tone or one of the radio stations. */
+@Composable
+private fun SoundPicker(alarm: Alarm, stations: List<Station>) {
+    var open by remember { mutableStateOf(false) }
+    val muted = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+    fun choose(station: Station?) {
+        open = false
+        AlarmStore.update(alarm.id) { it.copy(station = station) }
+    }
+    Row(Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text("Sound", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+        Box {
+            TextButton(onClick = { open = true }) { Text(alarm.station?.name ?: "Alarm tone") }
+            DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+                DropdownMenuItem(text = { Text("Alarm tone") }, onClick = { choose(null) })
+                stations.forEach { st -> DropdownMenuItem(text = { Text(st.name) }, onClick = { choose(st) }) }
+            }
+        }
+    }
+    if (alarm.station != null) {
+        Text(
+            "If the station doesn't play within ${AlarmService.STREAM_TIMEOUT_MS / 1000} s, the alarm tone rings instead.",
+            style = MaterialTheme.typography.bodySmall,
+            color = muted,
+        )
     }
 }
 

@@ -49,4 +49,4 @@ of their content.
 --------------------------------------------------------------------------------
 Build-time only (not shipped): Android Gradle Plugin (Apache-2.0), Kotlin
 compiler and Compose compiler plugin (Apache-2.0), Gradle (Apache-2.0),
-JUnit 4 (EPL-1.0).
+JUnit 4 (EPL-1.0), JSON-java org.json:json for unit tests (Public Domain).

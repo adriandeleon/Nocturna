@@ -20,6 +20,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -31,10 +32,15 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.adl.nocturna.clock.DigitalClock
 import com.adl.nocturna.clock.rememberNow
 import com.adl.nocturna.data.SettingsStore
+import com.adl.nocturna.radio.Radio
 import com.adl.nocturna.ui.NocturnaTheme
 import com.adl.nocturna.ui.enableDarkEdgeToEdge
 
-/** Full-screen "wake up" screen with big Snooze and Dismiss buttons. Shows over the lock screen. */
+/**
+ * Full-screen "wake up" screen with big Snooze and Dismiss buttons. Shows over the lock screen.
+ * While a radio alarm plays, "Keep listening" dismisses the alarm and carries on with the station in the
+ * normal radio player.
+ */
 class AlarmActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,6 +70,10 @@ class AlarmActivity : ComponentActivity() {
                         style = MaterialTheme.typography.headlineSmall,
                         color = accent.copy(alpha = 0.8f),
                     )
+                    ringing?.station?.let { station ->
+                        Spacer(Modifier.height(4.dp))
+                        Text(station.name, style = MaterialTheme.typography.bodyLarge, color = accent.copy(alpha = 0.6f))
+                    }
                     Spacer(Modifier.height(64.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
                         OutlinedButton(
@@ -76,6 +86,16 @@ class AlarmActivity : ComponentActivity() {
                             modifier = Modifier.size(width = 150.dp, height = 72.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = accent, contentColor = Color.Black),
                         ) { Text("Dismiss", fontSize = 18.sp) }
+                    }
+                    ringing?.station?.let { station ->
+                        Spacer(Modifier.height(24.dp))
+                        TextButton(
+                            onClick = {
+                                AlarmService.send(this@AlarmActivity, AlarmService.ACTION_DISMISS)
+                                Radio.play(this@AlarmActivity, station)
+                            },
+                            colors = ButtonDefaults.textButtonColors(contentColor = accent),
+                        ) { Text("Keep listening", fontSize = 18.sp) }
                     }
                 }
             }

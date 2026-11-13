@@ -16,6 +16,7 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.os.PowerManager
+import android.os.SystemClock
 import android.os.VibrationAttributes
 import android.os.VibrationEffect
 import android.os.Vibrator
@@ -24,26 +25,39 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
+import androidx.media3.common.C
+import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.Player
+import androidx.media3.exoplayer.ExoPlayer
 import com.adl.nocturna.NocturnaApp
 import com.adl.nocturna.R
 import com.adl.nocturna.data.AlarmStore
 import com.adl.nocturna.data.SettingsStore
+import com.adl.nocturna.data.Station
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
-/** What is ringing right now, if anything. */
-data class Ringing(val alarmId: Long, val label: String, val startedAt: Long)
+/**
+ * What is ringing right now, if anything. [station] is the radio station playing, or null while the
+ * alarm tone plays (chosen, or because the station failed).
+ */
+data class Ringing(val alarmId: Long, val label: String, val startedAt: Long, val station: Station? = null)
 
 /**
- * Rings the alarm: plays the default alarm sound on the alarm stream with a gradual volume ramp,
- * vibrates, and shows a full-screen notification that opens [AlarmActivity].
+ * Rings the alarm: plays the alarm's radio station, or the default alarm sound, on the alarm stream with
+ * a gradual volume ramp, vibrates, and shows a full-screen notification that opens [AlarmActivity].
+ * A station that fails, ends, or stays silent for [STREAM_TIMEOUT_MS] is replaced by the alarm sound.
  */
 class AlarmService : Service() {
-    private var player: MediaPlayer? = null
+    private var tone: MediaPlayer? = null
+    private var stream: ExoPlayer? = null
+    private var volume = 1f
     private var focusRequest: AudioFocusRequest? = null
     private var wakeLock: PowerManager.WakeLock? = null
     private val handler = Handler(Looper.getMainLooper())
@@ -61,11 +75,13 @@ class AlarmService : Service() {
 
     private fun ring(alarmId: Long) {
         stopSound()
-        val label = AlarmStore.get(alarmId)?.label.orEmpty()
-        ringingState.value = Ringing(alarmId, label, System.currentTimeMillis())
+        val alarm = AlarmStore.get(alarmId)
+        val label = alarm?.label.orEmpty()
+        val station = alarm?.station
+        ringingState.value = Ringing(alarmId, label, System.currentTimeMillis(), station)
 
         ServiceCompat.startForeground(
-            this, NOTIFICATION_ID, buildNotification(label),
+            this, NOTIFICATION_ID, buildNotification(label, station),
             ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK,
         )
         wakeLock?.takeIf { it.isHeld }?.release()
@@ -77,12 +93,12 @@ class AlarmService : Service() {
         // notification, so open the wake-up screen ourselves. (Blocked harmlessly when in background.)
         runCatching { startActivity(Intent(this, AlarmActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
 
-        startSound()
+        startSound(station)
         if (SettingsStore.current.alarmVibrate) startVibration()
         handler.postDelayed({ finishRinging() }, MAX_RING_MS)
     }
 
-    private fun buildNotification(label: String): Notification {
+    private fun buildNotification(label: String, station: Station?): Notification {
         val fullScreen = PendingIntent.getActivity(
             this, 0, Intent(this, AlarmActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
@@ -91,7 +107,7 @@ class AlarmService : Service() {
         return NotificationCompat.Builder(this, NocturnaApp.CHANNEL_ALARM)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle(label.ifBlank { "Alarm" })
-            .setContentText(time)
+            .setContentText(listOfNotNull(time, station?.name).joinToString(" · "))
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setOngoing(true)
@@ -102,16 +118,52 @@ class AlarmService : Service() {
             .build()
     }
 
-    private fun startSound() {
-        val attrs = AudioAttributes.Builder()
-            .setUsage(AudioAttributes.USAGE_ALARM)
-            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-            .build()
+    private fun startSound(station: Station?) {
         // Ask other audio (e.g. the radio) to pause while we ring.
         val am = getSystemService(AudioManager::class.java)
         focusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
-            .setAudioAttributes(attrs).build().also { am.requestAudioFocus(it) }
+            .setAudioAttributes(toneAttributes()).build().also { am.requestAudioFocus(it) }
 
+        val rampMs = SettingsStore.current.alarmRampSeconds * 1000L
+        volume = if (rampMs > 0) START_VOLUME else 1f
+        if (station == null) {
+            playTone()
+        } else {
+            runCatching { playStation(station) }.onFailure {
+                releaseStream()
+                ringingState.update { r -> r?.copy(station = null) }
+                playTone()
+            }
+        }
+
+        if (rampMs > 0) {
+            val started = SystemClock.elapsedRealtime()
+            handler.post(object : Runnable {
+                override fun run() {
+                    if (tone == null && stream == null) return
+                    val f = ((SystemClock.elapsedRealtime() - started).toFloat() / rampMs).coerceIn(0f, 1f)
+                    // Perceived loudness is roughly logarithmic, so ramp on a curve.
+                    setVolume(START_VOLUME + (1f - START_VOLUME) * f * f)
+                    if (f < 1f) handler.postDelayed(this, 250)
+                }
+            })
+        }
+    }
+
+    /** Sets the volume of whichever player is ringing; one that takes over later starts at the same level. */
+    private fun setVolume(v: Float) {
+        volume = v
+        tone?.setVolume(v, v)
+        stream?.volume = v
+    }
+
+    private fun toneAttributes(): AudioAttributes = AudioAttributes.Builder()
+        .setUsage(AudioAttributes.USAGE_ALARM)
+        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+        .build()
+
+    private fun playTone() {
+        val attrs = toneAttributes()
         // Try the system alarm sound first. Its settings URI is served from the system's own cached
         // copy, so it plays even when the user picked a tone from storage we aren't allowed to read.
         // If nothing else works, ring with the chime bundled in the app: an alarm must never be silent.
@@ -120,35 +172,71 @@ class AlarmService : Service() {
             RingtoneManager.getActualDefaultRingtoneUri(this, RingtoneManager.TYPE_ALARM),
             "android.resource://$packageName/${R.raw.alarm_fallback}".toUri(),
         )
-        player = candidates.firstNotNullOfOrNull { uri ->
+        tone = candidates.firstNotNullOfOrNull { uri ->
             val mp = MediaPlayer()
             runCatching {
                 mp.setAudioAttributes(attrs)
                 mp.setDataSource(this, uri)
                 mp.isLooping = true
-                mp.setVolume(START_VOLUME, START_VOLUME)
+                mp.setVolume(volume, volume)
                 mp.prepare()
                 mp.start()
                 mp
             }.onFailure { mp.release() }.getOrNull()
         }
+    }
 
-        val rampMs = SettingsStore.current.alarmRampSeconds * 1000L
-        if (rampMs > 0) {
-            val started = System.currentTimeMillis()
-            handler.post(object : Runnable {
-                override fun run() {
-                    val p = player ?: return
-                    val f = ((System.currentTimeMillis() - started).toFloat() / rampMs).coerceIn(0f, 1f)
-                    // Perceived loudness is roughly logarithmic, so ramp on a curve.
-                    val v = START_VOLUME + (1f - START_VOLUME) * f * f
-                    p.setVolume(v, v)
-                    if (f < 1f) handler.postDelayed(this, 250)
-                }
-            })
-        } else {
-            player?.setVolume(1f, 1f)
-        }
+    /**
+     * Streams [station] on the alarm stream (so it follows the alarm volume and Do Not Disturb's alarm
+     * rules). Focus is ours already, so the player doesn't handle it. Errors, the stream ending, and
+     * silence (not started yet, or stalled) all hand over to [playTone].
+     */
+    private fun playStation(station: Station) {
+        val p = ExoPlayer.Builder(this)
+            .setAudioAttributes(
+                androidx.media3.common.AudioAttributes.Builder()
+                    .setUsage(C.USAGE_ALARM).setContentType(C.AUDIO_CONTENT_TYPE_MUSIC).build(),
+                /* handleAudioFocus = */ false,
+            )
+            .setWakeMode(C.WAKE_MODE_NETWORK)
+            .build()
+        p.addListener(object : Player.Listener {
+            // Post, so the player isn't released from inside its own callback.
+            override fun onPlayerError(error: PlaybackException) {
+                handler.post { fallBackToTone(p) }
+            }
+
+            override fun onPlaybackStateChanged(state: Int) {
+                if (state == Player.STATE_ENDED) handler.post { fallBackToTone(p) }
+            }
+        })
+        p.volume = volume
+        p.setMediaItem(MediaItem.fromUri(station.url))
+        p.prepare()
+        p.play()
+        stream = p
+
+        val watchdog = SilenceWatchdog(STREAM_TIMEOUT_MS, SystemClock.elapsedRealtime())
+        handler.post(object : Runnable {
+            override fun run() {
+                if (stream !== p) return
+                val now = SystemClock.elapsedRealtime()
+                watchdog.update(p.isPlaying, now)
+                if (watchdog.expired(now)) fallBackToTone(p) else handler.postDelayed(this, 1000)
+            }
+        })
+    }
+
+    private fun fallBackToTone(failed: ExoPlayer) {
+        if (stream !== failed) return // already replaced, or the alarm stopped
+        releaseStream()
+        ringingState.update { it?.copy(station = null) }
+        playTone()
+    }
+
+    private fun releaseStream() {
+        stream?.runCatching { stop(); release() }
+        stream = null
     }
 
     private fun vibrator(): Vibrator = if (Build.VERSION.SDK_INT >= 31) {
@@ -170,8 +258,9 @@ class AlarmService : Service() {
 
     private fun stopSound() {
         handler.removeCallbacksAndMessages(null)
-        player?.runCatching { stop(); release() }
-        player = null
+        tone?.runCatching { stop(); release() }
+        tone = null
+        releaseStream()
         focusRequest?.let { getSystemService(AudioManager::class.java).abandonAudioFocusRequest(it) }
         focusRequest = null
         vibrator().cancel()
@@ -205,6 +294,8 @@ class AlarmService : Service() {
         private const val NOTIFICATION_ID = 42
         private const val START_VOLUME = 0.05f
         private const val MAX_RING_MS = 10 * 60_000L
+        /** How long a radio alarm may stay silent before the alarm tone takes over. */
+        const val STREAM_TIMEOUT_MS = 15_000L
         const val ACTION_SNOOZE = "com.adl.nocturna.SNOOZE"
         const val ACTION_DISMISS = "com.adl.nocturna.DISMISS"
 

@@ -24,5 +24,8 @@ one-line summary written for users.
   over the lock screen.
 - **Web radio:** play any MP3, AAC or HLS stream, with a sleep timer that fades out after 15, 30, 60 or 90
   minutes. Monterrey stations come ready to pick.
+- **Wake up to the radio:** each alarm can play one of your stations instead of the alarm tone. If the
+  station doesn't play within 15 seconds, or stops while ringing, the alarm tone takes over, and *Keep
+  listening* on the wake-up screen leaves the station playing after you dismiss the alarm.
 - **Starts on its own while charging,** as the Android screen saver or with *Open when charging*, which opens
   the clock when you plug in a locked phone.
