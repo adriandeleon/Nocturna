@@ -6,6 +6,7 @@ import android.content.Intent
 import com.adl.nocturna.charging.ChargingService
 import com.adl.nocturna.data.AlarmStore
 import com.adl.nocturna.data.SettingsStore
+import com.adl.nocturna.data.Storage
 
 /** Fired by the system at the scheduled alarm time. */
 class AlarmReceiver : BroadcastReceiver() {
@@ -16,8 +17,8 @@ class AlarmReceiver : BroadcastReceiver() {
         if (wasSnooze) {
             AlarmStore.clearSnooze(reschedule = false)
         } else {
-            // A one-shot alarm switches itself off once it has rung.
-            AlarmStore.get(id)?.takeIf { !it.repeats }?.let { AlarmStore.update(it.copy(enabled = false)) }
+            // A one-shot alarm switches itself off once it has rung (update() also reschedules).
+            AlarmStore.update(id) { if (it.repeats) it else it.copy(enabled = false) }
         }
         AlarmScheduler.reschedule(context)
         AlarmService.start(context, id)
@@ -27,9 +28,14 @@ class AlarmReceiver : BroadcastReceiver() {
 /** Re-registers alarms after reboot, app update or clock changes. */
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        // NocturnaApp.onCreate has already loaded the stores and rescheduled.
+        // NocturnaApp.onCreate has already loaded the stores. After the first unlock, load them again:
+        // that is when data from older versions (in normal storage) can be moved to device storage.
+        if (intent.action == Intent.ACTION_BOOT_COMPLETED || intent.action == Intent.ACTION_MY_PACKAGE_REPLACED) {
+            SettingsStore.init(context)
+            AlarmStore.init(context)
+        }
         AlarmScheduler.reschedule(context)
-        if (SettingsStore.current.autoStartOnCharge &&
+        if (SettingsStore.current.autoStartOnCharge && Storage.isUnlocked(context) &&
             intent.action in setOf(Intent.ACTION_BOOT_COMPLETED, Intent.ACTION_MY_PACKAGE_REPLACED)
         ) {
             ChargingService.start(context)

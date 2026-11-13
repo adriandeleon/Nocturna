@@ -26,14 +26,27 @@ data class Alarm(
 
     fun repeatsOn(dayIndex: Int) = days and (1 shl dayIndex) != 0
 
-    /** The next time this alarm rings strictly after [now]. */
+    /**
+     * The next time this alarm rings strictly after [now].
+     *
+     * Each candidate is built from its own calendar date, so a daylight-saving change only affects
+     * the day it happens on (a time inside the spring-forward gap rings at the first valid moment).
+     */
     fun nextTrigger(now: ZonedDateTime): ZonedDateTime {
-        var t = now.withHour(hour).withMinute(minute).withSecond(0).withNano(0)
-        if (!t.isAfter(now)) t = t.plusDays(1)
-        if (days != 0) {
-            while (!repeatsOn(t.dayOfWeek.value - 1)) t = t.plusDays(1)
+        var date = now.toLocalDate()
+        repeat(8) {
+            if (days == 0 || repeatsOn(date.dayOfWeek.value - 1)) {
+                val t = date.atTime(hour, minute).atZone(now.zone)
+                if (t.isAfter(now)) return t
+            }
+            date = date.plusDays(1)
         }
-        return t
+        // Only reachable with no valid day bits; treat as "once" rather than loop forever.
+        return copy(days = 0).nextTrigger(now)
+    }
+
+    companion object {
+        const val ALL_DAYS = 0b111_1111
     }
 }
 
@@ -48,9 +61,10 @@ object AlarmStore {
     val alarms: StateFlow<List<Alarm>> = state.asStateFlow()
     val snooze: StateFlow<Snooze?> = snoozeState.asStateFlow()
 
+    /** Loads (or reloads) alarms from device-protected storage, which is readable before the first unlock. */
     fun init(context: Context) {
         appContext = context.applicationContext
-        prefs = context.getSharedPreferences("nocturna_alarms", Context.MODE_PRIVATE)
+        prefs = Storage.prefs(context, "nocturna_alarms")
         state.value = runCatching { decode(prefs.getString("alarms", "[]")!!) }.getOrDefault(emptyList())
         val until = prefs.getLong("snoozeUntil", 0L)
         snoozeState.value = if (until > System.currentTimeMillis()) Snooze(prefs.getLong("snoozeId", 0L), until) else null
@@ -64,11 +78,29 @@ object AlarmStore {
         return alarm
     }
 
-    fun update(alarm: Alarm) = save(state.value.map { if (it.id == alarm.id) alarm else it })
+    /**
+     * Changes one alarm based on its *current* stored value, so quick successive edits don't overwrite
+     * each other. Turning an alarm off or moving it also cancels a pending snooze of it.
+     */
+    fun update(id: Long, transform: (Alarm) -> Alarm) {
+        val old = get(id) ?: return
+        val new = transform(old)
+        if (new == old) return
+        val snoozed = snoozeState.value?.alarmId == id
+        if (snoozed && (!new.enabled || new.hour != old.hour || new.minute != old.minute)) clearSnooze(reschedule = false)
+        save(state.value.map { if (it.id == id) new else it })
+    }
 
-    fun delete(id: Long) {
+    /** Removes an alarm and returns it, so the caller can offer undo via [restore]. */
+    fun delete(id: Long): Alarm? {
+        val removed = get(id) ?: return null
         if (snoozeState.value?.alarmId == id) clearSnooze(reschedule = false)
         save(state.value.filterNot { it.id == id })
+        return removed
+    }
+
+    fun restore(alarm: Alarm) {
+        if (get(alarm.id) == null) save(state.value + alarm)
     }
 
     fun setSnooze(alarmId: Long, until: Long) {
@@ -106,9 +138,9 @@ object AlarmStore {
             val o = arr.getJSONObject(i)
             Alarm(
                 id = o.getLong("id"),
-                hour = o.getInt("hour"),
-                minute = o.getInt("minute"),
-                days = o.optInt("days", 0),
+                hour = o.getInt("hour").coerceIn(0, 23),
+                minute = o.getInt("minute").coerceIn(0, 59),
+                days = o.optInt("days", 0) and Alarm.ALL_DAYS,
                 enabled = o.optBoolean("enabled", true),
                 label = o.optString("label", ""),
             )

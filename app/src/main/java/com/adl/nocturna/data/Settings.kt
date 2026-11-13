@@ -88,7 +88,7 @@ object SettingsStore {
     val current: Settings get() = state.value
 
     fun init(context: Context) {
-        prefs = context.getSharedPreferences("nocturna", Context.MODE_PRIVATE)
+        prefs = Storage.prefs(context, "nocturna")
         state.value = prefs.getString(KEY, null)?.let { runCatching { decode(JSONObject(it)) }.getOrNull() } ?: Settings()
     }
 

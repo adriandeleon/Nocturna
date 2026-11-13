@@ -2,7 +2,13 @@ package com.adl.nocturna.clock
 
 import android.graphics.Typeface
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.layout.LastBaseline
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -71,16 +77,18 @@ fun DigitalClock(
         lineHeightStyle = tight,
         letterSpacing = (-0.02).em,
     )
-    Row(verticalAlignment = Alignment.Bottom) {
-        Text(hm, style = style)
+    // ":ss" sits on the same baseline as the big digits; AM/PM sits above it, near the top of the digits.
+    Row {
+        Text(hm, style = style, modifier = Modifier.alignBy(LastBaseline))
         if (showSeconds || !use24h) {
-            val small = style.copy(fontSize = fontSize * 0.28f, letterSpacing = 0.em)
-            androidx.compose.foundation.layout.Column(
-                horizontalAlignment = Alignment.Start,
-                modifier = Modifier,
-            ) {
+            val small = style.copy(fontSize = fontSize * 0.26f, letterSpacing = 0.em)
+            val gap = with(LocalDensity.current) { (fontSize * 0.06f).toDp() }
+            Column(Modifier.alignBy(LastBaseline).padding(start = gap)) {
                 if (!use24h) Text(now.format(DateTimeFormatter.ofPattern("a", locale)), style = small)
-                if (showSeconds) Text(now.format(DateTimeFormatter.ofPattern("ss")), style = small)
+                if (!use24h && showSeconds) Spacer(Modifier.height(with(LocalDensity.current) { (fontSize * 0.2f).toDp() }))
+                if (showSeconds) {
+                    Text(now.format(DateTimeFormatter.ofPattern(":ss")), style = small.copy(color = color.copy(alpha = color.alpha * 0.6f)))
+                }
             }
         }
     }
