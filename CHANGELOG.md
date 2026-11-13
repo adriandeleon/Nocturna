@@ -20,6 +20,10 @@ one-line summary written for users.
 - **Night mode:** when the room goes dark the clock turns dim red; without a light sensor it follows the time
   (22:00–07:00).
 - **Burn-in protection:** the clock drifts slowly around the screen.
+- **Day mode, for a desk stand while you work:** the clock sits beside this month's calendar and the rest of
+  today's events from the calendars on your phone, with the one in progress marked *Now*. Turn it on from the
+  clock's controls or in Settings; today's events need calendar access, and without it you get the month alone.
+  Day mode never turns night red.
 - **Alarms** with repeat days, labels, snooze, a gentle volume ramp, vibration and a full-screen wake-up screen
   over the lock screen. A deleted alarm can be brought back with *Undo*.
 - **Alarms you can count on:** they still ring after the phone restarts overnight, even before you unlock it; if

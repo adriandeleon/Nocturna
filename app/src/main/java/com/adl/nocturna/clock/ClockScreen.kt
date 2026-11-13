@@ -56,6 +56,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.adl.nocturna.data.ClockStyle
 import com.adl.nocturna.data.Settings
 import com.adl.nocturna.data.SettingsStore
+import com.adl.nocturna.day.DayLayout
 import com.adl.nocturna.notify.NotifIcon
 import com.adl.nocturna.notify.NotificationIconService
 import com.adl.nocturna.radio.Radio
@@ -74,7 +75,7 @@ import kotlin.random.Random
 
 /**
  * The bedside clock. Shared by [ClockActivity] (interactive, with a tap-to-show control bar)
- * and the screen saver (display only).
+ * and the screen saver (display only). In day mode it sits beside a calendar ([DayLayout]).
  *
  * @param onBrightness receives the window brightness to apply (0..1), or -1 for "system default".
  */
@@ -94,7 +95,7 @@ fun ClockScreen(
     var night by remember { mutableStateOf(false) }
     val currentLux = lux
     night = when {
-        !settings.dimEnabled || !settings.nightModeEnabled -> false
+        !settings.dimEnabled || !settings.nightModeEnabled || settings.dayMode -> false
         currentLux == null -> now.hour >= 22 || now.hour < 7 // no light sensor: go by the clock
         night -> currentLux < settings.nightModeLux * 2.5f
         else -> currentLux < settings.nightModeLux
@@ -143,17 +144,26 @@ fun ClockScreen(
             )
     ) {
         val landscape = maxWidth > maxHeight
+        val day = settings.dayMode
+        // In day mode the clock gets half the width (landscape) or the top of the screen (portrait).
+        val clockWidth = if (day && landscape) maxWidth * 0.5f else maxWidth
         val clockFontDp: Dp = minOf(
-            maxWidth * (if (landscape) 0.62f else 0.85f) / (if (settings.showSeconds || !settings.use24h) 3.3f else 2.8f),
-            maxHeight * (if (landscape) 0.5f else 0.3f),
+            clockWidth * (if (landscape && !day) 0.62f else 0.85f) / (if (settings.showSeconds || !settings.use24h) 3.3f else 2.8f),
+            maxHeight * when {
+                day && !landscape -> 0.15f
+                day -> 0.3f
+                landscape -> 0.5f
+                else -> 0.3f
+            },
         )
-        val analogSize = minOf(maxWidth, maxHeight) * 0.55f
-        val infoFontDp = (clockFontDp * 0.13f).coerceIn(14.dp, 30.dp)
+        val analogSize = if (day) minOf(clockWidth * 0.7f, maxHeight * (if (landscape) 0.55f else 0.25f))
+        else minOf(maxWidth, maxHeight) * 0.55f
+        val infoFontDp = (clockFontDp * 0.13f).coerceIn(14.dp, if (day) 22.dp else 30.dp)
         val density = LocalDensity.current
         val clockSize = with(density) { clockFontDp.toSp() }
         val infoSize = with(density) { infoFontDp.toSp() }
 
-        DriftLayout(enabled = settings.burnInProtection, modifier = Modifier.safeDrawingPadding().padding(16.dp)) {
+        val clock = @Composable {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.alpha(contentAlpha),
@@ -165,6 +175,11 @@ fun ClockScreen(
                 Spacer(Modifier.height(infoFontDp * 0.6f))
                 InfoBlock(settings, now, color, infoSize, infoFontDp)
             }
+        }
+
+        DriftLayout(enabled = settings.burnInProtection, modifier = Modifier.safeDrawingPadding().padding(16.dp)) {
+            // Day mode fills the screen; leaving a sliver free still lets burn-in protection move it.
+            if (day) DayLayout(landscape, now, settings, color, Modifier.fillMaxSize(0.96f), clock) else clock()
         }
 
         if (interactive) {
@@ -291,6 +306,10 @@ private fun Controls(
                     .size(40.dp)
                     .semantics { contentDescription = if (settings.dimEnabled) "Dimming on" else "Dimming off" },
             ) { GlyphIcon(if (settings.dimEnabled) Glyph.MOON else Glyph.SUN, color, 24.dp) }
+            OutlinedButton(
+                onClick = { onInteract(); SettingsStore.update { it.copy(dayMode = !it.dayMode) } },
+                colors = buttonColors, border = border,
+            ) { Text(if (settings.dayMode) "Clock only" else "Day mode") }
             OutlinedButton(onClick = onOpenAlarms, colors = buttonColors, border = border) { Text("Alarms") }
             OutlinedButton(
                 onClick = { onInteract(); Radio.toggle(context, settings.currentStation) },

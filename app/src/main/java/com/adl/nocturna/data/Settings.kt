@@ -38,6 +38,11 @@ data class Settings(
     /** Ambient light (lux) below which the clock switches to the dim red night look. */
     val nightModeLux: Float = 4f,
     val burnInProtection: Boolean = true,
+    // Day mode
+    /** Clock beside a month calendar, for a desk during the day; never turns night red. */
+    val dayMode: Boolean = false,
+    /** Today's events from the phone's calendars in day mode; needs READ_CALENDAR. */
+    val showCalendarEvents: Boolean = false,
     // Launching
     val autoStartOnCharge: Boolean = false,
     // Weather
@@ -100,7 +105,7 @@ object SettingsStore {
         }
     }
 
-    private fun encode(s: Settings) = JSONObject().apply {
+    internal fun encode(s: Settings) = JSONObject().apply {
         put("style", s.style.name)
         put("use24h", s.use24h)
         put("showSeconds", s.showSeconds)
@@ -118,6 +123,8 @@ object SettingsStore {
         put("nightModeEnabled", s.nightModeEnabled)
         put("nightModeLux", s.nightModeLux.toDouble())
         put("burnInProtection", s.burnInProtection)
+        put("dayMode", s.dayMode)
+        put("showCalendarEvents", s.showCalendarEvents)
         put("autoStartOnCharge", s.autoStartOnCharge)
         put("weatherUseDeviceLocation", s.weatherUseDeviceLocation)
         put("weatherCity", s.weatherCity)
@@ -136,7 +143,7 @@ object SettingsStore {
         put("stationsVersion", Settings.STATIONS_VERSION)
     }
 
-    private fun decode(j: JSONObject): Settings {
+    internal fun decode(j: JSONObject): Settings {
         val d = Settings()
         var stations = j.optJSONArray("stations")?.let { arr ->
             (0 until arr.length()).map { i ->
@@ -169,6 +176,8 @@ object SettingsStore {
             nightModeEnabled = j.optBoolean("nightModeEnabled", d.nightModeEnabled),
             nightModeLux = j.optDouble("nightModeLux", d.nightModeLux.toDouble()).toFloat(),
             burnInProtection = j.optBoolean("burnInProtection", d.burnInProtection),
+            dayMode = j.optBoolean("dayMode", d.dayMode),
+            showCalendarEvents = j.optBoolean("showCalendarEvents", d.showCalendarEvents),
             autoStartOnCharge = j.optBoolean("autoStartOnCharge", d.autoStartOnCharge),
             weatherUseDeviceLocation = j.optBoolean("weatherUseDeviceLocation", d.weatherUseDeviceLocation),
             weatherCity = j.optString("weatherCity", d.weatherCity),

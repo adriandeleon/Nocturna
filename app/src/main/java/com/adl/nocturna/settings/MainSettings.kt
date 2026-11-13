@@ -51,6 +51,7 @@ import com.adl.nocturna.data.ClockFont
 import com.adl.nocturna.data.ClockStyle
 import com.adl.nocturna.data.Settings
 import com.adl.nocturna.data.SettingsStore
+import com.adl.nocturna.day.CalendarEvents
 import com.adl.nocturna.notify.NotificationIconService
 import com.adl.nocturna.weather.WeatherRepository
 import kotlinx.coroutines.launch
@@ -76,6 +77,11 @@ fun MainSettings(padding: PaddingValues, onNavigate: (String) -> Unit) {
     val locationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         set { it.copy(weatherUseDeviceLocation = granted) }
         WeatherRepository.invalidate()
+    }
+    val calendarAccess = remember(refresh) { CalendarEvents.hasPermission(context) }
+    val calendarPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        set { it.copy(showCalendarEvents = granted) }
+        refresh++
     }
 
     LazyColumn(Modifier.fillMaxSize(), contentPadding = padding) {
@@ -109,6 +115,26 @@ fun MainSettings(padding: PaddingValues, onNavigate: (String) -> Unit) {
                     context.startActivity(Intent(ACTION_NOTIFICATION_LISTENER_SETTINGS))
                 }
             }
+        }
+
+        item { SectionHeader("Day mode") }
+        item {
+            SwitchRow(
+                "Day mode", s.dayMode,
+                "The clock beside a calendar, for a desk stand. Also on the clock: tap it, then Day mode",
+            ) { v -> set { it.copy(dayMode = v) } }
+        }
+        item {
+            SwitchRow(
+                "Today's events", s.showCalendarEvents,
+                if (s.showCalendarEvents && !calendarAccess) "Needs calendar access — tap below" else "From the calendars on this phone",
+            ) { v ->
+                if (v && !calendarAccess) calendarPermission.launch(Manifest.permission.READ_CALENDAR)
+                else set { it.copy(showCalendarEvents = v) }
+            }
+        }
+        if (s.showCalendarEvents && !calendarAccess) {
+            item { ActionButton("Allow calendar access") { calendarPermission.launch(Manifest.permission.READ_CALENDAR) } }
         }
 
         item { SectionHeader("Brightness and night mode") }
