@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import androidx.core.net.toUri
 import android.os.Build
+import android.text.format.DateFormat
 import android.provider.Settings.ACTION_DREAM_SETTINGS
 import android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION
 import android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS
@@ -46,15 +47,26 @@ import com.adl.nocturna.BuildConfig
 import com.adl.nocturna.charging.ChargingService
 import com.adl.nocturna.clock.label
 import com.adl.nocturna.clock.rememberAmbientLux
+import com.adl.nocturna.clock.rememberNow
 import com.adl.nocturna.data.AlarmStore
 import com.adl.nocturna.data.ClockFont
 import com.adl.nocturna.data.ClockStyle
+import com.adl.nocturna.data.DayMode
 import com.adl.nocturna.data.Settings
 import com.adl.nocturna.data.SettingsStore
 import com.adl.nocturna.day.CalendarEvents
+import com.adl.nocturna.day.inDaySchedule
+import com.adl.nocturna.day.isDayModeActive
+import com.adl.nocturna.day.nextDayScheduleEdge
 import com.adl.nocturna.notify.NotificationIconService
+import com.adl.nocturna.ui.currentLocale
 import com.adl.nocturna.weather.WeatherRepository
 import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.LocalTime
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import kotlin.math.roundToInt
 
 @Composable
@@ -82,6 +94,19 @@ fun MainSettings(padding: PaddingValues, onNavigate: (String) -> Unit) {
     val calendarPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         set { it.copy(showCalendarEvents = granted) }
         refresh++
+    }
+
+    val locale = currentLocale()
+    var editingTime by remember { mutableStateOf<DayScheduleTime?>(null) }
+    editingTime?.let { which ->
+        val minute = if (which == DayScheduleTime.START) s.dayModeStart else s.dayModeEnd
+        TimeDialog(minute / 60, minute % 60, s.use24h, onDismiss = { editingTime = null }) { h, m ->
+            editingTime = null
+            set {
+                if (which == DayScheduleTime.START) it.copy(dayModeStart = h * 60 + m, dayModeOverrideUntil = 0L)
+                else it.copy(dayModeEnd = h * 60 + m, dayModeOverrideUntil = 0L)
+            }
+        }
     }
 
     LazyColumn(Modifier.fillMaxSize(), contentPadding = padding) {
@@ -119,10 +144,34 @@ fun MainSettings(padding: PaddingValues, onNavigate: (String) -> Unit) {
 
         item { SectionHeader("Day mode") }
         item {
-            SwitchRow(
-                "Day mode", s.dayMode,
-                "The clock beside a calendar, for a desk stand. Also on the clock: tap it, then Day mode",
-            ) { v -> set { it.copy(dayMode = v) } }
+            ChoiceRow("Day mode", DayMode.entries, s.dayMode, { it.label() }) { v ->
+                set { it.copy(dayMode = v, dayModeOverrideUntil = 0L) }
+            }
+        }
+        item { Hint("The clock beside a calendar, for a desk stand. Also on the clock: tap it, then Day mode") }
+        if (s.dayMode == DayMode.SCHEDULED) {
+            // Changing the schedule drops a switch made from the clock, which was tied to the old one.
+            item {
+                NavRow("From", formatTime(LocalTime.of(s.dayModeStart / 60, s.dayModeStart % 60), s.use24h, locale)) {
+                    editingTime = DayScheduleTime.START
+                }
+            }
+            item {
+                val endsNextDay = if (s.dayModeEnd <= s.dayModeStart) " the next day" else ""
+                NavRow("Until", formatTime(LocalTime.of(s.dayModeEnd / 60, s.dayModeEnd % 60), s.use24h, locale) + endsNextDay) {
+                    editingTime = DayScheduleTime.END
+                }
+            }
+            item {
+                DayToggles(s.dayModeDays, locale, Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) { days ->
+                    set { it.copy(dayModeDays = days, dayModeOverrideUntil = 0L) }
+                }
+            }
+            item {
+                // Only this line ticks every second, not the whole screen.
+                val now by rememberNow()
+                Hint(dayScheduleStatus(s, now, locale))
+            }
         }
         item {
             SwitchRow(
@@ -244,6 +293,42 @@ fun MainSettings(padding: PaddingValues, onNavigate: (String) -> Unit) {
         }
         item { Spacer(Modifier.height(32.dp)) }
     }
+}
+
+private enum class DayScheduleTime { START, END }
+
+private fun DayMode.label() = when (this) {
+    DayMode.OFF -> "Off"
+    DayMode.ON -> "On"
+    DayMode.SCHEDULED -> "On a schedule"
+}
+
+/** What the schedule is doing at [now] and when that changes, e.g. "Day mode now, until Fri 18:00". */
+private fun dayScheduleStatus(s: Settings, now: ZonedDateTime, locale: Locale): String {
+    val active = isDayModeActive(s, now)
+    val state = if (active) "Day mode now" else "Clock only now"
+    if (s.dayModeDays == 0) return "$state. Pick the days day mode starts on."
+    val overridden = active != inDaySchedule(s, now)
+    val until = if (overridden) Instant.ofEpochMilli(s.dayModeOverrideUntil).atZone(now.zone).takeIf { s.dayModeOverrideUntil != Long.MAX_VALUE }
+    else nextDayScheduleEdge(s, now)
+    val pattern = DateFormat.getBestDateTimePattern(locale, if (s.use24h) "EEEHHmm" else "EEEhmma")
+    val whenText = until?.format(DateTimeFormatter.ofPattern(pattern, locale))
+    return when {
+        overridden && whenText != null -> "$state, switched from the clock until $whenText"
+        overridden -> "$state, switched from the clock"
+        whenText != null -> "$state, until $whenText"
+        else -> state
+    }
+}
+
+@Composable
+private fun Hint(text: String) {
+    Text(
+        text,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+    )
 }
 
 @Composable

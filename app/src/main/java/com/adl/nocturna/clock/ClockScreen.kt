@@ -57,6 +57,8 @@ import com.adl.nocturna.data.ClockStyle
 import com.adl.nocturna.data.Settings
 import com.adl.nocturna.data.SettingsStore
 import com.adl.nocturna.day.DayLayout
+import com.adl.nocturna.day.isDayModeActive
+import com.adl.nocturna.day.withDayModeToggled
 import com.adl.nocturna.notify.NotifIcon
 import com.adl.nocturna.notify.NotificationIconService
 import com.adl.nocturna.radio.Radio
@@ -90,12 +92,14 @@ fun ClockScreen(
     val settings by SettingsStore.settings.collectAsStateWithLifecycle()
     val now by rememberNow()
     val lux by rememberAmbientLux()
+    // Follows the schedule on its own: now ticks every second.
+    val day = isDayModeActive(settings, now)
 
     // Night mode with hysteresis so it doesn't flicker around the threshold.
     var night by remember { mutableStateOf(false) }
     val currentLux = lux
     night = when {
-        !settings.dimEnabled || !settings.nightModeEnabled || settings.dayMode -> false
+        !settings.dimEnabled || !settings.nightModeEnabled || day -> false
         currentLux == null -> now.hour >= 22 || now.hour < 7 // no light sensor: go by the clock
         night -> currentLux < settings.nightModeLux * 2.5f
         else -> currentLux < settings.nightModeLux
@@ -144,7 +148,6 @@ fun ClockScreen(
             )
     ) {
         val landscape = maxWidth > maxHeight
-        val day = settings.dayMode
         // In day mode the clock gets half the width (landscape) or the top of the screen (portrait).
         val clockWidth = if (day && landscape) maxWidth * 0.5f else maxWidth
         val clockFontDp: Dp = minOf(
@@ -189,7 +192,7 @@ fun ClockScreen(
                 exit = fadeOut(),
                 modifier = Modifier.align(Alignment.BottomCenter).safeDrawingPadding().padding(16.dp),
             ) {
-                Controls(settings, color, onOpenSettings, onOpenAlarms, onInteract = { controlsVisible = true; lastInteraction = System.nanoTime() })
+                Controls(settings, day, color, onOpenSettings, onOpenAlarms, onInteract = { controlsVisible = true; lastInteraction = System.nanoTime() })
             }
         }
     }
@@ -274,6 +277,7 @@ private val SLEEP_STEPS = listOf(0, 15, 30, 60, 90)
 @Composable
 private fun Controls(
     settings: Settings,
+    day: Boolean,
     color: Color,
     onOpenSettings: () -> Unit,
     onOpenAlarms: () -> Unit,
@@ -307,9 +311,10 @@ private fun Controls(
                     .semantics { contentDescription = if (settings.dimEnabled) "Dimming on" else "Dimming off" },
             ) { GlyphIcon(if (settings.dimEnabled) Glyph.MOON else Glyph.SUN, color, 24.dp) }
             OutlinedButton(
-                onClick = { onInteract(); SettingsStore.update { it.copy(dayMode = !it.dayMode) } },
+                // On a schedule this overrides it until the next start or end.
+                onClick = { onInteract(); SettingsStore.update { it.withDayModeToggled(ZonedDateTime.now()) } },
                 colors = buttonColors, border = border,
-            ) { Text(if (settings.dayMode) "Clock only" else "Day mode") }
+            ) { Text(if (day) "Clock only" else "Day mode") }
             OutlinedButton(onClick = onOpenAlarms, colors = buttonColors, border = border) { Text("Alarms") }
             OutlinedButton(
                 onClick = { onInteract(); Radio.toggle(context, settings.currentStation) },
