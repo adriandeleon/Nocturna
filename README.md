@@ -18,7 +18,7 @@ A bedside clock for Android: a big, dimmable clock for the nightstand while your
 - **Night mode**: when the room goes dark the clock turns dim red. Without a light sensor it follows the time (22:00–07:00).
 - **Burn-in protection**: the clock drifts slowly around the screen.
 - **Day mode**: for a phone on a desk stand while you work. The clock sits beside this month's calendar and today's events from the calendars on the phone (needs calendar access; without it, the month alone). It never turns night red.
-- **Alarms**: repeat days, labels, snooze, a gentle volume ramp, vibration, and a full-screen wake-up screen over the lock screen. An alarm can wake you with a radio station, and falls back to the alarm tone if the station doesn't play.
+- **Alarms**: repeat days, labels, snooze, a gentle volume ramp, vibration, and a full-screen wake-up screen over the lock screen. An alarm can wake you with a radio station, and falls back to the alarm tone if the station doesn't play. A repeating alarm can skip its next ring.
 - **Web radio**: any MP3/AAC/HLS stream, with a sleep timer that fades out (15/30/60/90 min).
 - **Starts on its own**:
   - as the Android screen saver (Settings › Display › Screen saver › Nocturna, "while charging"), or

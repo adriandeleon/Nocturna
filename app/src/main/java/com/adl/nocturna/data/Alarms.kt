@@ -9,12 +9,15 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.json.JSONArray
 import org.json.JSONObject
+import java.time.LocalDate
 import java.time.ZonedDateTime
 
 /**
  * One alarm. [days] is a bitmask with bit 0 = Monday ... bit 6 = Sunday; 0 means "once".
  * [station] is the radio station to wake up to, or null for the alarm tone. It is a copy, not an index
  * into the station list, so editing or deleting stations never changes what an alarm plays.
+ * [skipDate] is the date of one occurrence of a repeating alarm that won't ring; a date already past
+ * does nothing.
  */
 data class Alarm(
     val id: Long,
@@ -24,6 +27,7 @@ data class Alarm(
     val enabled: Boolean = true,
     val label: String = "",
     val station: Station? = null,
+    val skipDate: LocalDate? = null,
 ) {
     val repeats: Boolean get() = days != 0
 
@@ -35,17 +39,43 @@ data class Alarm(
      * Each candidate is built from its own calendar date, so a daylight-saving change only affects
      * the day it happens on (a time inside the spring-forward gap rings at the first valid moment).
      */
-    fun nextTrigger(now: ZonedDateTime): ZonedDateTime {
+    fun nextTrigger(now: ZonedDateTime): ZonedDateTime = nextTrigger(now, skipDate)
+
+    private fun nextTrigger(now: ZonedDateTime, skip: LocalDate?): ZonedDateTime {
         var date = now.toLocalDate()
-        repeat(8) {
-            if (days == 0 || repeatsOn(date.dayOfWeek.value - 1)) {
+        // Two weeks and a day: a weekly alarm whose next occurrence is skipped rings a week later.
+        repeat(15) {
+            if ((days == 0 || repeatsOn(date.dayOfWeek.value - 1)) && date != skip) {
                 val t = date.atTime(hour, minute).atZone(now.zone)
                 if (t.isAfter(now)) return t
             }
             date = date.plusDays(1)
         }
         // Only reachable with no valid day bits; treat as "once" rather than loop forever.
-        return copy(days = 0).nextTrigger(now)
+        return copy(days = 0, skipDate = null).nextTrigger(now)
+    }
+
+    /** The occurrence being skipped, or null when none is still ahead of [now]. */
+    fun skipping(now: ZonedDateTime): LocalDate? =
+        skipDate?.takeIf { repeats && nextTrigger(now, null).toLocalDate() <= it }
+
+    /**
+     * Skips the next occurrence of a repeating alarm, or brings it back if it is already skipped.
+     * A one-time alarm has nothing after it to ring, so it is returned unchanged: turn it off instead.
+     */
+    fun toggleSkip(now: ZonedDateTime): Alarm = when {
+        !repeats -> this
+        skipping(now) != null -> copy(skipDate = null)
+        else -> copy(skipDate = nextTrigger(now, null).toLocalDate())
+    }
+
+    /**
+     * The alarm after an edit from [old]: changing its time, days or switch drops a skip, since the
+     * occurrence it named may no longer exist or be the one the user meant.
+     */
+    fun withSkipCheckedAgainst(old: Alarm): Alarm {
+        val scheduleChanged = hour != old.hour || minute != old.minute || days != old.days || enabled != old.enabled
+        return if (scheduleChanged && skipDate == old.skipDate && skipDate != null) copy(skipDate = null) else this
     }
 
     companion object {
@@ -87,7 +117,7 @@ object AlarmStore {
      */
     fun update(id: Long, transform: (Alarm) -> Alarm) {
         val old = get(id) ?: return
-        val new = transform(old)
+        val new = transform(old).withSkipCheckedAgainst(old)
         if (new == old) return
         val snoozed = snoozeState.value?.alarmId == id
         if (snoozed && (!new.enabled || new.hour != old.hour || new.minute != old.minute)) clearSnooze(reschedule = false)
@@ -132,6 +162,7 @@ object AlarmStore {
                     .put("id", it.id).put("hour", it.hour).put("minute", it.minute)
                     .put("days", it.days).put("enabled", it.enabled).put("label", it.label)
                     .apply { it.station?.let { st -> put("station", JSONObject().put("name", st.name).put("url", st.url)) } }
+                    .apply { it.skipDate?.let { d -> put("skipDate", d.toString()) } }
             )
         }
     }.toString()
@@ -151,6 +182,7 @@ object AlarmStore {
                 station = o.optJSONObject("station")?.let { st ->
                     st.optString("url").takeIf { it.isNotBlank() }?.let { Station(st.optString("name").ifBlank { it }, it) }
                 },
+                skipDate = o.optString("skipDate").takeIf { it.isNotBlank() }?.let { runCatching { LocalDate.parse(it) }.getOrNull() },
             )
         }
     }
