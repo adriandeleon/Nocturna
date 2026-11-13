@@ -39,6 +39,7 @@ class SettingsActivity : ComponentActivity() {
                                     when (screen) {
                                         SCREEN_ALARMS -> "Alarms"
                                         SCREEN_STATIONS -> "Radio stations"
+                                        SCREEN_ABOUT -> "About"
                                         else -> "Settings"
                                     }
                                 )
@@ -50,6 +51,7 @@ class SettingsActivity : ComponentActivity() {
                     when (screen) {
                         SCREEN_ALARMS -> AlarmsScreen(padding)
                         SCREEN_STATIONS -> StationsScreen(padding)
+                        SCREEN_ABOUT -> AboutScreen(padding)
                         else -> MainSettings(padding, onNavigate = { screen = it })
                     }
                 }
@@ -62,5 +64,6 @@ class SettingsActivity : ComponentActivity() {
         const val SCREEN_MAIN = "main"
         const val SCREEN_ALARMS = "alarms"
         const val SCREEN_STATIONS = "stations"
+        const val SCREEN_ABOUT = "about"
     }
 }

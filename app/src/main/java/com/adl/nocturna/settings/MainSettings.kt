@@ -42,6 +42,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.adl.nocturna.BuildConfig
 import com.adl.nocturna.charging.ChargingService
 import com.adl.nocturna.clock.label
 import com.adl.nocturna.clock.rememberAmbientLux
@@ -208,6 +209,13 @@ fun MainSettings(padding: PaddingValues, onNavigate: (String) -> Unit) {
                 }
             }
         }
+
+        item { SectionHeader("About") }
+        item {
+            NavRow("About Nocturna", versionLabel(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE, BuildConfig.DEBUG)) {
+                onNavigate(SettingsActivity.SCREEN_ABOUT)
+            }
+        }
         item { Spacer(Modifier.height(32.dp)) }
     }
 }
@@ -227,9 +235,7 @@ private fun WeatherAttribution() {
         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
         modifier = Modifier
             .fillMaxWidth()
-            .clickable {
-                runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, "https://open-meteo.com/".toUri())) }
-            }
+            .clickable { context.openUrl("https://open-meteo.com/") }
             .padding(horizontal = 16.dp, vertical = 8.dp),
     )
 }

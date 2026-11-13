@@ -47,7 +47,7 @@ The debug build installs as `com.adl.nocturna.debug`, so it can sit next to a re
 | `weather` | Open-Meteo current conditions and city search |
 | `notify` | Notification listener that mirrors notification icons |
 | `charging` | Foreground service that opens the clock when the charger is connected |
-| `settings` | Settings, alarms and stations screens |
+| `settings` | Settings, alarms, stations and About screens |
 | `data` | Settings and alarms, stored as JSON in SharedPreferences |
 
 ## License
