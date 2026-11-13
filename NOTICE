@@ -1,0 +1,52 @@
+Nocturna
+Copyright (c) 2026 Adrián Arturo De León Saldivar
+
+Nocturna is licensed under the MIT License (see LICENSE).
+
+This product includes the following third-party components, each under its own
+licence. Keep this list in step with gradle/libs.versions.toml and
+app/build.gradle.kts: every library the APK carries, and every outside service
+whose data the app shows, appears here.
+
+--------------------------------------------------------------------------------
+Android Jetpack (AndroidX) — https://developer.android.com/jetpack/androidx
+androidx.core:core-ktx, androidx.activity:activity-compose,
+androidx.lifecycle:lifecycle-runtime-compose, androidx.lifecycle:lifecycle-service,
+androidx.savedstate:savedstate-ktx
+Copyright The Android Open Source Project.
+Licensed under the Apache License, Version 2.0.
+
+Jetpack Compose — https://developer.android.com/jetpack/compose
+androidx.compose.ui:ui, ui-graphics, ui-tooling-preview;
+androidx.compose.material3:material3 (versions from the Compose BOM)
+Copyright The Android Open Source Project.
+Licensed under the Apache License, Version 2.0.
+
+AndroidX Media3 — https://github.com/androidx/media
+androidx.media3:media3-exoplayer, media3-exoplayer-hls, media3-session
+Copyright The Android Open Source Project.
+Licensed under the Apache License, Version 2.0.
+
+Kotlin standard library — https://kotlinlang.org
+Copyright JetBrains s.r.o. and Kotlin Programming Language contributors.
+Licensed under the Apache License, Version 2.0.
+
+The full text of the Apache License, Version 2.0:
+https://www.apache.org/licenses/LICENSE-2.0
+
+--------------------------------------------------------------------------------
+Data shown by the app, not bundled with it:
+
+Weather data by Open-Meteo.com — https://open-meteo.com
+Current conditions (api.open-meteo.com) and city search
+(geocoding-api.open-meteo.com) are licensed under Creative Commons Attribution
+4.0 International (CC BY 4.0); the city search is based on GeoNames
+(https://www.geonames.org), also CC BY 4.0. Attribution is a condition of use.
+
+Radio streams are played from the stations' own servers; Nocturna carries none
+of their content.
+
+--------------------------------------------------------------------------------
+Build-time only (not shipped): Android Gradle Plugin (Apache-2.0), Kotlin
+compiler and Compose compiler plugin (Apache-2.0), Gradle (Apache-2.0),
+JUnit 4 (EPL-1.0).

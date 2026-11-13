@@ -1,5 +1,10 @@
 # Nocturna
 
+[![CI](https://github.com/adriandeleon/Nocturna/actions/workflows/ci.yml/badge.svg)](https://github.com/adriandeleon/Nocturna/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/github/license/adriandeleon/Nocturna)](LICENSE)
+![Android](https://img.shields.io/badge/Android-8.1%2B%20%28API%2027%29-3ddc84?logo=android&logoColor=white)
+![Kotlin](https://img.shields.io/badge/Kotlin-Compose-7f52ff?logo=kotlin&logoColor=white)
+
 A bedside clock for Android: a big, dimmable clock for the nightstand while your phone charges.
 
 ## Features
@@ -42,3 +47,8 @@ The debug build installs as `com.adl.nocturna.debug`, so it can sit next to a re
 | `charging` | Foreground service that opens the clock when the charger is connected |
 | `settings` | Settings, alarms and stations screens |
 | `data` | Settings and alarms, stored as JSON in SharedPreferences |
+
+## License
+
+MIT, see [LICENSE](LICENSE). Third-party components and the weather data's attribution are in [NOTICE](NOTICE);
+what changed is in [CHANGELOG.md](CHANGELOG.md).

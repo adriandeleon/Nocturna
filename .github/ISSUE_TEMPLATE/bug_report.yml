@@ -1,0 +1,39 @@
+name: Bug report
+description: Something in Nocturna went wrong.
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what Nocturna did instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: If you can make it happen again, how?
+      placeholder: |
+        1. Open …
+        2. Tap …
+  # An in-app "Report a problem" can fill this field by its id
+  # (…/issues/new?template=bug_report.yml&environment=…); keep the id `environment`.
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: >-
+        Nocturna version (Android Settings › Apps › Nocturna), Android version, phone model, and how the clock
+        was opened (the app, the screen saver, or Open when charging).
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: >-
+        Optional: `adb logcat` output from around the problem. Read it before you submit; anything left in it
+        becomes public.
+      render: text

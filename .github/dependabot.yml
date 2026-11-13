@@ -1,0 +1,21 @@
+# Weekly update pull requests for the Gradle dependencies and plugins (from gradle/libs.versions.toml)
+# and for the GitHub Actions. The actions are pinned to commit SHAs with the version in a trailing
+# comment (`uses: owner/action@<sha> # vX.Y.Z`); Dependabot rewrites both together.
+version: 2
+updates:
+  - package-ecosystem: gradle
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      # Compose, Media3 and the other AndroidX libraries move together; one pull request for them.
+      androidx:
+        patterns:
+          - "androidx.*"
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
