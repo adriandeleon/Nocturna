@@ -11,16 +11,19 @@ import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.media.MediaPlayer
 import android.media.RingtoneManager
+import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.os.PowerManager
+import android.os.VibrationAttributes
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import com.adl.nocturna.NocturnaApp
 import com.adl.nocturna.R
 import com.adl.nocturna.data.AlarmStore
@@ -65,6 +68,7 @@ class AlarmService : Service() {
             this, NOTIFICATION_ID, buildNotification(label),
             ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK,
         )
+        wakeLock?.takeIf { it.isHeld }?.release()
         wakeLock = getSystemService(PowerManager::class.java)
             .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "nocturna:alarm")
             .apply { acquire(MAX_RING_MS + 10_000) }
@@ -108,19 +112,26 @@ class AlarmService : Service() {
         focusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
             .setAudioAttributes(attrs).build().also { am.requestAudioFocus(it) }
 
-        val uri = RingtoneManager.getActualDefaultRingtoneUri(this, RingtoneManager.TYPE_ALARM)
-            ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-            ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
-        player = runCatching {
-            MediaPlayer().apply {
-                setAudioAttributes(attrs)
-                setDataSource(this@AlarmService, uri)
-                isLooping = true
-                setVolume(START_VOLUME, START_VOLUME)
-                prepare()
-                start()
-            }
-        }.getOrNull()
+        // Try the system alarm sound first. Its settings URI is served from the system's own cached
+        // copy, so it plays even when the user picked a tone from storage we aren't allowed to read.
+        // If nothing else works, ring with the chime bundled in the app: an alarm must never be silent.
+        val candidates = listOfNotNull(
+            RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM),
+            RingtoneManager.getActualDefaultRingtoneUri(this, RingtoneManager.TYPE_ALARM),
+            "android.resource://$packageName/${R.raw.alarm_fallback}".toUri(),
+        )
+        player = candidates.firstNotNullOfOrNull { uri ->
+            val mp = MediaPlayer()
+            runCatching {
+                mp.setAudioAttributes(attrs)
+                mp.setDataSource(this, uri)
+                mp.isLooping = true
+                mp.setVolume(START_VOLUME, START_VOLUME)
+                mp.prepare()
+                mp.start()
+                mp
+            }.onFailure { mp.release() }.getOrNull()
+        }
 
         val rampMs = SettingsStore.current.alarmRampSeconds * 1000L
         if (rampMs > 0) {
@@ -140,13 +151,21 @@ class AlarmService : Service() {
         }
     }
 
+    private fun vibrator(): Vibrator = if (Build.VERSION.SDK_INT >= 31) {
+        getSystemService(VibratorManager::class.java).defaultVibrator
+    } else {
+        @Suppress("DEPRECATION") getSystemService(Vibrator::class.java)
+    }
+
     private fun startVibration() {
-        val vibrator = if (android.os.Build.VERSION.SDK_INT >= 31) {
-            getSystemService(VibratorManager::class.java).defaultVibrator
+        val effect = VibrationEffect.createWaveform(longArrayOf(0, 600, 900), 0)
+        // Mark it as alarm vibration so "alarm vibration" / Do Not Disturb settings treat it as one.
+        if (Build.VERSION.SDK_INT >= 33) {
+            vibrator().vibrate(effect, VibrationAttributes.createForUsage(VibrationAttributes.USAGE_ALARM))
         } else {
-            @Suppress("DEPRECATION") getSystemService(Vibrator::class.java)
+            @Suppress("DEPRECATION")
+            vibrator().vibrate(effect, AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ALARM).build())
         }
-        vibrator.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 600, 900), 0))
     }
 
     private fun stopSound() {
@@ -155,11 +174,7 @@ class AlarmService : Service() {
         player = null
         focusRequest?.let { getSystemService(AudioManager::class.java).abandonAudioFocusRequest(it) }
         focusRequest = null
-        if (android.os.Build.VERSION.SDK_INT >= 31) {
-            getSystemService(VibratorManager::class.java).cancel()
-        } else {
-            @Suppress("DEPRECATION") getSystemService(Vibrator::class.java).cancel()
-        }
+        vibrator().cancel()
     }
 
     private fun snooze() {

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12+. Settings and alarms are backed up; per-device flags are not. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="sharedpref" path="nocturna_local.xml" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="nocturna_local.xml" />
+    </device-transfer>
+</data-extraction-rules>

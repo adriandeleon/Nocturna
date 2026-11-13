@@ -12,11 +12,17 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.adl.nocturna.alarm.AlarmActivity
+import com.adl.nocturna.alarm.AlarmService
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import com.adl.nocturna.data.Storage
 import com.adl.nocturna.settings.SettingsActivity
 import com.adl.nocturna.ui.NocturnaTheme
 import com.adl.nocturna.ui.enableDarkEdgeToEdge
@@ -33,6 +39,12 @@ class ClockActivity : ComponentActivity() {
 
         setContent {
             NocturnaTheme {
+                // If the alarm's own screen couldn't open (e.g. notifications are off), show it as soon
+                // as the clock is visible, so there's always a way to stop a ringing alarm.
+                val ringing by AlarmService.ringing.collectAsStateWithLifecycle()
+                LaunchedEffect(ringing?.alarmId) {
+                    if (ringing != null) startActivity(Intent(this@ClockActivity, AlarmActivity::class.java))
+                }
                 ClockScreen(
                     interactive = true,
                     onBrightness = { window.setBrightness(it) },
@@ -46,6 +58,13 @@ class ClockActivity : ComponentActivity() {
                 )
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Coming back to the clock while an alarm rings (e.g. after switching away from its screen)
+        // must bring the Stop/Snooze screen back to the front.
+        if (AlarmService.ringing.value != null) startActivity(Intent(this, AlarmActivity::class.java))
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
@@ -62,7 +81,7 @@ class ClockActivity : ComponentActivity() {
 
     private fun askForNotificationsOnce() {
         if (Build.VERSION.SDK_INT < 33) return
-        val prefs = getSharedPreferences("nocturna", MODE_PRIVATE)
+        val prefs = Storage.localPrefs(this)
         if (prefs.getBoolean("askedNotifications", false)) return
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) return
         prefs.edit { putBoolean("askedNotifications", true) }

@@ -33,6 +33,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -122,7 +123,8 @@ fun ClockScreen(
     }
 
     var controlsVisible by remember { mutableStateOf(false) }
-    LaunchedEffect(controlsVisible) {
+    var lastInteraction by remember { mutableLongStateOf(0L) }
+    LaunchedEffect(controlsVisible, lastInteraction) {
         if (controlsVisible) {
             delay(8_000)
             controlsVisible = false
@@ -172,7 +174,7 @@ fun ClockScreen(
                 exit = fadeOut(),
                 modifier = Modifier.align(Alignment.BottomCenter).safeDrawingPadding().padding(16.dp),
             ) {
-                Controls(settings, color, onOpenSettings, onOpenAlarms, onInteract = { controlsVisible = true })
+                Controls(settings, color, onOpenSettings, onOpenAlarms, onInteract = { controlsVisible = true; lastInteraction = System.nanoTime() })
             }
         }
     }

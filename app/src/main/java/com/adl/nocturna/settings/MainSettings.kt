@@ -12,6 +12,7 @@ import android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS
 import android.provider.Settings.canDrawOverlays
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -65,6 +66,7 @@ fun MainSettings(padding: PaddingValues, onNavigate: (String) -> Unit) {
     // Permission states that the user changes in system settings; re-check when we come back.
     var refresh by remember { mutableIntStateOf(0) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { refresh++ }
+    val notificationsAllowed = rememberNotificationsAllowed()
     val notificationAccess = remember(refresh) { NotificationIconService.isEnabled(context) }
     val overlayAllowed = remember(refresh) { canDrawOverlays(context) }
     val fullScreenAllowed = remember(refresh) {
@@ -123,12 +125,12 @@ fun MainSettings(padding: PaddingValues, onNavigate: (String) -> Unit) {
         }
         item { SwitchRow("Adjust to room light", s.autoBrightness) { v -> set { it.copy(autoBrightness = v) } } }
         item {
-            SliderRow("Darkest", s.minBrightness, 0.01f..0.3f, "${(s.minBrightness * 100).roundToInt()}%") { v ->
+            SliderRow("Darkest", s.minBrightness, 0.01f..0.3f, { "${(it * 100).roundToInt()}%" }) { v ->
                 set { it.copy(minBrightness = v) }
             }
         }
         item {
-            SliderRow("Brightest", s.maxBrightness, 0.3f..1f, "${(s.maxBrightness * 100).roundToInt()}%") { v ->
+            SliderRow("Brightest", s.maxBrightness, 0.3f..1f, { "${(it * 100).roundToInt()}%" }) { v ->
                 set { it.copy(maxBrightness = v) }
             }
         }
@@ -139,7 +141,7 @@ fun MainSettings(padding: PaddingValues, onNavigate: (String) -> Unit) {
         }
         if (s.nightModeEnabled) {
             item {
-                SliderRow("Turn on below", s.nightModeLux, 0.5f..30f, "${"%.1f".format(s.nightModeLux)} lux") { v ->
+                SliderRow("Turn on below", s.nightModeLux, 0.5f..30f, { "${"%.1f".format(it)} lux" }) { v ->
                     set { it.copy(nightModeLux = v) }
                 }
             }
@@ -163,8 +165,10 @@ fun MainSettings(padding: PaddingValues, onNavigate: (String) -> Unit) {
         }
         item { CitySearch(s) }
         item { SwitchRow("Fahrenheit", s.weatherFahrenheit) { v -> set { it.copy(weatherFahrenheit = v) } } }
+        item { WeatherAttribution() }
 
         item { SectionHeader("Alarms and radio") }
+        if (!notificationsAllowed && alarms.any { it.enabled }) item { NotificationsOffWarning() }
         item {
             val on = alarms.count { it.enabled }
             NavRow("Alarms", if (alarms.isEmpty()) "No alarms yet" else "$on of ${alarms.size} on") { onNavigate(SettingsActivity.SCREEN_ALARMS) }
@@ -211,6 +215,23 @@ fun MainSettings(padding: PaddingValues, onNavigate: (String) -> Unit) {
 @Composable
 private fun ActionButton(text: String, onClick: () -> Unit) {
     OutlinedButton(onClick = onClick, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) { Text(text) }
+}
+
+/** Open-Meteo's data (and the GeoNames data behind its city search) is CC BY 4.0, which asks for credit. */
+@Composable
+private fun WeatherAttribution() {
+    val context = LocalContext.current
+    Text(
+        "Weather data by Open-Meteo.com (CC BY 4.0). City search based on GeoNames.",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable {
+                runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, "https://open-meteo.com/".toUri())) }
+            }
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+    )
 }
 
 @Composable

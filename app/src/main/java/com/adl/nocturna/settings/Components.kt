@@ -18,6 +18,10 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -57,20 +61,32 @@ fun NavRow(title: String, subtitle: String? = null, onClick: () -> Unit) {
 }
 
 @Composable
+/** A slider that follows the finger locally and saves through [onChange] only when released. */
 fun SliderRow(
     title: String,
     value: Float,
     range: ClosedFloatingPointRange<Float>,
-    valueLabel: String,
+    valueLabel: (Float) -> String,
     steps: Int = 0,
     onChange: (Float) -> Unit,
 ) {
+    var dragging by remember { mutableStateOf<Float?>(null) }
+    val shown = dragging ?: value
     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)) {
         Row {
             Text(title, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-            Text(valueLabel, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
+            Text(valueLabel(shown), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
         }
-        Slider(value = value, onValueChange = onChange, valueRange = range, steps = steps)
+        Slider(
+            value = shown,
+            onValueChange = { dragging = it },
+            onValueChangeFinished = {
+                dragging?.let(onChange)
+                dragging = null
+            },
+            valueRange = range,
+            steps = steps,
+        )
     }
 }
 
