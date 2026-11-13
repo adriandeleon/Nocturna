@@ -13,6 +13,8 @@ import java.time.ZonedDateTime
 
 /**
  * One alarm. [days] is a bitmask with bit 0 = Monday ... bit 6 = Sunday; 0 means "once".
+ * [station] is the radio station to wake up to, or null for the alarm tone. It is a copy, not an index
+ * into the station list, so editing or deleting stations never changes what an alarm plays.
  */
 data class Alarm(
     val id: Long,
@@ -21,6 +23,7 @@ data class Alarm(
     val days: Int = 0,
     val enabled: Boolean = true,
     val label: String = "",
+    val station: Station? = null,
 ) {
     val repeats: Boolean get() = days != 0
 
@@ -122,17 +125,19 @@ object AlarmStore {
         AlarmScheduler.reschedule(appContext)
     }
 
-    private fun encode(list: List<Alarm>) = JSONArray().apply {
+    internal fun encode(list: List<Alarm>) = JSONArray().apply {
         list.forEach {
             put(
                 JSONObject()
                     .put("id", it.id).put("hour", it.hour).put("minute", it.minute)
                     .put("days", it.days).put("enabled", it.enabled).put("label", it.label)
+                    .apply { it.station?.let { st -> put("station", JSONObject().put("name", st.name).put("url", st.url)) } }
             )
         }
     }.toString()
 
-    private fun decode(json: String): List<Alarm> {
+    /** Reads what [encode] wrote, including JSON from versions that had fewer fields. */
+    internal fun decode(json: String): List<Alarm> {
         val arr = JSONArray(json)
         return (0 until arr.length()).map { i ->
             val o = arr.getJSONObject(i)
@@ -143,6 +148,9 @@ object AlarmStore {
                 days = o.optInt("days", 0) and Alarm.ALL_DAYS,
                 enabled = o.optBoolean("enabled", true),
                 label = o.optString("label", ""),
+                station = o.optJSONObject("station")?.let { st ->
+                    st.optString("url").takeIf { it.isNotBlank() }?.let { Station(st.optString("name").ifBlank { it }, it) }
+                },
             )
         }
     }

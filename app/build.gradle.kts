@@ -56,4 +56,6 @@ dependencies {
     implementation(libs.androidx.media3.session)
 
     testImplementation(libs.junit)
+    // Android's org.json is a stub in JVM tests; the real one lets tests check the stored JSON.
+    testImplementation(libs.org.json)
 }
