@@ -65,7 +65,7 @@ object WeatherRepository {
         val (lat, lon) = location(context, settings) ?: return
         val cur = state.value
         val moved = cur == null || Math.abs(cur.lat - lat) > 0.05 || Math.abs(cur.lon - lon) > 0.05
-        if (!moved && System.currentTimeMillis() - cur!!.fetchedAt < MAX_AGE_MS) return
+        if (!moved && System.currentTimeMillis() - cur.fetchedAt < MAX_AGE_MS) return
         runCatching { fetch(lat, lon) }.onSuccess { state.value = it }
     }
 

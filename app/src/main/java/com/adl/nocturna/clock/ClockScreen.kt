@@ -23,7 +23,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -89,7 +93,7 @@ fun ClockScreen(
     var night by remember { mutableStateOf(false) }
     val currentLux = lux
     night = when {
-        !settings.nightModeEnabled -> false
+        !settings.dimEnabled || !settings.nightModeEnabled -> false
         currentLux == null -> now.hour >= 22 || now.hour < 7 // no light sensor: go by the clock
         night -> currentLux < settings.nightModeLux * 2.5f
         else -> currentLux < settings.nightModeLux
@@ -97,7 +101,7 @@ fun ClockScreen(
 
     val brightness = when {
         night -> settings.minBrightness
-        !settings.autoBrightness -> -1f
+        !settings.dimEnabled || !settings.autoBrightness -> -1f
         currentLux == null -> -1f
         else -> {
             val f = (log10(1f + currentLux) / log10(1f + 1000f)).coerceIn(0f, 1f)
@@ -267,7 +271,24 @@ private fun Controls(
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         error?.let { Text(it, color = color.copy(alpha = 0.8f), fontSize = 14.sp, modifier = Modifier.padding(bottom = 8.dp)) }
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)) {
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+            itemVerticalAlignment = Alignment.CenterVertically,
+        ) {
+            // Quick dimming switch: moon = dims with the room and goes red at night; sun = normal brightness.
+            OutlinedButton(
+                onClick = {
+                    onInteract()
+                    SettingsStore.update { it.copy(dimEnabled = !it.dimEnabled) }
+                },
+                colors = buttonColors,
+                border = border,
+                shape = CircleShape,
+                contentPadding = PaddingValues(0.dp),
+                modifier = Modifier
+                    .size(40.dp)
+                    .semantics { contentDescription = if (settings.dimEnabled) "Dimming on" else "Dimming off" },
+            ) { GlyphIcon(if (settings.dimEnabled) Glyph.MOON else Glyph.SUN, color, 24.dp) }
             OutlinedButton(onClick = onOpenAlarms, colors = buttonColors, border = border) { Text("Alarms") }
             OutlinedButton(
                 onClick = { onInteract(); Radio.toggle(context, settings.currentStation) },

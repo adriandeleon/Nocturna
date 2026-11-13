@@ -116,6 +116,11 @@ fun MainSettings(padding: PaddingValues, onNavigate: (String) -> Unit) {
                 modifier = Modifier.padding(horizontal = 16.dp),
             )
         }
+        item {
+            SwitchRow("Dimming", s.dimEnabled, "Also on the clock: tap it, then the moon/sun button") { v ->
+                set { it.copy(dimEnabled = v) }
+            }
+        }
         item { SwitchRow("Adjust to room light", s.autoBrightness) { v -> set { it.copy(autoBrightness = v) } } }
         item {
             SliderRow("Darkest", s.minBrightness, 0.01f..0.3f, "${(s.minBrightness * 100).roundToInt()}%") { v ->

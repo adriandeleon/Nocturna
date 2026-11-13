@@ -29,6 +29,8 @@ data class Settings(
     val showWeather: Boolean = true,
     val showNotifications: Boolean = true,
     // Brightness and night mode
+    /** Master switch for all dimming: room-light brightness and night mode. */
+    val dimEnabled: Boolean = true,
     val autoBrightness: Boolean = true,
     val minBrightness: Float = 0.02f,
     val maxBrightness: Float = 0.8f,
@@ -56,7 +58,15 @@ data class Settings(
     val currentStation: Station? get() = stations.getOrNull(selectedStation) ?: stations.firstOrNull()
 
     companion object {
-        val DEFAULT_STATIONS = listOf(
+        /** Stations added in later versions; merged once into lists saved by older versions. */
+        val MONTERREY_STATIONS = listOf(
+            Station("Classic 106.9", "https://mdstrm.com/audio/673788019b826f0dc1842750/icecast.audio"),
+            Station("D99", "https://mdstrm.com/audio/662800a9c30cbb3e2e61f44b/icecast.audio"),
+            Station("Imagen Monterrey", "https://monterrey.radio.wnsol.com/;stream.mp3"),
+        )
+        const val STATIONS_VERSION = 2
+
+        val DEFAULT_STATIONS = MONTERREY_STATIONS + listOf(
             Station("SomaFM Groove Salad", "https://ice1.somafm.com/groovesalad-128-mp3"),
             Station("SomaFM Drone Zone", "https://ice1.somafm.com/dronezone-128-mp3"),
             Station("SomaFM Deep Space One", "https://ice1.somafm.com/deepspaceone-128-mp3"),
@@ -101,6 +111,7 @@ object SettingsStore {
         put("showNextAlarm", s.showNextAlarm)
         put("showWeather", s.showWeather)
         put("showNotifications", s.showNotifications)
+        put("dimEnabled", s.dimEnabled)
         put("autoBrightness", s.autoBrightness)
         put("minBrightness", s.minBrightness.toDouble())
         put("maxBrightness", s.maxBrightness.toDouble())
@@ -122,10 +133,24 @@ object SettingsStore {
             s.stations.forEach { put(JSONObject().put("name", it.name).put("url", it.url)) }
         })
         put("selectedStation", s.selectedStation)
+        put("stationsVersion", Settings.STATIONS_VERSION)
     }
 
     private fun decode(j: JSONObject): Settings {
         val d = Settings()
+        var stations = j.optJSONArray("stations")?.let { arr ->
+            (0 until arr.length()).map { i ->
+                val o = arr.getJSONObject(i)
+                Station(o.getString("name"), o.getString("url"))
+            }
+        } ?: d.stations
+        var selected = j.optInt("selectedStation", d.selectedStation)
+        // Lists saved before version 2 don't have the Monterrey stations yet: put them on top.
+        if (j.optInt("stationsVersion", 1) < 2) {
+            val added = Settings.MONTERREY_STATIONS.filter { new -> stations.none { it.url == new.url } }
+            stations = added + stations
+            selected += added.size
+        }
         return Settings(
             style = enumOr(j.optString("style"), d.style),
             use24h = j.optBoolean("use24h", d.use24h),
@@ -137,6 +162,7 @@ object SettingsStore {
             showNextAlarm = j.optBoolean("showNextAlarm", d.showNextAlarm),
             showWeather = j.optBoolean("showWeather", d.showWeather),
             showNotifications = j.optBoolean("showNotifications", d.showNotifications),
+            dimEnabled = j.optBoolean("dimEnabled", d.dimEnabled),
             autoBrightness = j.optBoolean("autoBrightness", d.autoBrightness),
             minBrightness = j.optDouble("minBrightness", d.minBrightness.toDouble()).toFloat(),
             maxBrightness = j.optDouble("maxBrightness", d.maxBrightness.toDouble()).toFloat(),
@@ -152,13 +178,8 @@ object SettingsStore {
             snoozeMinutes = j.optInt("snoozeMinutes", d.snoozeMinutes),
             alarmRampSeconds = j.optInt("alarmRampSeconds", d.alarmRampSeconds),
             alarmVibrate = j.optBoolean("alarmVibrate", d.alarmVibrate),
-            stations = j.optJSONArray("stations")?.let { arr ->
-                (0 until arr.length()).map { i ->
-                    val o = arr.getJSONObject(i)
-                    Station(o.getString("name"), o.getString("url"))
-                }
-            } ?: d.stations,
-            selectedStation = j.optInt("selectedStation", d.selectedStation),
+            stations = stations,
+            selectedStation = selected,
         )
     }
 
