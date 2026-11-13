@@ -187,7 +187,20 @@ private fun AlarmCard(
                 )
                 Switch(checked = alarm.enabled, onCheckedChange = { on -> AlarmStore.update(alarm.id) { it.copy(enabled = on) } })
             }
-            Text(describe(alarm, use24h, locale), style = MaterialTheme.typography.bodySmall, color = muted)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    describe(alarm, use24h, locale),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = muted,
+                    modifier = Modifier.weight(1f),
+                )
+                if (alarm.enabled && alarm.repeats) {
+                    val skipping = alarm.skipping(ZonedDateTime.now()) != null
+                    TextButton(onClick = { AlarmStore.update(alarm.id) { it.toggleSkip(ZonedDateTime.now()) } }) {
+                        Text(if (skipping) "Undo skip" else "Skip next")
+                    }
+                }
+            }
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 DayOfWeek.entries.forEachIndexed { i, day ->
@@ -265,8 +278,12 @@ private fun LabelField(alarm: Alarm, modifier: Modifier) {
 
 private fun describe(alarm: Alarm, use24h: Boolean, locale: Locale): String {
     if (!alarm.enabled) return "Off"
-    val next = alarm.nextTrigger(ZonedDateTime.now())
+    val now = ZonedDateTime.now()
+    val next = alarm.nextTrigger(now)
     val pattern = DateFormat.getBestDateTimePattern(locale, if (use24h) "EEEdMMMHHmm" else "EEEdMMMhmma")
+    val skipped = alarm.skipping(now)?.let {
+        " · skipping " + it.format(DateTimeFormatter.ofPattern(DateFormat.getBestDateTimePattern(locale, "EEEdMMM"), locale))
+    }.orEmpty()
     val repeat = when (alarm.days) {
         0 -> "Once"
         Alarm.ALL_DAYS -> "Every day"
@@ -274,7 +291,7 @@ private fun describe(alarm: Alarm, use24h: Boolean, locale: Locale): String {
         0b1100000 -> "Weekends"
         else -> "Repeats"
     }
-    return "$repeat · next ${next.format(DateTimeFormatter.ofPattern(pattern, locale))}"
+    return "$repeat$skipped · next ${next.format(DateTimeFormatter.ofPattern(pattern, locale))}"
 }
 
 private fun formatTime(t: LocalTime, use24h: Boolean, locale: Locale): String =
