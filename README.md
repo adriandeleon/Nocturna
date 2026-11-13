@@ -7,6 +7,8 @@
 
 A bedside clock for Android: a big, dimmable clock for the nightstand while your phone charges.
 
+![Nocturna showing the time, date and battery level on a black screen](docs/images/clock.png)
+
 ## Features
 
 - **Clock**: digital (six font styles, 12/24 h, optional seconds) or analog, in a colour you pick.
