@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Nocturna</string>
+    <string name="settings">Nocturna settings</string>
+    <string name="channel_alarm">Alarms</string>
+    <string name="channel_service">Background services</string>
+    <string name="channel_launch">Clock launcher</string>
+</resources>
