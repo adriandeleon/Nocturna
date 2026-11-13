@@ -21,7 +21,11 @@ one-line summary written for users.
   (22:00–07:00).
 - **Burn-in protection:** the clock drifts slowly around the screen.
 - **Alarms** with repeat days, labels, snooze, a gentle volume ramp, vibration and a full-screen wake-up screen
-  over the lock screen.
+  over the lock screen. A deleted alarm can be brought back with *Undo*.
+- **Alarms you can count on:** they still ring after the phone restarts overnight, even before you unlock it; if
+  your alarm sound can't play, a soft built-in chime rings instead; and if notifications are off, Nocturna warns
+  you, because a locked phone then can't show the screen to stop an alarm. Opening Nocturna always brings that
+  screen back while an alarm rings.
 - **Web radio:** play any MP3, AAC or HLS stream, with a sleep timer that fades out after 15, 30, 60 or 90
   minutes. Monterrey stations come ready to pick.
 - **Starts on its own while charging,** as the Android screen saver or with *Open when charging*, which opens
