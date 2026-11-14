@@ -39,7 +39,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import java.time.LocalTime
+import java.time.Instant
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
@@ -48,6 +49,13 @@ import java.time.format.FormatStyle
  * alarm tone plays (chosen, or because the station failed).
  */
 data class Ringing(val alarmId: Long, val label: String, val startedAt: Long, val station: Station? = null)
+
+/**
+ * The alarm notification's text: the time the alarm started ringing and, while it plays, the station.
+ * The start time, not the current one, so an update a few minutes in doesn't show a different time.
+ */
+fun ringingText(r: Ringing, zone: ZoneId, formatter: DateTimeFormatter): String =
+    listOfNotNull(Instant.ofEpochMilli(r.startedAt).atZone(zone).format(formatter), r.station?.name).joinToString(" · ")
 
 /**
  * Rings the alarm: plays the alarm's radio station, or the default alarm sound, on the alarm stream with
@@ -76,14 +84,10 @@ class AlarmService : Service() {
     private fun ring(alarmId: Long) {
         stopSound()
         val alarm = AlarmStore.get(alarmId)
-        val label = alarm?.label.orEmpty()
         val station = alarm?.station
-        ringingState.value = Ringing(alarmId, label, System.currentTimeMillis(), station)
-
-        ServiceCompat.startForeground(
-            this, NOTIFICATION_ID, buildNotification(label, station),
-            ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK,
-        )
+        val r = Ringing(alarmId, alarm?.label.orEmpty(), System.currentTimeMillis(), station)
+        ringingState.value = r
+        postNotification(r, alert = true)
         wakeLock?.takeIf { it.isHeld }?.release()
         wakeLock = getSystemService(PowerManager::class.java)
             .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "nocturna:alarm")
@@ -98,20 +102,32 @@ class AlarmService : Service() {
         handler.postDelayed({ finishRinging() }, MAX_RING_MS)
     }
 
-    private fun buildNotification(label: String, station: Station?): Notification {
+    /**
+     * Posts (or replaces) the foreground notification. Only the first post, with [alert], carries the
+     * full-screen intent: an update while ringing must not open the wake-up screen again or re-alert.
+     */
+    private fun postNotification(r: Ringing, alert: Boolean) {
+        ServiceCompat.startForeground(
+            this, NOTIFICATION_ID, buildNotification(r, alert),
+            ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK,
+        )
+    }
+
+    private fun buildNotification(r: Ringing, alert: Boolean): Notification {
         val fullScreen = PendingIntent.getActivity(
             this, 0, Intent(this, AlarmActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
-        val time = LocalTime.now().format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT))
+        val text = ringingText(r, ZoneId.systemDefault(), DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT))
         return NotificationCompat.Builder(this, NocturnaApp.CHANNEL_ALARM)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle(label.ifBlank { "Alarm" })
-            .setContentText(listOfNotNull(time, station?.name).joinToString(" · "))
+            .setContentTitle(r.label.ifBlank { "Alarm" })
+            .setContentText(text)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setOngoing(true)
-            .setFullScreenIntent(fullScreen, true)
+            .setOnlyAlertOnce(true)
+            .apply { if (alert) setFullScreenIntent(fullScreen, true) }
             .setContentIntent(fullScreen)
             .addAction(0, "Snooze", serviceIntent(this, ACTION_SNOOZE))
             .addAction(0, "Dismiss", serviceIntent(this, ACTION_DISMISS))
@@ -131,8 +147,7 @@ class AlarmService : Service() {
         } else {
             runCatching { playStation(station) }.onFailure {
                 releaseStream()
-                ringingState.update { r -> r?.copy(station = null) }
-                playTone()
+                switchToTone()
             }
         }
 
@@ -230,7 +245,13 @@ class AlarmService : Service() {
     private fun fallBackToTone(failed: ExoPlayer) {
         if (stream !== failed) return // already replaced, or the alarm stopped
         releaseStream()
+        switchToTone()
+    }
+
+    /** The station is gone: ring the tone, and stop naming the station on the wake-up screen and notification. */
+    private fun switchToTone() {
         ringingState.update { it?.copy(station = null) }
+        ringingState.value?.let { postNotification(it, alert = false) }
         playTone()
     }
 

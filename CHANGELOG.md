@@ -41,8 +41,9 @@ one-line summary written for users.
 - **Web radio:** play any MP3, AAC or HLS stream, with a sleep timer that fades out after 15, 30, 60 or 90
   minutes. Monterrey stations come ready to pick.
 - **Wake up to the radio:** each alarm can play one of your stations instead of the alarm tone. If the
-  station doesn't play within 15 seconds, or stops while ringing, the alarm tone takes over, and *Keep
-  listening* on the wake-up screen leaves the station playing after you dismiss the alarm.
+  station doesn't play within 15 seconds, or stops while ringing, the alarm tone takes over. The wake-up
+  screen and the alarm notification name the station only while it plays, and *Keep listening* on the
+  wake-up screen leaves the station playing after you dismiss the alarm.
 - **Skip the next alarm:** a repeating alarm can skip its next ring, for a day off, without being switched
   off and back on. *Undo skip* brings it back, and changing the alarm's time or days drops the skip.
 - **Starts on its own while charging,** as the Android screen saver or with *Open when charging*, which opens
