@@ -1,5 +1,7 @@
 package com.adl.nocturna.day
 
+import com.adl.nocturna.data.CalendarView
+
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
@@ -88,4 +90,31 @@ fun rowsThatFit(heights: List<Int>, gap: Int, max: Int, moreHeight: Int): Int {
     }
     val all = fit(max)
     return if (all == heights.size) all else fit(max - moreHeight - gap)
+}
+
+/** The seven days of the week that holds [day], starting on [firstDayOfWeek]. */
+fun weekOf(day: LocalDate, firstDayOfWeek: DayOfWeek): List<LocalDate> {
+    val start = day.minusDays(((day.dayOfWeek.value - firstDayOfWeek.value + 7) % 7).toLong())
+    return List(7) { start.plusDays(it.toLong()) }
+}
+
+/** All of [day]'s events, finished ones included: all-day events first, then by start time. */
+fun eventsOnDay(events: List<CalendarEvent>, day: LocalDate, zone: ZoneId): List<CalendarEvent> =
+    events.filter { it.covers(day, zone) }
+        .sortedWith(compareByDescending<CalendarEvent> { it.allDay }.thenBy { it.begin }.thenBy { it.title })
+
+/**
+ * The view a swipe on the calendar page moves to: towards more detail (month, week, day) or back.
+ * It stops at either end rather than wrapping round.
+ */
+fun swipeView(view: CalendarView, towardsDetail: Boolean): CalendarView {
+    val next = view.ordinal + if (towardsDetail) 1 else -1
+    return CalendarView.entries[next.coerceIn(0, CalendarView.entries.size - 1)]
+}
+
+/** How a calendar view is called on the page and in Settings. */
+fun CalendarView.label(): String = when (this) {
+    CalendarView.MONTH -> "Month"
+    CalendarView.WEEK -> "Week"
+    CalendarView.DAY -> "Day"
 }

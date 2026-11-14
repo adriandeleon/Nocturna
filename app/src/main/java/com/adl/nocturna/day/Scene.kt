@@ -6,7 +6,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Paint
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
@@ -74,39 +79,78 @@ private val HILLS = listOf(
 private fun hillY(hill: FloatArray, x: Float): Float =
     hill[0] - hill[1] * sin(2 * PI * (hill[2] * x) + hill[3]).toFloat() - hill[1] * 0.4f * sin(2 * PI * (hill[2] * 2.7f * x) + 1f).toFloat()
 
+/** The colours of one look of the sky. [shade] tints the hills (dusk, night); transparent leaves them be. */
+private class Sky(val top: Color, val bottom: Color, val sun: Color, val glow: Color, val cloud: Color, val shade: Color)
+
+private fun sky(look: TimeOfDay, theme: MonthTheme): Sky = when (look) {
+    // Dawn: a soft blue over a peachy horizon, a low orange sun.
+    TimeOfDay.MORNING -> Sky(lerp(theme.skyTop, c(0xFF8CC6F2), 0.6f), c(0xFFFFD3B6), c(0xFFFFBE45), c(0x99FFE2B8), c(0xFFFFF3EA), Color.Transparent)
+    // Midday: the month's own sky.
+    TimeOfDay.MIDDAY -> Sky(theme.skyTop, theme.skyBottom, c(0xFFFFD43B), c(0x88FFF3B0), Color.White, Color.Transparent)
+    // Afternoon: golden light, warm on the hills.
+    TimeOfDay.AFTERNOON -> Sky(c(0xFF4B8ED5), c(0xFFFFBE78), c(0xFFFFA22B), c(0x99FFD08A), c(0xFFFFEAD3), c(0x30FF8A3D))
+    // Night: deep blue, with the hills in shadow.
+    TimeOfDay.NIGHT -> Sky(c(0xFF0B1533), c(0xFF2C3A6E), c(0xFFFFD43B), c(0x00FFF3B0), c(0xFF56628C), c(0x9E0E1838))
+}
+
+private fun mix(a: Sky, b: Sky, t: Float) = Sky(
+    lerp(a.top, b.top, t), lerp(a.bottom, b.bottom, t), lerp(a.sun, b.sun, t),
+    lerp(a.glow, b.glow, t), lerp(a.cloud, b.cloud, t), lerp(a.shade, b.shade, t),
+)
+
 /**
  * A cheerful, flat illustration for day mode: sky, sun, drifting clouds and rolling hills in [theme]'s
- * colours. [time] turns the sun's rays and moves the clouds along.
+ * colours. [time] turns the sun's rays, moves the clouds along and sets the look of the sky: dawn,
+ * midday, golden afternoon or a starry night (see [skyMix]).
  */
 @Composable
 fun SceneBackground(theme: MonthTheme, time: LocalTime, seed: Int, modifier: Modifier = Modifier) {
     Canvas(modifier) {
         val w = size.width
         val h = size.height
-        drawRect(Brush.verticalGradient(listOf(theme.skyTop, theme.skyBottom), endY = h * HORIZON))
-
-        // The sun peeks in from the top corner, out of the clock's way; its rays turn slowly.
         val seconds = time.toSecondOfDay().toFloat()
+        val skyMix = skyMix(time)
+        val sky = mix(sky(skyMix.from, theme), sky(skyMix.to, theme), skyMix.t)
+        val night = skyMix.weight(TimeOfDay.NIGHT)
+        drawRect(Brush.verticalGradient(listOf(sky.top, sky.bottom), endY = h * HORIZON))
+
+        // Stars come out with the night and twinkle gently.
+        if (night > 0f) {
+            val stars = Random(seed * 7 + 3)
+            repeat(80) {
+                val x = stars.nextFloat() * w
+                val y = stars.nextFloat() * h * 0.6f
+                val twinkle = 0.55f + 0.45f * sin(seconds * (0.3f + stars.nextFloat()) + stars.nextFloat() * 6f)
+                drawCircle(Color.White, minOf(w, h) * (0.002f + stars.nextFloat() * 0.003f), Offset(x, y), alpha = night * twinkle)
+            }
+        }
+
+        // The sun (or at night the moon) peeks in from the top corner, out of the clock's way; the
+        // sun's rays turn slowly.
         val sunR = minOf(w, h) * 0.13f
         val (wx, wy) = sunWobble(seconds)
         val sun = Offset(sunR * (wx - 0.15f), sunR * (wy - 0.15f))
-        drawCircle(Brush.radialGradient(listOf(Color(0x88FFF3B0), Color.Transparent), sun, sunR * 2.6f), sunR * 2.6f, sun)
-        rotate(seconds * 0.5f % 360f, sun) {
-            for (i in 0 until 16) {
-                rotate(i * 360f / 16, sun) {
-                    drawLine(Color(0xFFFFD43B), Offset(sun.x, sun.y + sunR * 1.25f), Offset(sun.x, sun.y + sunR * 1.6f), sunR * 0.09f, StrokeCap.Round)
+        val day = 1f - night
+        if (day > 0f) {
+            drawCircle(Brush.radialGradient(listOf(sky.glow, Color.Transparent), sun, sunR * 2.6f), sunR * 2.6f, sun, alpha = day)
+            rotate(seconds * 0.5f % 360f, sun) {
+                for (i in 0 until 16) {
+                    rotate(i * 360f / 16, sun) {
+                        drawLine(sky.sun, Offset(sun.x, sun.y + sunR * 1.25f), Offset(sun.x, sun.y + sunR * 1.6f), sunR * 0.09f, StrokeCap.Round, alpha = day)
+                    }
                 }
             }
+            drawCircle(lerp(sky.sun, Color.White, 0.3f), sunR * 1.1f, sun, alpha = day)
+            drawCircle(sky.sun, sunR, sun, alpha = day)
         }
-        drawCircle(Color(0xFFFFE066), sunR * 1.1f, sun)
-        drawCircle(Color(0xFFFFD43B), sunR, sun)
+        if (night > 0f) moon(sun, sunR * 0.85f, night)
 
         // Clouds cross the screen in about three hours.
         val cloudW = minOf(w, h) * 0.32f
         listOf(Triple(0.1f, 0.16f, 1f), Triple(0.55f, 0.3f, 0.75f), Triple(0.8f, 0.1f, 0.6f)).forEach { (start, y, scale) ->
             val span = w + cloudW * 2
             val x = ((start * span + seconds * span / 10_800f * scale) % span) - cloudW
-            cloud(x, y * h, cloudW * scale)
+            cloud(x, y * h, cloudW * scale, sky.cloud)
         }
 
         if (theme.snow) {
@@ -119,6 +163,9 @@ fun SceneBackground(theme: MonthTheme, time: LocalTime, seed: Int, modifier: Mod
             }
         }
 
+        // The hills and everything on them go in a layer of their own, so dusk and night can tint
+        // just them (SrcAtop) and not the sky.
+        drawIntoCanvas { it.saveLayer(Rect(0f, 0f, w, h), Paint()) }
         HILLS.forEachIndexed { i, hill ->
             val path = Path().apply {
                 moveTo(0f, h)
@@ -153,7 +200,17 @@ fun SceneBackground(theme: MonthTheme, time: LocalTime, seed: Int, modifier: Mod
                 flower(Offset(fx * w, fy * h), r, theme.flowers[rnd.nextInt(theme.flowers.size)])
             }
         }
+        if (sky.shade.alpha > 0f) drawRect(sky.shade, blendMode = BlendMode.SrcAtop)
+        drawIntoCanvas { it.restore() }
     }
+}
+
+/** A full moon with a soft glow and a couple of craters. */
+private fun DrawScope.moon(center: Offset, r: Float, alpha: Float) {
+    drawCircle(Brush.radialGradient(listOf(Color(0x55DDE6FF), Color.Transparent), center, r * 2.8f), r * 2.8f, center, alpha = alpha)
+    drawCircle(Color(0xFFF4F1DE), r, center, alpha = alpha)
+    drawCircle(Color(0xFFDCD8C2), r * 0.18f, Offset(center.x + r * 0.35f, center.y + r * 0.3f), alpha = alpha)
+    drawCircle(Color(0xFFDCD8C2), r * 0.12f, Offset(center.x + r * 0.05f, center.y + r * 0.6f), alpha = alpha)
 }
 
 /** Where something on the near hill that started at [start] has travelled to, wrapping around the screen. */
@@ -162,8 +219,8 @@ private fun travel(start: Float, seconds: Float): Float = ((start - hillShift(se
 /** The near hill's top at screen position [x], as it has scrolled by [seconds]. */
 private fun nearHillY(x: Float, seconds: Float): Float = hillY(HILLS[2], x + hillShift(seconds, 2))
 
-private fun DrawScope.cloud(x: Float, y: Float, w: Float) {
-    val white = Color.White.copy(alpha = 0.92f)
+private fun DrawScope.cloud(x: Float, y: Float, w: Float, color: Color) {
+    val white = color.copy(alpha = 0.92f)
     drawCircle(white, w * 0.2f, Offset(x - w * 0.2f, y))
     drawCircle(white, w * 0.27f, Offset(x + w * 0.02f, y - w * 0.1f))
     drawCircle(white, w * 0.18f, Offset(x + w * 0.26f, y + w * 0.02f))

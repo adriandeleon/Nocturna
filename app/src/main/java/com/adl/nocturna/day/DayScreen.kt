@@ -2,7 +2,14 @@ package com.adl.nocturna.day
 
 import android.content.Intent
 import android.text.format.DateFormat
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -28,7 +35,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -55,6 +67,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.constrainHeight
 import androidx.compose.ui.unit.constrainWidth
 import androidx.compose.ui.unit.dp
+import com.adl.nocturna.data.CalendarView
 import com.adl.nocturna.data.Settings
 import com.adl.nocturna.ui.currentLocale
 import java.time.DayOfWeek
@@ -63,6 +76,7 @@ import java.time.YearMonth
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.WeekFields
+import kotlin.math.abs
 
 // Warm and a touch below white: kinder to OLED pixels lit all day, and it still reads as paper.
 private val Paper = Color(0xFFF8F2E4)
@@ -133,6 +147,16 @@ fun DayLayout(
     val openDay: ((LocalDate) -> Unit)? = onOpen?.let { open -> { day -> open(OpenCalendar.day(day, now)) } }
     val openEvent: ((CalendarEvent) -> Unit)? = onOpen?.let { open -> { event -> open(OpenCalendar.event(event)) } }
 
+    // The page starts on the view chosen in Settings; a swipe (or the switch under the page)
+    // changes it for as long as the clock stays open. The screen saver can't be swiped.
+    var view by rememberSaveable(settings.dayCalendarView) { mutableStateOf(settings.dayCalendarView) }
+    val onView: ((CalendarView) -> Unit)? = if (onOpen != null) { v -> view = v } else null
+    // The day view lists the whole day on the page itself, so the sticky note would only repeat it.
+    val showNote = settings.showCalendarEvents && view != CalendarView.DAY
+    val page: @Composable (Modifier) -> Unit = { m ->
+        DeskPage(view, now, weeks, dots, events, settings.showCalendarEvents, settings.use24h, theme, openDay, openEvent, onView, m)
+    }
+
     BoxWithConstraints(modifier) {
         val noteFont = with(LocalDensity.current) { (minOf(maxWidth, maxHeight) * 0.042f).coerceIn(14.dp, 22.dp).toSp() }
         if (landscape) {
@@ -147,12 +171,12 @@ fun DayLayout(
                             verticalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterVertically),
                         ) {
                             ClockPanel(clock)
-                            if (settings.showCalendarEvents) {
+                            if (showNote) {
                                 StickyNote(now, events, settings.use24h, theme, noteFont, openDay, openEvent, Modifier.widthIn(max = 380.dp).weight(1f, fill = false))
                             }
                         }
                     }
-                    val pageSide = @Composable { DeskPage(today, weeks, dots, theme, openDay, Modifier.weight(1f).fillMaxHeight()) }
+                    val pageSide = @Composable { page(Modifier.weight(1f).fillMaxHeight()) }
                     if (swapped) pageSide() else clockSide()
                     Spacer(Modifier.width(24.dp))
                     if (swapped) clockSide() else pageSide()
@@ -161,8 +185,8 @@ fun DayLayout(
         } else {
             Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(Modifier.padding(vertical = 16.dp)) { ClockPanel(clock) }
-                DeskPage(today, weeks, dots, theme, openDay, Modifier.fillMaxWidth().weight(1.6f))
-                if (settings.showCalendarEvents) {
+                page(Modifier.fillMaxWidth().weight(1.6f))
+                if (showNote) {
                     Spacer(Modifier.height(20.dp))
                     StickyNote(now, events, settings.use24h, theme, noteFont, openDay, openEvent, Modifier.fillMaxWidth(0.9f).weight(1f, fill = false))
                 }
@@ -184,23 +208,53 @@ private fun ClockPanel(clock: @Composable () -> Unit) {
     ) { clock() }
 }
 
-/** A page of a spiral-bound desk calendar: a header in the month's colour and the month's days. */
+/**
+ * A page of a spiral-bound desk calendar: a header in the month's colour, then the month, this week
+ * or today, and a switch between them. Swiping the page sideways moves between the views too.
+ */
 @Composable
 private fun DeskPage(
-    today: LocalDate,
+    view: CalendarView,
+    now: ZonedDateTime,
     weeks: List<List<LocalDate>>,
     dots: Set<LocalDate>,
+    events: List<CalendarEvent>?,
+    showEvents: Boolean,
+    use24h: Boolean,
     theme: MonthTheme,
     onOpenDay: ((LocalDate) -> Unit)?,
+    onOpenEvent: ((CalendarEvent) -> Unit)?,
+    onView: ((CalendarView) -> Unit)?,
     modifier: Modifier,
 ) {
+    val today = now.toLocalDate()
     val locale = currentLocale()
+    val weekFields = WeekFields.of(locale)
     val month = remember(today.year, today.monthValue, locale) {
         today.format(DateTimeFormatter.ofPattern("LLLL", locale)).replaceFirstChar { it.titlecase(locale) }
     }
+    val currentView by rememberUpdatedState(view)
+    val currentOnView by rememberUpdatedState(onView)
+    // Swipe left for more detail (month, week, day), right to go back.
+    val swipe = if (onView == null) Modifier else Modifier.pointerInput(Unit) {
+        val threshold = 48.dp.toPx()
+        var total = 0f
+        detectHorizontalDragGestures(
+            onDragStart = { total = 0f },
+            onDragEnd = {
+                if (abs(total) > threshold) currentOnView?.invoke(swipeView(currentView, towardsDetail = total < 0))
+            },
+        ) { change, dx ->
+            change.consume()
+            total += dx
+        }
+    }
+
     BoxWithConstraints(modifier, contentAlignment = Alignment.Center) {
-        // Heights in cells: rings, header, weekday row, the weeks and the bottom margin.
-        val cell = minOf(maxWidth / PAGE_WIDTH, maxHeight / (0.3f + 1.6f + 0.7f + weeks.size * ROW + 0.4f), 72.dp)
+        // Heights in cells: rings, header, the body (as tall as the month's weekday row and weeks, so
+        // the page keeps its size in every view), the view switch and the bottom margin.
+        val bodyCells = 0.7f + weeks.size * ROW
+        val cell = minOf(maxWidth / PAGE_WIDTH, maxHeight / (0.3f + 1.6f + 0.1f + bodyCells + SWITCH + 0.15f), 72.dp)
         val font = with(LocalDensity.current) { (cell * 0.4f).toSp() }
         val shape = RoundedCornerShape(cell * 0.28f)
         val base = TextStyle(color = Ink, fontSize = font, fontFeatureSettings = "tnum")
@@ -213,6 +267,7 @@ private fun DeskPage(
                     .clip(shape)
                     .background(Paper)
                     .fillMaxWidth()
+                    .then(swipe)
             ) {
                 Row(
                     Modifier
@@ -223,32 +278,284 @@ private fun DeskPage(
                 ) {
                     Text(month, style = base.copy(color = Color.White, fontSize = font * 1.7f, fontWeight = FontWeight.Bold))
                     Spacer(Modifier.weight(1f))
-                    Text(today.year.toString(), style = base.copy(color = Color.White.copy(alpha = 0.85f), fontSize = font * 1.2f))
+                    Text(
+                        if (view == CalendarView.WEEK) "Week ${today.get(weekFields.weekOfWeekBasedYear())}" else today.year.toString(),
+                        style = base.copy(color = Color.White.copy(alpha = 0.85f), fontSize = font * 1.2f),
+                    )
                 }
-                Column(Modifier.padding(horizontal = cell * 0.3f).padding(top = cell * 0.1f, bottom = cell * 0.3f)) {
-                    Row {
-                        weeks.first().forEach { d ->
-                            Box(Modifier.size(cell, cell * 0.7f), contentAlignment = Alignment.Center) {
-                                Text(
-                                    d.dayOfWeek.getDisplayName(java.time.format.TextStyle.NARROW, locale),
-                                    style = base.copy(
-                                        color = if (d.dayOfWeek in WEEKEND) theme.accent else Ink.copy(alpha = 0.5f),
-                                        fontSize = font * 0.8f,
-                                        fontWeight = FontWeight.Bold,
-                                    ),
-                                )
-                            }
-                        }
+                AnimatedContent(
+                    view,
+                    transitionSpec = {
+                        val dir = if (targetState.ordinal > initialState.ordinal) 1 else -1
+                        (slideInHorizontally { it * dir / 3 } + fadeIn()) togetherWith (slideOutHorizontally { -it * dir / 3 } + fadeOut())
+                    },
+                    label = "view",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = cell * 0.3f)
+                        .padding(top = cell * 0.1f)
+                        .height(cell * bodyCells),
+                ) { v ->
+                    when (v) {
+                        CalendarView.MONTH -> MonthBody(today, weeks, dots, theme.accent, cell, base, onOpenDay)
+                        CalendarView.WEEK ->
+                            WeekBody(now, weekOf(today, weekFields.firstDayOfWeek), events, showEvents, use24h, theme.accent, cell, base, onOpenDay, onOpenEvent)
+                        CalendarView.DAY -> DayBody(now, events, showEvents, use24h, theme.accent, cell, base, onOpenDay, onOpenEvent)
                     }
-                    weeks.forEach { week ->
-                        Row {
-                            week.forEach { d -> DayCell(d, today, d in dots, theme.accent, cell, base, onOpenDay) }
+                }
+                ViewSwitch(view, theme.accent, cell, base, onView)
+            }
+            Rings(Modifier.width(cell * PAGE_WIDTH).height(cell * 0.75f), cell)
+        }
+    }
+}
+
+@Composable
+private fun MonthBody(
+    today: LocalDate,
+    weeks: List<List<LocalDate>>,
+    dots: Set<LocalDate>,
+    accent: Color,
+    cell: Dp,
+    base: TextStyle,
+    onOpenDay: ((LocalDate) -> Unit)?,
+) {
+    val locale = currentLocale()
+    Column {
+        Row {
+            weeks.first().forEach { d ->
+                Box(Modifier.size(cell, cell * 0.7f), contentAlignment = Alignment.Center) {
+                    Text(
+                        d.dayOfWeek.getDisplayName(java.time.format.TextStyle.NARROW, locale),
+                        style = base.copy(
+                            color = if (d.dayOfWeek in WEEKEND) accent else Ink.copy(alpha = 0.5f),
+                            fontSize = base.fontSize * 0.8f,
+                            fontWeight = FontWeight.Bold,
+                        ),
+                    )
+                }
+            }
+        }
+        weeks.forEach { week ->
+            Row {
+                week.forEach { d -> DayCell(d, today, d in dots, accent, cell, base, onOpenDay) }
+            }
+        }
+    }
+}
+
+/** This week, one row per day: the date and as many of its events as fit, finished ones faded. */
+@Composable
+private fun WeekBody(
+    now: ZonedDateTime,
+    days: List<LocalDate>,
+    events: List<CalendarEvent>?,
+    showEvents: Boolean,
+    use24h: Boolean,
+    accent: Color,
+    cell: Dp,
+    base: TextStyle,
+    onOpenDay: ((LocalDate) -> Unit)?,
+    onOpenEvent: ((CalendarEvent) -> Unit)?,
+) {
+    val locale = currentLocale()
+    val today = now.toLocalDate()
+    val time = rememberTimeFormat(use24h)
+    val eventFont = base.fontSize * 0.72f
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        val lineHeight = with(LocalDensity.current) { (eventFont * 1.4f).toDp() }
+        val lines = ((maxHeight / 7) / lineHeight).toInt().coerceIn(1, 3)
+        Column(Modifier.fillMaxSize()) {
+            days.forEach { d ->
+                val isToday = d == today
+                val dayEvents = if (showEvents) events?.let { eventsOnDay(it, d, now.zone) }.orEmpty() else emptyList()
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .clip(RoundedCornerShape(cell * 0.15f))
+                        .background(if (isToday) accent.copy(alpha = 0.12f) else Color.Transparent)
+                        .clickable(enabled = onOpenDay != null, onClickLabel = "Open in your calendar") { onOpenDay?.invoke(d) }
+                        .padding(horizontal = cell * 0.15f),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Row(Modifier.width(cell * 1.9f), verticalAlignment = Alignment.Bottom) {
+                        Text(
+                            d.dayOfWeek.getDisplayName(java.time.format.TextStyle.SHORT, locale),
+                            style = base.copy(
+                                fontSize = base.fontSize * 0.62f,
+                                color = if (isToday || d.dayOfWeek in WEEKEND) accent else Ink.copy(alpha = 0.55f),
+                                fontWeight = FontWeight.Bold,
+                            ),
+                            maxLines = 1,
+                        )
+                        Spacer(Modifier.width(cell * 0.12f))
+                        Text(
+                            d.dayOfMonth.toString(),
+                            style = base.copy(
+                                fontSize = base.fontSize * 0.95f,
+                                color = if (isToday) accent else Ink,
+                                fontWeight = if (isToday) FontWeight.Bold else FontWeight.Medium,
+                            ),
+                            maxLines = 1,
+                        )
+                    }
+                    Column(Modifier.weight(1f)) {
+                        val shown = dayEvents.take(lines)
+                        shown.forEachIndexed { i, e ->
+                            // No room for a line of its own: the count of the rest goes on the last line.
+                            val more = if (i == shown.lastIndex) dayEvents.size - shown.size else 0
+                            WeekEventLine(e, now, time, eventFont, accent, more, onOpenEvent)
                         }
                     }
                 }
             }
-            Rings(Modifier.width(cell * PAGE_WIDTH).height(cell * 0.75f), cell)
         }
+    }
+}
+
+@Composable
+private fun WeekEventLine(
+    e: CalendarEvent,
+    now: ZonedDateTime,
+    time: DateTimeFormatter,
+    fontSize: TextUnit,
+    accent: Color,
+    more: Int,
+    onOpenEvent: ((CalendarEvent) -> Unit)?,
+) {
+    val faded = !e.allDay && e.end <= now.toInstant().toEpochMilli()
+    val line = with(LocalDensity.current) { fontSize.toDp() }
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(4.dp))
+            .clickable(enabled = onOpenEvent != null, onClickLabel = "Open in your calendar") { onOpenEvent?.invoke(e) },
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(Modifier.size(line * 0.55f).clip(CircleShape).background((e.color?.let { Color(it) } ?: accent).copy(alpha = if (faded) 0.4f else 1f)))
+        Spacer(Modifier.width(line * 0.4f))
+        val start = if (e.allDay) "" else java.time.Instant.ofEpochMilli(e.begin).atZone(now.zone).format(time) + "  "
+        Text(
+            start + e.title,
+            style = TextStyle(color = Ink.copy(alpha = if (faded) 0.4f else 0.9f), fontSize = fontSize, fontFeatureSettings = "tnum"),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f, fill = false),
+        )
+        if (more > 0) {
+            Spacer(Modifier.width(line * 0.4f))
+            Text("+$more", style = TextStyle(color = accent, fontSize = fontSize, fontWeight = FontWeight.Bold), maxLines = 1)
+        }
+    }
+}
+
+/** Today, like a tear-off calendar: the big date beside the whole day's schedule. */
+@Composable
+private fun DayBody(
+    now: ZonedDateTime,
+    events: List<CalendarEvent>?,
+    showEvents: Boolean,
+    use24h: Boolean,
+    accent: Color,
+    cell: Dp,
+    base: TextStyle,
+    onOpenDay: ((LocalDate) -> Unit)?,
+    onOpenEvent: ((CalendarEvent) -> Unit)?,
+) {
+    val context = LocalContext.current
+    val locale = currentLocale()
+    val today = now.toLocalDate()
+    val time = rememberTimeFormat(use24h)
+    val access = remember(events) { CalendarEvents.hasPermission(context) }
+    val dayEvents = remember(events, today) { events?.let { eventsOnDay(it, today, now.zone) } }
+    val faint = TextStyle(color = Ink.copy(alpha = 0.55f), fontSize = base.fontSize * 0.7f)
+    val instant = now.toInstant()
+    fun fmt(millis: Long) = java.time.Instant.ofEpochMilli(millis).atZone(now.zone).format(time)
+
+    Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+        Column(
+            Modifier
+                .width(cell * 2.5f)
+                .fillMaxHeight()
+                .clip(RoundedCornerShape(cell * 0.2f))
+                .clickable(enabled = onOpenDay != null, onClickLabel = "Open in your calendar") { onOpenDay?.invoke(today) },
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            Text(
+                today.dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL, locale).replaceFirstChar { it.titlecase(locale) },
+                style = base.copy(color = accent, fontSize = base.fontSize * 0.75f, fontWeight = FontWeight.Bold),
+                maxLines = 1,
+            )
+            Text(
+                today.dayOfMonth.toString(),
+                style = base.copy(fontSize = base.fontSize * 4f, fontWeight = FontWeight.Bold, lineHeight = base.fontSize * 4.2f),
+                maxLines = 1,
+            )
+        }
+        Box(Modifier.width(1.dp).fillMaxHeight(0.8f).background(Ink.copy(alpha = 0.15f)))
+        Spacer(Modifier.width(cell * 0.3f))
+        Box(Modifier.weight(1f).fillMaxHeight(), contentAlignment = Alignment.CenterStart) {
+            when {
+                !showEvents -> Text("Turn on Today's events in Settings to see your day here", style = faint)
+                !access -> Text("Allow calendar access in Settings to see your day here", style = faint)
+                dayEvents == null -> Unit // still loading
+                dayEvents.isEmpty() -> Text("Nothing on your calendar today", style = faint)
+                else -> FitColumn(cell * 0.12f, Modifier, more = { n -> Text("+$n more", style = faint) }) {
+                    dayEvents.forEach { e ->
+                        val ongoing = e.isOngoing(instant)
+                        val whenText = when {
+                            e.allDay -> "All day"
+                            ongoing -> "Now · until ${fmt(e.end)}"
+                            else -> "${fmt(e.begin)} – ${fmt(e.end)}"
+                        }
+                        EventRow(
+                            e.title, whenText, e.color?.let { Color(it) } ?: accent, base.fontSize * 0.72f,
+                            emphasised = ongoing,
+                            onClick = onOpenEvent?.let { open -> { open(e) } },
+                            ink = Ink,
+                            faded = !e.allDay && e.end <= instant.toEpochMilli(),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** "Month · Week · Day" under the page: shows the view, and switches it with a tap. */
+@Composable
+private fun ViewSwitch(view: CalendarView, accent: Color, cell: Dp, base: TextStyle, onView: ((CalendarView) -> Unit)?) {
+    Row(
+        Modifier.fillMaxWidth().height(cell * SWITCH),
+        horizontalArrangement = Arrangement.spacedBy(cell * 0.15f, Alignment.CenterHorizontally),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        CalendarView.entries.forEach { v ->
+            val selected = v == view
+            Text(
+                v.label(),
+                style = base.copy(
+                    fontSize = base.fontSize * 0.62f,
+                    color = if (selected) accent else Ink.copy(alpha = 0.45f),
+                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                ),
+                modifier = Modifier
+                    .clip(RoundedCornerShape(50))
+                    .background(if (selected) accent.copy(alpha = 0.12f) else Color.Transparent)
+                    .clickable(enabled = onView != null, onClickLabel = "Show the ${v.label().lowercase()}") { onView?.invoke(v) }
+                    .padding(horizontal = cell * 0.25f, vertical = cell * 0.06f),
+            )
+        }
+    }
+}
+
+@Composable
+private fun rememberTimeFormat(use24h: Boolean): DateTimeFormatter {
+    val locale = currentLocale()
+    return remember(use24h, locale) {
+        DateTimeFormatter.ofPattern(DateFormat.getBestDateTimePattern(locale, if (use24h) "Hm" else "hma"), locale)
     }
 }
 
@@ -397,7 +704,17 @@ private fun Agenda(
 }
 
 @Composable
-private fun EventRow(title: String, whenText: String, dot: Color, fontSize: TextUnit, emphasised: Boolean, onClick: (() -> Unit)?) {
+private fun EventRow(
+    title: String,
+    whenText: String,
+    dot: Color,
+    fontSize: TextUnit,
+    emphasised: Boolean,
+    onClick: (() -> Unit)?,
+    ink: Color = NoteInk,
+    faded: Boolean = false,
+) {
+    val alpha = if (faded) 0.4f else 1f
     val line = with(LocalDensity.current) { fontSize.toDp() }
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -406,13 +723,13 @@ private fun EventRow(title: String, whenText: String, dot: Color, fontSize: Text
             .clip(RoundedCornerShape(6.dp))
             .clickable(enabled = onClick != null, onClickLabel = "Open in your calendar") { onClick?.invoke() },
     ) {
-        Box(Modifier.size(line * 0.7f).clip(CircleShape).background(dot))
+        Box(Modifier.size(line * 0.7f).clip(CircleShape).background(dot.copy(alpha = dot.alpha * alpha)))
         Spacer(Modifier.width(line * 0.6f))
         Column {
             Text(
                 whenText,
                 style = TextStyle(
-                    color = NoteInk.copy(alpha = if (emphasised) 1f else 0.65f),
+                    color = ink.copy(alpha = (if (emphasised) 1f else 0.65f) * alpha),
                     fontSize = fontSize * 0.8f,
                     fontWeight = if (emphasised) FontWeight.Bold else FontWeight.Normal,
                     fontFeatureSettings = "tnum",
@@ -421,7 +738,7 @@ private fun EventRow(title: String, whenText: String, dot: Color, fontSize: Text
             )
             Text(
                 title,
-                style = TextStyle(color = NoteInk, fontSize = fontSize, fontWeight = if (emphasised) FontWeight.Bold else FontWeight.Medium),
+                style = TextStyle(color = ink.copy(alpha = alpha), fontSize = fontSize, fontWeight = if (emphasised) FontWeight.Bold else FontWeight.Medium),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -433,6 +750,9 @@ private val WEEKEND = setOf(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY)
 
 /** The page is seven day cells wide plus its side margins. */
 private const val PAGE_WIDTH = 7.6f
+
+/** Height of the Month · Week · Day switch under the page, in cells. */
+private const val SWITCH = 0.75f
 
 /** Height of a week row, as a share of a day cell's width: a little flatter than square. */
 private const val ROW = 0.82f
