@@ -30,6 +30,8 @@ data class Settings(
     val showBattery: Boolean = true,
     val showNextAlarm: Boolean = true,
     val showWeather: Boolean = true,
+    /** Today's high and low next to the weather, or tomorrow's in the evening. */
+    val showForecast: Boolean = true,
     val showNotifications: Boolean = true,
     // Brightness and night mode
     /** Master switch for all dimming: room-light brightness and night mode. */
@@ -130,6 +132,7 @@ object SettingsStore {
         put("showBattery", s.showBattery)
         put("showNextAlarm", s.showNextAlarm)
         put("showWeather", s.showWeather)
+        put("showForecast", s.showForecast)
         put("showNotifications", s.showNotifications)
         put("dimEnabled", s.dimEnabled)
         put("autoBrightness", s.autoBrightness)
@@ -187,6 +190,7 @@ object SettingsStore {
             showBattery = j.optBoolean("showBattery", d.showBattery),
             showNextAlarm = j.optBoolean("showNextAlarm", d.showNextAlarm),
             showWeather = j.optBoolean("showWeather", d.showWeather),
+            showForecast = j.optBoolean("showForecast", d.showForecast),
             showNotifications = j.optBoolean("showNotifications", d.showNotifications),
             dimEnabled = j.optBoolean("dimEnabled", d.dimEnabled),
             autoBrightness = j.optBoolean("autoBrightness", d.autoBrightness),
