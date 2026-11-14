@@ -17,6 +17,8 @@ data class CalendarEvent(
     val end: Long,
     val allDay: Boolean,
     val color: Int? = null,
+    /** The event this is an occurrence of, to open it in the calendar app; 0 when unknown. */
+    val eventId: Long = 0L,
 )
 
 /**

@@ -24,7 +24,8 @@ one-line summary written for users.
 - **Burn-in protection:** the clock drifts slowly around the screen.
 - **Day mode, a cheerful desk set for while you work:** a desk clock, a spiral-bound calendar page for the
   month in its own colour, with dots on the days that have events, and a sticky note that says hello and lists
-  the rest of today's events from the calendars on your phone, with the one in progress marked *Now*. Behind
+  the rest of today's events from the calendars on your phone, with the one in progress marked *Now*. Tap a
+  day to open it in your calendar app, or an event to open the event. Behind
   them is a sunny scene that changes every month (blossoms in April, sunflowers in August, snow in December),
   or a photo of your own. Turn it on from the clock's controls or in Settings; today's events need calendar
   access, and without it you get the page alone. Day mode never turns night red. Because it stays up all day,

@@ -1,11 +1,13 @@
 package com.adl.nocturna.day
 
+import android.content.Intent
 import android.text.format.DateFormat
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -117,6 +119,8 @@ fun DayLayout(
     now: ZonedDateTime,
     settings: Settings,
     modifier: Modifier = Modifier,
+    /** Opens the calendar app; null where nothing can be tapped (the screen saver). */
+    onOpen: ((Intent) -> Unit)? = null,
     clock: @Composable () -> Unit,
 ) {
     val today = now.toLocalDate()
@@ -126,6 +130,8 @@ fun DayLayout(
     val events by rememberCalendarEvents(settings.showCalendarEvents, weeks.first().first(), weeks.last().last(), now.zone)
     val dots = remember(events, weeks, now.zone) { events?.let { daysWithEvents(it, weeks.flatten(), now.zone) } ?: emptySet() }
     val theme = monthTheme(now.month)
+    val openDay: ((LocalDate) -> Unit)? = onOpen?.let { open -> { day -> open(OpenCalendar.day(day, now)) } }
+    val openEvent: ((CalendarEvent) -> Unit)? = onOpen?.let { open -> { event -> open(OpenCalendar.event(event)) } }
 
     BoxWithConstraints(modifier) {
         val noteFont = with(LocalDensity.current) { (minOf(maxWidth, maxHeight) * 0.042f).coerceIn(14.dp, 22.dp).toSp() }
@@ -142,11 +148,11 @@ fun DayLayout(
                         ) {
                             ClockPanel(clock)
                             if (settings.showCalendarEvents) {
-                                StickyNote(now, events, settings.use24h, theme, noteFont, Modifier.widthIn(max = 380.dp).weight(1f, fill = false))
+                                StickyNote(now, events, settings.use24h, theme, noteFont, openDay, openEvent, Modifier.widthIn(max = 380.dp).weight(1f, fill = false))
                             }
                         }
                     }
-                    val pageSide = @Composable { DeskPage(today, weeks, dots, theme, Modifier.weight(1f).fillMaxHeight()) }
+                    val pageSide = @Composable { DeskPage(today, weeks, dots, theme, openDay, Modifier.weight(1f).fillMaxHeight()) }
                     if (swapped) pageSide() else clockSide()
                     Spacer(Modifier.width(24.dp))
                     if (swapped) clockSide() else pageSide()
@@ -155,10 +161,10 @@ fun DayLayout(
         } else {
             Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(Modifier.padding(vertical = 16.dp)) { ClockPanel(clock) }
-                DeskPage(today, weeks, dots, theme, Modifier.fillMaxWidth().weight(1.6f))
+                DeskPage(today, weeks, dots, theme, openDay, Modifier.fillMaxWidth().weight(1.6f))
                 if (settings.showCalendarEvents) {
                     Spacer(Modifier.height(20.dp))
-                    StickyNote(now, events, settings.use24h, theme, noteFont, Modifier.fillMaxWidth(0.9f).weight(1f, fill = false))
+                    StickyNote(now, events, settings.use24h, theme, noteFont, openDay, openEvent, Modifier.fillMaxWidth(0.9f).weight(1f, fill = false))
                 }
             }
         }
@@ -180,7 +186,14 @@ private fun ClockPanel(clock: @Composable () -> Unit) {
 
 /** A page of a spiral-bound desk calendar: a header in the month's colour and the month's days. */
 @Composable
-private fun DeskPage(today: LocalDate, weeks: List<List<LocalDate>>, dots: Set<LocalDate>, theme: MonthTheme, modifier: Modifier) {
+private fun DeskPage(
+    today: LocalDate,
+    weeks: List<List<LocalDate>>,
+    dots: Set<LocalDate>,
+    theme: MonthTheme,
+    onOpenDay: ((LocalDate) -> Unit)?,
+    modifier: Modifier,
+) {
     val locale = currentLocale()
     val month = remember(today.year, today.monthValue, locale) {
         today.format(DateTimeFormatter.ofPattern("LLLL", locale)).replaceFirstChar { it.titlecase(locale) }
@@ -229,7 +242,7 @@ private fun DeskPage(today: LocalDate, weeks: List<List<LocalDate>>, dots: Set<L
                     }
                     weeks.forEach { week ->
                         Row {
-                            week.forEach { d -> DayCell(d, today, d in dots, theme.accent, cell, base) }
+                            week.forEach { d -> DayCell(d, today, d in dots, theme.accent, cell, base, onOpenDay) }
                         }
                     }
                 }
@@ -240,10 +253,24 @@ private fun DeskPage(today: LocalDate, weeks: List<List<LocalDate>>, dots: Set<L
 }
 
 @Composable
-private fun DayCell(day: LocalDate, today: LocalDate, hasEvents: Boolean, accent: Color, cell: Dp, base: TextStyle) {
+private fun DayCell(
+    day: LocalDate,
+    today: LocalDate,
+    hasEvents: Boolean,
+    accent: Color,
+    cell: Dp,
+    base: TextStyle,
+    onOpen: ((LocalDate) -> Unit)?,
+) {
     val isToday = day == today
     val inMonth = day.month == today.month
-    Box(Modifier.size(cell, cell * ROW), contentAlignment = Alignment.Center) {
+    Box(
+        Modifier
+            .size(cell, cell * ROW)
+            .clip(RoundedCornerShape(cell * 0.2f))
+            .clickable(enabled = onOpen != null, onClickLabel = "Open in your calendar") { onOpen?.invoke(day) },
+        contentAlignment = Alignment.Center,
+    ) {
         if (isToday) Box(Modifier.size(cell * ROW * 0.95f).shadow(3.dp, CircleShape).clip(CircleShape).background(accent))
         Text(
             day.dayOfMonth.toString(),
@@ -296,6 +323,8 @@ private fun StickyNote(
     use24h: Boolean,
     theme: MonthTheme,
     fontSize: TextUnit,
+    onOpenDay: ((LocalDate) -> Unit)?,
+    onOpenEvent: ((CalendarEvent) -> Unit)?,
     modifier: Modifier,
 ) {
     Box(modifier.rotate(-1.5f)) {
@@ -304,6 +333,8 @@ private fun StickyNote(
                 .padding(top = 8.dp)
                 .shadow(6.dp, RoundedCornerShape(2.dp))
                 .background(NoteYellow)
+                // Anywhere on the note but an event opens today; an event opens itself.
+                .clickable(enabled = onOpenDay != null, onClickLabel = "Open today in your calendar") { onOpenDay?.invoke(now.toLocalDate()) }
                 .padding(horizontal = 18.dp, vertical = 14.dp)
         ) {
             Text(
@@ -311,7 +342,7 @@ private fun StickyNote(
                 style = TextStyle(color = NoteInk, fontSize = fontSize * 1.6f, fontFamily = FontFamily.Cursive, fontWeight = FontWeight.Bold),
             )
             Spacer(Modifier.height(6.dp))
-            Agenda(now, events, use24h, theme.accent, fontSize, Modifier.weight(1f, fill = false))
+            Agenda(now, events, use24h, theme.accent, fontSize, onOpenEvent, Modifier.weight(1f, fill = false))
         }
         // A strip of tape holding the note up.
         Box(
@@ -325,7 +356,15 @@ private fun StickyNote(
 }
 
 @Composable
-private fun Agenda(now: ZonedDateTime, events: List<CalendarEvent>?, use24h: Boolean, accent: Color, fontSize: TextUnit, modifier: Modifier) {
+private fun Agenda(
+    now: ZonedDateTime,
+    events: List<CalendarEvent>?,
+    use24h: Boolean,
+    accent: Color,
+    fontSize: TextUnit,
+    onOpenEvent: ((CalendarEvent) -> Unit)?,
+    modifier: Modifier,
+) {
     val context = LocalContext.current
     val locale = currentLocale()
     val access = remember(events) { CalendarEvents.hasPermission(context) }
@@ -351,16 +390,22 @@ private fun Agenda(now: ZonedDateTime, events: List<CalendarEvent>?, use24h: Boo
                     ongoing -> "Now · until ${fmt(e.end)}"
                     else -> "${fmt(e.begin)} – ${fmt(e.end)}"
                 }
-                EventRow(e.title, whenText, e.color?.let { Color(it) } ?: accent, fontSize, emphasised = ongoing)
+                EventRow(e.title, whenText, e.color?.let { Color(it) } ?: accent, fontSize, emphasised = ongoing, onClick = onOpenEvent?.let { open -> { open(e) } })
             }
         }
     }
 }
 
 @Composable
-private fun EventRow(title: String, whenText: String, dot: Color, fontSize: TextUnit, emphasised: Boolean) {
+private fun EventRow(title: String, whenText: String, dot: Color, fontSize: TextUnit, emphasised: Boolean, onClick: (() -> Unit)?) {
     val line = with(LocalDensity.current) { fontSize.toDp() }
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(6.dp))
+            .clickable(enabled = onClick != null, onClickLabel = "Open in your calendar") { onClick?.invoke() },
+    ) {
         Box(Modifier.size(line * 0.7f).clip(CircleShape).background(dot))
         Spacer(Modifier.width(line * 0.6f))
         Column {

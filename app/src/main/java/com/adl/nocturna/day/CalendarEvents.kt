@@ -39,7 +39,7 @@ object CalendarEvents {
         val uri = Instances.CONTENT_URI.buildUpon()
             .also { ContentUris.appendId(it, from); ContentUris.appendId(it, to) }
             .build()
-        val projection = arrayOf(Instances.TITLE, Instances.BEGIN, Instances.END, Instances.ALL_DAY, Instances.DISPLAY_COLOR)
+        val projection = arrayOf(Instances.TITLE, Instances.BEGIN, Instances.END, Instances.ALL_DAY, Instances.DISPLAY_COLOR, Instances.EVENT_ID)
         // Hidden calendars and invitations the user declined don't belong on the desk.
         val selection = "${Instances.VISIBLE} = 1 AND ${Instances.SELF_ATTENDEE_STATUS} != ${CalendarContract.Attendees.ATTENDEE_STATUS_DECLINED}"
         val events = mutableListOf<CalendarEvent>()
@@ -51,6 +51,7 @@ object CalendarEvents {
                     end = c.getLong(2),
                     allDay = c.getInt(3) != 0,
                     color = if (c.isNull(4)) null else c.getInt(4),
+                    eventId = c.getLong(5),
                 )
             }
         }
