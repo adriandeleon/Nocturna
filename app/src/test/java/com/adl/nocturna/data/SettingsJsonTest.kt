@@ -57,4 +57,14 @@ class SettingsJsonTest {
         assertEquals(Alarm.ALL_DAYS, loaded.dayModeDays)
         assertEquals(DayMode.OFF, loaded.dayMode)
     }
+
+    @Test fun forecastSwitchSurvivesRoundTrip() {
+        val settings = Settings(showForecast = false)
+        assertEquals(settings, SettingsStore.decode(JSONObject(SettingsStore.encode(settings).toString())))
+    }
+
+    @Test fun settingsSavedBeforeTheForecastShowIt() {
+        val old = SettingsStore.encode(Settings()).apply { remove("showForecast") }
+        assertEquals(true, SettingsStore.decode(JSONObject(old.toString())).showForecast)
+    }
 }
