@@ -3,6 +3,9 @@ package com.adl.nocturna.settings
 /** Where the code lives; the About screen links to it, its issues and its licence. */
 const val REPOSITORY_URL = "https://github.com/adriandeleon/Nocturna"
 
+/** The author's homepage, linked from the About screen. */
+const val HOMEPAGE_URL = "https://www.adeleon.dev"
+
 const val COPYRIGHT = "Copyright © 2026 Adrián Arturo De León Saldivar"
 
 /** One line of credit on the About screen. [url] matches the one in `NOTICE`. */

@@ -38,6 +38,7 @@ fun AboutScreen(padding: PaddingValues) {
         item { NavRow("Source code", REPOSITORY_URL.removePrefix("https://")) { context.openUrl(REPOSITORY_URL) } }
         item { NavRow("Report a problem", "Opens an issue on GitHub") { context.openUrl("$REPOSITORY_URL/issues/new/choose") } }
         item { NavRow("Licence", "MIT · $COPYRIGHT") { context.openUrl("$REPOSITORY_URL/blob/main/LICENSE") } }
+        item { NavRow("Made by Adrián De León", HOMEPAGE_URL.removePrefix("https://www.")) { context.openUrl(HOMEPAGE_URL) } }
 
         item { SectionHeader("Open-source libraries") }
         items(LIBRARY_CREDITS) { CreditRow(it) }
