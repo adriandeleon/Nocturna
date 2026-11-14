@@ -14,6 +14,8 @@ one-line summary written for users.
   seconds, or analog, in a colour you pick.
 - **An info line under the clock** with the date, the weather (from Open-Meteo, no account needed), the battery
   and charging state, the next alarm and the radio station playing.
+- **A short forecast next to the weather:** today's high and low during the day, and from 18:00 tomorrow's
+  weather, high and low, for a look before bed. Switch it off under *Show on the clock › Forecast*.
 - **Notification icons under the clock,** once you give Nocturna notification access.
 - **Brightness that follows the room,** between the darkest and brightest levels you set, and a switch to turn
   dimming off.

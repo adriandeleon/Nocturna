@@ -12,7 +12,7 @@ A bedside clock for Android: a big, dimmable clock for the nightstand while your
 ## Features
 
 - **Clock**: digital (six font styles, 12/24 h, optional seconds) or analog, in a colour you pick.
-- **Info line**: date, weather (Open-Meteo, no API key), battery and charging state, next alarm, now-playing radio station.
+- **Info line**: date, weather with today's high and low, or tomorrow's forecast in the evening (Open-Meteo, no API key), battery and charging state, next alarm, now-playing radio station.
 - **Notification icons**: icons of pending notifications under the clock (needs notification access).
 - **Brightness**: follows the room's light sensor between a darkest and brightest level you set.
 - **Night mode**: when the room goes dark the clock turns dim red. Without a light sensor it follows the time (22:00–07:00).

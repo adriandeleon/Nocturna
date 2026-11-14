@@ -66,11 +66,13 @@ import com.adl.nocturna.ui.Glyph
 import com.adl.nocturna.ui.GlyphIcon
 import com.adl.nocturna.ui.NightRed
 import com.adl.nocturna.weather.WeatherRepository
+import com.adl.nocturna.weather.pickForecast
 import kotlinx.coroutines.delay
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import java.time.format.TextStyle as DateTextStyle
 import com.adl.nocturna.ui.currentLocale
 import kotlin.math.log10
 import kotlin.random.Random
@@ -217,7 +219,22 @@ private fun InfoBlock(settings: Settings, now: ZonedDateTime, color: Color, font
     Row(horizontalArrangement = Arrangement.spacedBy(glyphSize * 1.2f), verticalAlignment = Alignment.CenterVertically) {
         val w = weather
         if (settings.showWeather && w != null) {
-            Item(w.glyph, w.temperatureText(settings.weatherFahrenheit), color, style, glyphSize)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Item(w.glyph, w.temperatureText(settings.weatherFahrenheit), color, style, glyphSize)
+                val pick = if (settings.showForecast) pickForecast(w.days, now.toLocalDateTime()) else null
+                if (pick != null) {
+                    // Today: "↑24° ↓12°" after the current temperature. Evening: "Sat ☁ ↑20° ↓11°" for tomorrow.
+                    Spacer(Modifier.width(glyphSize * 0.6f))
+                    val forecastStyle = style.copy(color = style.color.copy(alpha = style.color.alpha * 0.75f))
+                    if (pick.tomorrow) {
+                        Text(pick.day.date.dayOfWeek.getDisplayName(DateTextStyle.SHORT, locale), style = forecastStyle)
+                        Spacer(Modifier.width(glyphSize * 0.3f))
+                        GlyphIcon(pick.day.glyph, forecastStyle.color, glyphSize)
+                        Spacer(Modifier.width(glyphSize * 0.3f))
+                    }
+                    Text(pick.day.highLowText(settings.weatherFahrenheit), style = forecastStyle)
+                }
+            }
         }
         val b = battery
         if (settings.showBattery && b != null) {

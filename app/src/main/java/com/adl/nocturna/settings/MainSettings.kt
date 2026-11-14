@@ -128,6 +128,13 @@ fun MainSettings(padding: PaddingValues, onNavigate: (String) -> Unit) {
         item { SwitchRow("Battery", s.showBattery) { v -> set { it.copy(showBattery = v) } } }
         item { SwitchRow("Next alarm", s.showNextAlarm, "Within the next 24 hours") { v -> set { it.copy(showNextAlarm = v) } } }
         item { SwitchRow("Weather", s.showWeather) { v -> set { it.copy(showWeather = v) } } }
+        if (s.showWeather) {
+            item {
+                SwitchRow("Forecast", s.showForecast, "Today's high and low; tomorrow's in the evening") { v ->
+                    set { it.copy(showForecast = v) }
+                }
+            }
+        }
         item {
             SwitchRow(
                 "Notification icons", s.showNotifications,
