@@ -15,11 +15,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.OutlinedIconToggleButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,6 +37,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import java.time.DayOfWeek
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
+import java.time.format.TextStyle
+import java.util.Locale
 
 @Composable
 fun SectionHeader(text: String) {
@@ -128,4 +141,39 @@ fun ColorRow(colors: List<Int>, selected: Int, onSelect: (Int) -> Unit) {
 /** Opens [url] in the browser; does nothing when no app can handle it. */
 fun Context.openUrl(url: String) {
     runCatching { startActivity(Intent(Intent.ACTION_VIEW, url.toUri())) }
+}
+
+/** One round toggle per weekday, Monday first, for a [days] bitmask with bit 0 = Monday. */
+@Composable
+fun DayToggles(days: Int, locale: Locale, modifier: Modifier = Modifier, onChange: (Int) -> Unit) {
+    Row(modifier, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        DayOfWeek.entries.forEachIndexed { i, day ->
+            OutlinedIconToggleButton(
+                checked = days and (1 shl i) != 0,
+                onCheckedChange = { checked -> onChange(if (checked) days or (1 shl i) else days and (1 shl i).inv()) },
+                colors = IconButtonDefaults.outlinedIconToggleButtonColors(
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                    checkedContainerColor = MaterialTheme.colorScheme.primary,
+                    checkedContentColor = MaterialTheme.colorScheme.onPrimary,
+                ),
+                shape = CircleShape,
+                modifier = Modifier.size(36.dp),
+            ) { Text(day.getDisplayName(TextStyle.NARROW, locale), fontSize = 13.sp) }
+        }
+    }
+}
+
+fun formatTime(t: LocalTime, use24h: Boolean, locale: Locale): String =
+    t.format(DateTimeFormatter.ofPattern(if (use24h) "HH:mm" else "h:mm a", locale))
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TimeDialog(hour: Int, minute: Int, use24h: Boolean, onDismiss: () -> Unit, onConfirm: (Int, Int) -> Unit) {
+    val state = rememberTimePickerState(initialHour = hour, initialMinute = minute, is24Hour = use24h)
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = { TextButton(onClick = { onConfirm(state.hour, state.minute) }) { Text("OK") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+        text = { TimePicker(state) },
+    )
 }

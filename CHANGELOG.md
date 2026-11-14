@@ -24,6 +24,10 @@ one-line summary written for users.
   today's events from the calendars on your phone, with the one in progress marked *Now*. Turn it on from the
   clock's controls or in Settings; today's events need calendar access, and without it you get the month alone.
   Day mode never turns night red.
+- **Day mode on a schedule:** set Day mode to *On a schedule* with the hours and days you work, for example
+  weekdays 09:00–18:00, and the clock switches to the calendar and back on its own. Hours can run past
+  midnight. The *Day mode* / *Clock only* button on the clock overrides the schedule until its next start or
+  end, and Settings shows what the schedule is doing and until when.
 - **Alarms** with repeat days, labels, snooze, a gentle volume ramp, vibration and a full-screen wake-up screen
   over the lock screen. A deleted alarm can be brought back with *Undo*.
 - **Alarms you can count on:** they still ring after the phone restarts overnight, even before you unlock it; if

@@ -13,6 +13,9 @@ enum class ClockStyle { DIGITAL, ANALOG }
 
 enum class ClockFont { THIN, LIGHT, REGULAR, CONDENSED, MONO, SERIF }
 
+/** When day mode shows: never, always, or inside the schedule in [Settings]. */
+enum class DayMode { OFF, ON, SCHEDULED }
+
 data class Station(val name: String, val url: String)
 
 data class Settings(
@@ -40,7 +43,18 @@ data class Settings(
     val burnInProtection: Boolean = true,
     // Day mode
     /** Clock beside a month calendar, for a desk during the day; never turns night red. */
-    val dayMode: Boolean = false,
+    val dayMode: DayMode = DayMode.OFF,
+    /** Scheduled day mode starts at this minute of the day (0..1439) on [dayModeDays]. */
+    val dayModeStart: Int = 9 * 60,
+    /** Scheduled day mode ends at this minute of the day; at or before [dayModeStart], the next day. */
+    val dayModeEnd: Int = 18 * 60,
+    /** Days the schedule starts on: bit 0 = Monday ... bit 6 = Sunday, as in [Alarm.days]. */
+    val dayModeDays: Int = WEEKDAYS,
+    /**
+     * Epoch millis until which the clock's Day mode button overrides the schedule, flipping it; 0 for none.
+     * It is set to the schedule's next edge, so the schedule takes over again on its own.
+     */
+    val dayModeOverrideUntil: Long = 0L,
     /** Today's events from the phone's calendars in day mode; needs READ_CALENDAR. */
     val showCalendarEvents: Boolean = false,
     // Launching
@@ -70,6 +84,7 @@ data class Settings(
             Station("Imagen Monterrey", "https://monterrey.radio.wnsol.com/;stream.mp3"),
         )
         const val STATIONS_VERSION = 2
+        const val WEEKDAYS = 0b001_1111
 
         val DEFAULT_STATIONS = MONTERREY_STATIONS + listOf(
             Station("SomaFM Groove Salad", "https://ice1.somafm.com/groovesalad-128-mp3"),
@@ -123,7 +138,11 @@ object SettingsStore {
         put("nightModeEnabled", s.nightModeEnabled)
         put("nightModeLux", s.nightModeLux.toDouble())
         put("burnInProtection", s.burnInProtection)
-        put("dayMode", s.dayMode)
+        put("dayMode", s.dayMode.name)
+        put("dayModeStart", s.dayModeStart)
+        put("dayModeEnd", s.dayModeEnd)
+        put("dayModeDays", s.dayModeDays)
+        put("dayModeOverrideUntil", s.dayModeOverrideUntil)
         put("showCalendarEvents", s.showCalendarEvents)
         put("autoStartOnCharge", s.autoStartOnCharge)
         put("weatherUseDeviceLocation", s.weatherUseDeviceLocation)
@@ -176,7 +195,15 @@ object SettingsStore {
             nightModeEnabled = j.optBoolean("nightModeEnabled", d.nightModeEnabled),
             nightModeLux = j.optDouble("nightModeLux", d.nightModeLux.toDouble()).toFloat(),
             burnInProtection = j.optBoolean("burnInProtection", d.burnInProtection),
-            dayMode = j.optBoolean("dayMode", d.dayMode),
+            dayMode = when (val v = j.opt("dayMode")) {
+                // Versions before the schedule stored a plain switch.
+                is Boolean -> if (v) DayMode.ON else DayMode.OFF
+                else -> enumOr(j.optString("dayMode"), d.dayMode)
+            },
+            dayModeStart = j.optInt("dayModeStart", d.dayModeStart).coerceIn(0, MINUTES_PER_DAY - 1),
+            dayModeEnd = j.optInt("dayModeEnd", d.dayModeEnd).coerceIn(0, MINUTES_PER_DAY - 1),
+            dayModeDays = j.optInt("dayModeDays", d.dayModeDays) and Alarm.ALL_DAYS,
+            dayModeOverrideUntil = j.optLong("dayModeOverrideUntil", d.dayModeOverrideUntil),
             showCalendarEvents = j.optBoolean("showCalendarEvents", d.showCalendarEvents),
             autoStartOnCharge = j.optBoolean("autoStartOnCharge", d.autoStartOnCharge),
             weatherUseDeviceLocation = j.optBoolean("weatherUseDeviceLocation", d.weatherUseDeviceLocation),
@@ -191,6 +218,8 @@ object SettingsStore {
             selectedStation = selected,
         )
     }
+
+    private const val MINUTES_PER_DAY = 24 * 60
 
     private inline fun <reified E : Enum<E>> enumOr(name: String, fallback: E): E =
         enumValues<E>().firstOrNull { it.name == name } ?: fallback

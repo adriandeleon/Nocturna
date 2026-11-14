@@ -20,14 +20,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.OutlinedIconToggleButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarDuration
@@ -37,8 +33,6 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TimePicker
-import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -59,13 +53,11 @@ import com.adl.nocturna.data.Station
 import com.adl.nocturna.ui.currentLocale
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
-import java.time.format.TextStyle
 import java.util.Locale
 import kotlin.math.roundToInt
 
@@ -202,25 +194,7 @@ private fun AlarmCard(
                 }
             }
             Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                DayOfWeek.entries.forEachIndexed { i, day ->
-                    OutlinedIconToggleButton(
-                        checked = alarm.repeatsOn(i),
-                        onCheckedChange = { checked ->
-                            AlarmStore.update(alarm.id) {
-                                it.copy(days = if (checked) it.days or (1 shl i) else it.days and (1 shl i).inv())
-                            }
-                        },
-                        colors = IconButtonDefaults.outlinedIconToggleButtonColors(
-                            contentColor = MaterialTheme.colorScheme.onSurface,
-                            checkedContainerColor = MaterialTheme.colorScheme.primary,
-                            checkedContentColor = MaterialTheme.colorScheme.onPrimary,
-                        ),
-                        shape = CircleShape,
-                        modifier = Modifier.size(36.dp),
-                    ) { Text(day.getDisplayName(TextStyle.NARROW, locale), fontSize = 13.sp) }
-                }
-            }
+            DayToggles(alarm.days, locale) { days -> AlarmStore.update(alarm.id) { it.copy(days = days) } }
             SoundPicker(alarm, stations)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 LabelField(alarm, Modifier.weight(1f).padding(top = 8.dp))
@@ -292,19 +266,4 @@ private fun describe(alarm: Alarm, use24h: Boolean, locale: Locale): String {
         else -> "Repeats"
     }
     return "$repeat$skipped · next ${next.format(DateTimeFormatter.ofPattern(pattern, locale))}"
-}
-
-private fun formatTime(t: LocalTime, use24h: Boolean, locale: Locale): String =
-    t.format(DateTimeFormatter.ofPattern(if (use24h) "HH:mm" else "h:mm a", locale))
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun TimeDialog(hour: Int, minute: Int, use24h: Boolean, onDismiss: () -> Unit, onConfirm: (Int, Int) -> Unit) {
-    val state = rememberTimePickerState(initialHour = hour, initialMinute = minute, is24Hour = use24h)
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        confirmButton = { TextButton(onClick = { onConfirm(state.hour, state.minute) }) { Text("OK") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
-        text = { TimePicker(state) },
-    )
 }
