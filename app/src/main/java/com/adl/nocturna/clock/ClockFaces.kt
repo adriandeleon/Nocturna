@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.rotate
@@ -64,6 +65,7 @@ fun DigitalClock(
     font: ClockFont,
     color: Color,
     fontSize: TextUnit,
+    shadow: Shadow? = null,
 ) {
     val locale = currentLocale()
     val hm = now.format(DateTimeFormatter.ofPattern(if (use24h) "HH:mm" else "h:mm", locale))
@@ -76,6 +78,7 @@ fun DigitalClock(
         lineHeight = 1.em,
         lineHeightStyle = tight,
         letterSpacing = (-0.02).em,
+        shadow = shadow,
     )
     // ":ss" sits on the same baseline as the big digits; AM/PM sits above it, near the top of the digits.
     Row {

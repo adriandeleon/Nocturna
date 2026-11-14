@@ -57,6 +57,8 @@ data class Settings(
     val dayModeOverrideUntil: Long = 0L,
     /** Today's events from the phone's calendars in day mode; needs READ_CALENDAR. */
     val showCalendarEvents: Boolean = false,
+    /** When the day mode photo was picked (epoch millis); 0 means no photo, use the illustration. */
+    val dayPhotoVersion: Long = 0L,
     // Launching
     val autoStartOnCharge: Boolean = false,
     // Weather
@@ -144,6 +146,7 @@ object SettingsStore {
         put("dayModeDays", s.dayModeDays)
         put("dayModeOverrideUntil", s.dayModeOverrideUntil)
         put("showCalendarEvents", s.showCalendarEvents)
+        put("dayPhotoVersion", s.dayPhotoVersion)
         put("autoStartOnCharge", s.autoStartOnCharge)
         put("weatherUseDeviceLocation", s.weatherUseDeviceLocation)
         put("weatherCity", s.weatherCity)
@@ -205,6 +208,7 @@ object SettingsStore {
             dayModeDays = j.optInt("dayModeDays", d.dayModeDays) and Alarm.ALL_DAYS,
             dayModeOverrideUntil = j.optLong("dayModeOverrideUntil", d.dayModeOverrideUntil),
             showCalendarEvents = j.optBoolean("showCalendarEvents", d.showCalendarEvents),
+            dayPhotoVersion = j.optLong("dayPhotoVersion", d.dayPhotoVersion),
             autoStartOnCharge = j.optBoolean("autoStartOnCharge", d.autoStartOnCharge),
             weatherUseDeviceLocation = j.optBoolean("weatherUseDeviceLocation", d.weatherUseDeviceLocation),
             weatherCity = j.optString("weatherCity", d.weatherCity),

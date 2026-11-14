@@ -30,12 +30,12 @@ object CalendarEvents {
         ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_GRANTED
 
     /**
-     * Occurrences around [day]: a day either side as well, because all-day events are stored at UTC
-     * midnight. [eventsForDay] picks out the ones that really fall on [day].
+     * Occurrences from [first] to [last], with a day more on either side because all-day events are
+     * stored at UTC midnight. [covers] picks out the ones that really fall on a given day.
      */
-    fun around(context: Context, day: LocalDate, zone: ZoneId): List<CalendarEvent> {
-        val from = day.minusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
-        val to = day.plusDays(2).atStartOfDay(zone).toInstant().toEpochMilli()
+    fun between(context: Context, first: LocalDate, last: LocalDate, zone: ZoneId): List<CalendarEvent> {
+        val from = first.minusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
+        val to = last.plusDays(2).atStartOfDay(zone).toInstant().toEpochMilli()
         val uri = Instances.CONTENT_URI.buildUpon()
             .also { ContentUris.appendId(it, from); ContentUris.appendId(it, to) }
             .build()
@@ -59,11 +59,11 @@ object CalendarEvents {
 }
 
 /**
- * Event occurrences around [day], kept current as the calendars change; null when [enabled] is off
- * or calendar access isn't granted.
+ * Event occurrences from [first] to [last], kept current as the calendars change; null when [enabled]
+ * is off or calendar access isn't granted.
  */
 @Composable
-fun rememberCalendarEvents(enabled: Boolean, day: LocalDate, zone: ZoneId): State<List<CalendarEvent>?> {
+fun rememberCalendarEvents(enabled: Boolean, first: LocalDate, last: LocalDate, zone: ZoneId): State<List<CalendarEvent>?> {
     val context = LocalContext.current
     val state = remember { mutableStateOf<List<CalendarEvent>?>(null) }
     val changes = remember { mutableIntStateOf(0) }
@@ -81,10 +81,10 @@ fun rememberCalendarEvents(enabled: Boolean, day: LocalDate, zone: ZoneId): Stat
         onDispose { if (registered) context.contentResolver.unregisterContentObserver(observer) }
     }
 
-    LaunchedEffect(context, enabled, day, zone, changes.intValue) {
+    LaunchedEffect(context, enabled, first, last, zone, changes.intValue) {
         while (true) {
             state.value = if (enabled && CalendarEvents.hasPermission(context)) {
-                withContext(Dispatchers.IO) { runCatching { CalendarEvents.around(context, day, zone) }.getOrDefault(emptyList()) }
+                withContext(Dispatchers.IO) { runCatching { CalendarEvents.between(context, first, last, zone) }.getOrDefault(emptyList()) }
             } else {
                 null
             }

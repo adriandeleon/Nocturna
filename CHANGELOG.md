@@ -20,10 +20,12 @@ one-line summary written for users.
 - **Night mode:** when the room goes dark the clock turns dim red; without a light sensor it follows the time
   (22:00–07:00).
 - **Burn-in protection:** the clock drifts slowly around the screen.
-- **Day mode, for a desk stand while you work:** the clock sits beside this month's calendar and the rest of
-  today's events from the calendars on your phone, with the one in progress marked *Now*. Turn it on from the
-  clock's controls or in Settings; today's events need calendar access, and without it you get the month alone.
-  Day mode never turns night red.
+- **Day mode, a cheerful desk set for while you work:** a desk clock, a spiral-bound calendar page for the
+  month in its own colour, with dots on the days that have events, and a sticky note that says hello and lists
+  the rest of today's events from the calendars on your phone, with the one in progress marked *Now*. Behind
+  them is a sunny scene that changes every month (blossoms in April, sunflowers in August, snow in December),
+  or a photo of your own. Turn it on from the clock's controls or in Settings; today's events need calendar
+  access, and without it you get the page alone. Day mode never turns night red.
 - **Day mode on a schedule:** set Day mode to *On a schedule* with the hours and days you work, for example
   weekdays 09:00–18:00, and the clock switches to the calendar and back on its own. Hours can run past
   midnight. The *Day mode* / *Clock only* button on the clock overrides the schedule until its next start or

@@ -105,4 +105,25 @@ class CalendarTest {
     }
 
     @Test fun noRowsWhenNothingFits() = assertEquals(0, rowsThatFit(listOf(50), gap = 5, max = 40, moreHeight = 8))
+
+    @Test fun dotsMarkDaysWithTimedAndAllDayEvents() {
+        val days = monthGrid(YearMonth.of(2026, 11), DayOfWeek.SUNDAY).flatten()
+        val events = listOf(
+            CalendarEvent("Stand-up", at(9, 30), at(9, 45), allDay = false),
+            allDay("Trip", LocalDate.of(2026, 11, 20), LocalDate.of(2026, 11, 22)),
+            // Ends exactly at midnight: belongs to the 24th only.
+            CalendarEvent("Late", at(23, day = LocalDate.of(2026, 11, 24)), at(0, day = LocalDate.of(2026, 11, 25)), allDay = false),
+        )
+        assertEquals(
+            setOf(today, LocalDate.of(2026, 11, 20), LocalDate.of(2026, 11, 21), LocalDate.of(2026, 11, 24)),
+            daysWithEvents(events, days, monterrey),
+        )
+    }
+
+    @Test fun greetingFollowsTheTimeOfDay() {
+        assertEquals("Good morning!", greeting(8))
+        assertEquals("Good afternoon!", greeting(12))
+        assertEquals("Good evening!", greeting(20))
+        assertEquals("Good evening!", greeting(2))
+    }
 }
