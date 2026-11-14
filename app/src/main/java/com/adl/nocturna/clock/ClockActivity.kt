@@ -3,12 +3,14 @@ package com.adl.nocturna.clock
 import android.Manifest
 import android.app.Activity
 import android.app.KeyguardManager
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.view.Window
 import android.view.WindowManager
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -49,6 +51,11 @@ class ClockActivity : ComponentActivity() {
                     interactive = true,
                     onBrightness = { window.setBrightness(it) },
                     onOpenSettings = { openUnlocked(Intent(this, SettingsActivity::class.java)) },
+                    onOpen = { intent ->
+                        openUnlocked(intent) {
+                            Toast.makeText(this, "No calendar app found", Toast.LENGTH_SHORT).show()
+                        }
+                    },
                     onOpenAlarms = {
                         openUnlocked(
                             Intent(this, SettingsActivity::class.java)
@@ -89,15 +96,25 @@ class ClockActivity : ComponentActivity() {
     }
 }
 
-/** The clock may be showing over the lock screen; unlock first before opening anything else. */
-fun Activity.openUnlocked(intent: Intent) {
+/**
+ * The clock may be showing over the lock screen; unlock first before opening anything else.
+ * [onNoApp] runs instead of crashing when no installed app can open [intent].
+ */
+fun Activity.openUnlocked(intent: Intent, onNoApp: () -> Unit = {}) {
+    fun start() {
+        try {
+            startActivity(intent)
+        } catch (_: ActivityNotFoundException) {
+            onNoApp()
+        }
+    }
     val km = getSystemService(KeyguardManager::class.java)
     if (km.isKeyguardLocked) {
         km.requestDismissKeyguard(this, object : KeyguardManager.KeyguardDismissCallback() {
-            override fun onDismissSucceeded() = startActivity(intent)
+            override fun onDismissSucceeded() = start()
         })
     } else {
-        startActivity(intent)
+        start()
     }
 }
 

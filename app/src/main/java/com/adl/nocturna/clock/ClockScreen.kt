@@ -1,5 +1,6 @@
 package com.adl.nocturna.clock
 
+import android.content.Intent
 import android.text.format.DateFormat
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -94,6 +95,8 @@ fun ClockScreen(
     onBrightness: (Float) -> Unit,
     onOpenSettings: () -> Unit = {},
     onOpenAlarms: () -> Unit = {},
+    /** Opens another app (day mode's calendar); only used when [interactive]. */
+    onOpen: (Intent) -> Unit = {},
 ) {
     val context = LocalContext.current
     val settings by SettingsStore.settings.collectAsStateWithLifecycle()
@@ -199,7 +202,12 @@ fun ClockScreen(
         DriftLayout(enabled = settings.burnInProtection, modifier = Modifier.safeDrawingPadding().padding(16.dp)) {
             // Day mode fills the screen and stays up all day: with burn-in protection it leaves a tenth
             // of the screen free, so the drift moves it noticeably.
-            if (day) DayLayout(landscape, now, settings, Modifier.fillMaxSize(if (settings.burnInProtection) 0.9f else 0.96f), clock)
+            if (day) DayLayout(
+                landscape, now, settings,
+                Modifier.fillMaxSize(if (settings.burnInProtection) 0.9f else 0.96f),
+                onOpen = if (interactive) onOpen else null,
+                clock = clock,
+            )
             else clock()
         }
 
