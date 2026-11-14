@@ -38,6 +38,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.OutlinedButton
+import com.adl.nocturna.ui.Glyph
+import com.adl.nocturna.ui.GlyphIcon
 import java.time.DayOfWeek
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -176,4 +187,67 @@ fun TimeDialog(hour: Int, minute: Int, use24h: Boolean, onDismiss: () -> Unit, o
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
         text = { TimePicker(state) },
     )
+}
+
+/** A settings page: a scrolling column of [SettingsGroup]s under the top bar. */
+@Composable
+fun SettingsPage(padding: PaddingValues, content: @Composable ColumnScope.() -> Unit) {
+    Column(
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(padding).padding(bottom = 32.dp),
+        content = content,
+    )
+}
+
+/** Related rows on one rounded card, with an optional heading above it. */
+@Composable
+fun SettingsGroup(title: String? = null, content: @Composable ColumnScope.() -> Unit) {
+    title?.let {
+        Text(
+            it,
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(start = 32.dp, end = 32.dp, top = 20.dp, bottom = 8.dp),
+        )
+    }
+    Card(
+        Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(top = if (title == null) 12.dp else 0.dp),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+    ) {
+        Column(Modifier.padding(vertical = 6.dp), content = content)
+    }
+}
+
+/** A row of the Settings hub: an icon, the page's name and what it is set to now. */
+@Composable
+fun HubRow(glyph: Glyph, title: String, summary: String, onClick: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            Modifier.size(40.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
+            contentAlignment = Alignment.Center,
+        ) { GlyphIcon(glyph, MaterialTheme.colorScheme.onPrimaryContainer, 22.dp) }
+        Column(Modifier.weight(1f).padding(start = 16.dp)) {
+            Text(title, style = MaterialTheme.typography.bodyLarge)
+            Text(summary, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+        }
+        Text("›", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
+    }
+}
+
+@Composable
+fun Hint(text: String, modifier: Modifier = Modifier) {
+    Text(
+        text,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+        modifier = modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+    )
+}
+
+@Composable
+fun ActionButton(text: String, onClick: () -> Unit) {
+    OutlinedButton(onClick = onClick, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) { Text(text) }
 }

@@ -1,0 +1,150 @@
+package com.adl.nocturna.settings
+
+import android.Manifest
+import android.text.format.DateFormat
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.adl.nocturna.clock.rememberNow
+import com.adl.nocturna.data.DayMode
+import com.adl.nocturna.data.Settings
+import com.adl.nocturna.data.SettingsStore
+import com.adl.nocturna.day.DayPhoto
+import com.adl.nocturna.day.inDaySchedule
+import com.adl.nocturna.day.isDayModeActive
+import com.adl.nocturna.day.nextDayScheduleEdge
+import com.adl.nocturna.ui.currentLocale
+import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.LocalTime
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
+
+@Composable
+fun DayModePage(padding: PaddingValues) {
+    val context = LocalContext.current
+    val s by SettingsStore.settings.collectAsStateWithLifecycle()
+    val access = rememberSystemAccess()
+    val locale = currentLocale()
+    fun set(block: (Settings) -> Settings) = SettingsStore.update(block)
+
+    val scope = rememberCoroutineScope()
+    var photoFailed by remember { mutableStateOf(false) }
+    // The system photo picker needs no storage permission; the photo is copied in, so it lasts.
+    val pickPhoto = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri != null) scope.launch {
+            val saved = DayPhoto.save(context, uri)
+            photoFailed = !saved
+            if (saved) set { it.copy(dayPhotoVersion = System.currentTimeMillis()) }
+        }
+    }
+    val calendarPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        set { it.copy(showCalendarEvents = granted) }
+    }
+
+    var editingTime by remember { mutableStateOf<DayScheduleTime?>(null) }
+    editingTime?.let { which ->
+        val minute = if (which == DayScheduleTime.START) s.dayModeStart else s.dayModeEnd
+        TimeDialog(minute / 60, minute % 60, s.use24h, onDismiss = { editingTime = null }) { h, m ->
+            editingTime = null
+            // Changing the schedule drops a switch made from the clock, which was tied to the old one.
+            set {
+                if (which == DayScheduleTime.START) it.copy(dayModeStart = h * 60 + m, dayModeOverrideUntil = 0L)
+                else it.copy(dayModeEnd = h * 60 + m, dayModeOverrideUntil = 0L)
+            }
+        }
+    }
+
+    SettingsPage(padding) {
+        Hint(
+            "The clock beside a calendar, for a desk stand. Also on the clock: tap it, then Day mode",
+            Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+        )
+        SettingsGroup {
+            ChoiceRow("Show day mode", DayMode.entries, s.dayMode, { it.label() }) { v ->
+                set { it.copy(dayMode = v, dayModeOverrideUntil = 0L) }
+            }
+        }
+        if (s.dayMode == DayMode.SCHEDULED) {
+            SettingsGroup("Schedule") {
+                NavRow("From", formatTime(LocalTime.of(s.dayModeStart / 60, s.dayModeStart % 60), s.use24h, locale)) {
+                    editingTime = DayScheduleTime.START
+                }
+                val endsNextDay = if (s.dayModeEnd <= s.dayModeStart) " the next day" else ""
+                NavRow("Until", formatTime(LocalTime.of(s.dayModeEnd / 60, s.dayModeEnd % 60), s.use24h, locale) + endsNextDay) {
+                    editingTime = DayScheduleTime.END
+                }
+                DayToggles(s.dayModeDays, locale, Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) { days ->
+                    set { it.copy(dayModeDays = days, dayModeOverrideUntil = 0L) }
+                }
+                // Only this line ticks every second, not the whole page.
+                val now by rememberNow()
+                Hint(dayScheduleStatus(s, now, locale), Modifier.padding(bottom = 6.dp))
+            }
+        }
+        SettingsGroup("Calendar") {
+            SwitchRow(
+                "Today's events", s.showCalendarEvents,
+                if (s.showCalendarEvents && !access.calendar) "Needs calendar access" else "From the calendars on this phone",
+            ) { v ->
+                if (v && !access.calendar) calendarPermission.launch(Manifest.permission.READ_CALENDAR)
+                else set { it.copy(showCalendarEvents = v) }
+            }
+            if (s.showCalendarEvents && !access.calendar) {
+                ActionButton("Allow calendar access") { calendarPermission.launch(Manifest.permission.READ_CALENDAR) }
+            }
+        }
+        SettingsGroup("Background") {
+            NavRow(
+                if (s.dayPhotoVersion == 0L) "Monthly pictures" else "Your photo",
+                if (s.dayPhotoVersion == 0L) "A cheerful picture for each month. Tap to use your own photo" else "Tap to change it",
+            ) { pickPhoto.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
+            if (photoFailed) Hint("That photo couldn't be opened. Try another one")
+            if (s.dayPhotoVersion != 0L) {
+                ActionButton("Use the monthly pictures") {
+                    DayPhoto.clear(context)
+                    set { it.copy(dayPhotoVersion = 0L) }
+                }
+            }
+        }
+    }
+}
+
+private enum class DayScheduleTime { START, END }
+
+private fun DayMode.label() = when (this) {
+    DayMode.OFF -> "Off"
+    DayMode.ON -> "Always"
+    DayMode.SCHEDULED -> "On a schedule"
+}
+
+/** What the schedule is doing at [now] and when that changes, e.g. "Day mode now, until Fri 18:00". */
+private fun dayScheduleStatus(s: Settings, now: ZonedDateTime, locale: Locale): String {
+    val active = isDayModeActive(s, now)
+    val state = if (active) "Day mode now" else "Clock only now"
+    if (s.dayModeDays == 0) return "$state. Pick the days day mode starts on."
+    val overridden = active != inDaySchedule(s, now)
+    val until = if (overridden) Instant.ofEpochMilli(s.dayModeOverrideUntil).atZone(now.zone).takeIf { s.dayModeOverrideUntil != Long.MAX_VALUE }
+    else nextDayScheduleEdge(s, now)
+    val pattern = DateFormat.getBestDateTimePattern(locale, if (s.use24h) "EEEHHmm" else "EEEhmma")
+    val whenText = until?.format(DateTimeFormatter.ofPattern(pattern, locale))
+    return when {
+        overridden && whenText != null -> "$state, switched from the clock until $whenText"
+        overridden -> "$state, switched from the clock"
+        whenText != null -> "$state, until $whenText"
+        else -> state
+    }
+}
