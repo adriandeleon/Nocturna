@@ -16,3 +16,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Nocturna"
 include(":app")
+include(":shared")
