@@ -60,3 +60,9 @@ one-line summary written for users.
   line saying how it is set, and each opening its own page. *Clock face* shows a live preview of the clock as you
   change it, and anything Android hasn't allowed yet, such as notification or calendar access, is gathered in a
   *Needs your attention* card at the top with the button that fixes it.
+
+### Changed
+
+- **Groundwork for an iOS version:** the code that doesn't depend on Android (the burn-in timings, the alarm's
+  silence check, the icons and the credits) now lives in a shared Kotlin Multiplatform module that can also
+  build for iOS. The Android app works exactly as before; the About screen now credits Compose Multiplatform.

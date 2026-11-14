@@ -1,9 +1,9 @@
 package com.adl.nocturna.day
 
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
-import org.junit.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
+import kotlin.test.Test
 import kotlin.math.abs
 
 class BurnInTest {
@@ -27,8 +27,8 @@ class BurnInTest {
         val room = (PHOTO_SCALE - 1f) / 2f
         for (s in 0 until 86_400 step 60) {
             val (x, y) = photoPan(s.toFloat())
-            assertTrue("x=$x at $s", abs(x) < room)
-            assertTrue("y=$y at $s", abs(y) < room)
+            assertTrue(abs(x) < room, "x=$x at $s")
+            assertTrue(abs(y) < room, "y=$y at $s")
         }
     }
 

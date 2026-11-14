@@ -18,6 +18,10 @@ val LIBRARY_CREDITS = listOf(
         "https://developer.android.com/jetpack/androidx",
     ),
     Credit("Jetpack Compose", "UI and Material 3", "Apache License 2.0", "https://developer.android.com/jetpack/compose"),
+    Credit(
+        "Compose Multiplatform", "Shared UI: runtime, foundation and UI", "Apache License 2.0",
+        "https://github.com/JetBrains/compose-multiplatform",
+    ),
     Credit("AndroidX Media3", "ExoPlayer, HLS and media session", "Apache License 2.0", "https://github.com/androidx/media"),
     Credit("Kotlin standard library", "JetBrains and Kotlin contributors", "Apache License 2.0", "https://kotlinlang.org"),
 )

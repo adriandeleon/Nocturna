@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.unit.Dp
+import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -121,7 +122,7 @@ fun GlyphIcon(glyph: Glyph, color: Color, size: Dp, modifier: Modifier = Modifie
 private fun DrawScope.sun(color: Color, stroke: Stroke, c: Offset, r: Float, s: Float) {
     drawCircle(color, r, c, style = stroke)
     for (i in 0 until 8) {
-        val a = Math.toRadians(i * 45.0)
+        val a = i * PI / 4 // every 45°
         val inner = r + s * 0.09f
         val outer = r + s * 0.18f
         drawLine(
