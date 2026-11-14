@@ -53,8 +53,8 @@ one-line summary written for users.
   off and back on. *Undo skip* brings it back, and changing the alarm's time or days drops the skip.
 - **Starts on its own while charging,** as the Android screen saver or with *Open when charging*, which opens
   the clock when you plug in a locked phone.
-- **An About screen in Settings** with the version, links to the source code, bug reports and the licence, and
-  credits for the open-source libraries and the weather data.
+- **An About screen in Settings** with the version, links to the source code, bug reports, the licence and
+  the author's homepage, and credits for the open-source libraries and the weather data.
 - **Settings in tidy pages:** the first Settings page is now a short list (Clock face, Show on the clock,
   Brightness and night mode, Day mode, Alarms, Radio stations, Weather, Starting the clock, About), each with a
   line saying how it is set, and each opening its own page. *Clock face* shows a live preview of the clock as you
