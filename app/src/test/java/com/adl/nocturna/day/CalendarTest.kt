@@ -1,5 +1,6 @@
 package com.adl.nocturna.day
 
+import com.adl.nocturna.data.CalendarView
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -125,5 +126,32 @@ class CalendarTest {
         assertEquals("Good afternoon!", greeting(12))
         assertEquals("Good evening!", greeting(20))
         assertEquals("Good evening!", greeting(2))
+    }
+
+    @Test fun weekStartsOnTheLocalesFirstDay() {
+        // Saturday 14 November 2026.
+        val sat = LocalDate.of(2026, 11, 14)
+        assertEquals(LocalDate.of(2026, 11, 8), weekOf(sat, DayOfWeek.SUNDAY).first())
+        assertEquals(LocalDate.of(2026, 11, 9), weekOf(sat, DayOfWeek.MONDAY).first())
+        assertEquals(LocalDate.of(2026, 11, 15), weekOf(sat, DayOfWeek.MONDAY).last())
+        assertEquals(sat, weekOf(sat, DayOfWeek.SATURDAY).first())
+    }
+
+    @Test fun dayViewKeepsFinishedEvents() {
+        val events = listOf(
+            CalendarEvent("Lunch", at(13), at(14), allDay = false),
+            CalendarEvent("Stand-up", at(9, 30), at(9, 45), allDay = false),
+            allDay("Holiday", today),
+            CalendarEvent("Tomorrow", at(9, day = today.plusDays(1)), at(10, day = today.plusDays(1)), allDay = false),
+        )
+        assertEquals(listOf("Holiday", "Stand-up", "Lunch"), eventsOnDay(events, today, monterrey).map { it.title })
+    }
+
+    @Test fun swipesMoveThroughTheViewsAndStopAtTheEnds() {
+        assertEquals(CalendarView.WEEK, swipeView(CalendarView.MONTH, towardsDetail = true))
+        assertEquals(CalendarView.DAY, swipeView(CalendarView.WEEK, towardsDetail = true))
+        assertEquals(CalendarView.DAY, swipeView(CalendarView.DAY, towardsDetail = true))
+        assertEquals(CalendarView.WEEK, swipeView(CalendarView.DAY, towardsDetail = false))
+        assertEquals(CalendarView.MONTH, swipeView(CalendarView.MONTH, towardsDetail = false))
     }
 }

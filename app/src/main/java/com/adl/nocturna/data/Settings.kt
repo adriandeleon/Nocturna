@@ -16,6 +16,9 @@ enum class ClockFont { THIN, LIGHT, REGULAR, CONDENSED, MONO, SERIF }
 /** When day mode shows: never, always, or inside the schedule in [Settings]. */
 enum class DayMode { OFF, ON, SCHEDULED }
 
+/** What day mode's calendar page shows; swiping the page moves between them. */
+enum class CalendarView { MONTH, WEEK, DAY }
+
 data class Station(val name: String, val url: String)
 
 data class Settings(
@@ -59,6 +62,8 @@ data class Settings(
     val dayModeOverrideUntil: Long = 0L,
     /** Today's events from the phone's calendars in day mode; needs READ_CALENDAR. */
     val showCalendarEvents: Boolean = false,
+    /** The calendar page's view when day mode starts. */
+    val dayCalendarView: CalendarView = CalendarView.MONTH,
     /** When the day mode photo was picked (epoch millis); 0 means no photo, use the illustration. */
     val dayPhotoVersion: Long = 0L,
     // Launching
@@ -149,6 +154,7 @@ object SettingsStore {
         put("dayModeDays", s.dayModeDays)
         put("dayModeOverrideUntil", s.dayModeOverrideUntil)
         put("showCalendarEvents", s.showCalendarEvents)
+        put("dayCalendarView", s.dayCalendarView.name)
         put("dayPhotoVersion", s.dayPhotoVersion)
         put("autoStartOnCharge", s.autoStartOnCharge)
         put("weatherUseDeviceLocation", s.weatherUseDeviceLocation)
@@ -212,6 +218,7 @@ object SettingsStore {
             dayModeDays = j.optInt("dayModeDays", d.dayModeDays) and Alarm.ALL_DAYS,
             dayModeOverrideUntil = j.optLong("dayModeOverrideUntil", d.dayModeOverrideUntil),
             showCalendarEvents = j.optBoolean("showCalendarEvents", d.showCalendarEvents),
+            dayCalendarView = enumOr(j.optString("dayCalendarView"), d.dayCalendarView),
             dayPhotoVersion = j.optLong("dayPhotoVersion", d.dayPhotoVersion),
             autoStartOnCharge = j.optBoolean("autoStartOnCharge", d.autoStartOnCharge),
             weatherUseDeviceLocation = j.optBoolean("weatherUseDeviceLocation", d.weatherUseDeviceLocation),

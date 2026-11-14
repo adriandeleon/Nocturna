@@ -18,10 +18,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.adl.nocturna.clock.rememberNow
+import com.adl.nocturna.data.CalendarView
 import com.adl.nocturna.data.DayMode
 import com.adl.nocturna.data.Settings
 import com.adl.nocturna.data.SettingsStore
 import com.adl.nocturna.day.DayPhoto
+import com.adl.nocturna.day.label
 import com.adl.nocturna.day.inDaySchedule
 import com.adl.nocturna.day.isDayModeActive
 import com.adl.nocturna.day.nextDayScheduleEdge
@@ -106,11 +108,16 @@ fun DayModePage(padding: PaddingValues) {
             if (s.showCalendarEvents && !access.calendar) {
                 ActionButton("Allow calendar access") { calendarPermission.launch(Manifest.permission.READ_CALENDAR) }
             }
+            ChoiceRow("Calendar view", CalendarView.entries, s.dayCalendarView, { it.label() }) { v ->
+                set { it.copy(dayCalendarView = v) }
+            }
+            Hint("On the clock, swipe the calendar page to switch between month, week and day", Modifier.padding(bottom = 6.dp))
         }
         SettingsGroup("Background") {
             NavRow(
                 if (s.dayPhotoVersion == 0L) "Monthly pictures" else "Your photo",
-                if (s.dayPhotoVersion == 0L) "A cheerful picture for each month. Tap to use your own photo" else "Tap to change it",
+                if (s.dayPhotoVersion == 0L) "A cheerful picture for each month that follows the time of day. Tap to use your own photo"
+                else "Tap to change it",
             ) { pickPhoto.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
             if (photoFailed) Hint("That photo couldn't be opened. Try another one")
             if (s.dayPhotoVersion != 0L) {
