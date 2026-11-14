@@ -87,10 +87,10 @@ fun DigitalClock(
             val small = style.copy(fontSize = fontSize * 0.26f, letterSpacing = 0.em)
             val gap = with(LocalDensity.current) { (fontSize * 0.06f).toDp() }
             Column(Modifier.alignBy(LastBaseline).padding(start = gap)) {
-                if (!use24h) Text(now.format(DateTimeFormatter.ofPattern("a", locale)), style = small)
+                if (!use24h) Text(now.format(DateTimeFormatter.ofPattern("a", locale)), style = small, softWrap = false)
                 if (!use24h && showSeconds) Spacer(Modifier.height(with(LocalDensity.current) { (fontSize * 0.2f).toDp() }))
                 if (showSeconds) {
-                    Text(now.format(DateTimeFormatter.ofPattern(":ss")), style = small.copy(color = color.copy(alpha = color.alpha * 0.6f)))
+                    Text(now.format(DateTimeFormatter.ofPattern(":ss")), style = small.copy(color = color.copy(alpha = color.alpha * 0.6f)), softWrap = false)
                 }
             }
         }

@@ -27,7 +27,9 @@ one-line summary written for users.
   the rest of today's events from the calendars on your phone, with the one in progress marked *Now*. Behind
   them is a sunny scene that changes every month (blossoms in April, sunflowers in August, snow in December),
   or a photo of your own. Turn it on from the clock's controls or in Settings; today's events need calendar
-  access, and without it you get the page alone. Day mode never turns night red.
+  access, and without it you get the page alone. Day mode never turns night red. Because it stays up all day,
+  burn-in protection moves it around more, swaps the clock and the page every hour in landscape, and keeps
+  the background slowly moving.
 - **Day mode on a schedule:** set Day mode to *On a schedule* with the hours and days you work, for example
   weekdays 09:00–18:00, and the clock switches to the calendar and back on its own. Hours can run past
   midnight. The *Day mode* / *Clock only* button on the clock overrides the schedule until its next start or
