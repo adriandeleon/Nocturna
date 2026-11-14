@@ -1,6 +1,8 @@
 package com.adl.nocturna.day
 
 import android.text.format.DateFormat
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -30,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -59,9 +62,10 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.WeekFields
 
-private val Paper = Color(0xFFFFFCF5)
+// Warm and a touch below white: kinder to OLED pixels lit all day, and it still reads as paper.
+private val Paper = Color(0xFFF8F2E4)
 private val Ink = Color(0xFF3B3A36)
-private val NoteYellow = Color(0xFFFFF09A)
+private val NoteYellow = Color(0xFFF8E68C)
 private val NoteInk = Color(0xFF4A3F1F)
 
 /**
@@ -77,7 +81,19 @@ fun DayBackground(now: ZonedDateTime, photoVersion: Long, modifier: Modifier = M
     Box(modifier) {
         val p = photo
         if (p != null) {
-            Image(p, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+            // A slow pan, so no part of the photo stays on the same pixels all day.
+            val (panX, panY) = photoPan(now.toLocalTime().toSecondOfDay().toFloat())
+            Image(
+                p,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize().graphicsLayer {
+                    scaleX = PHOTO_SCALE
+                    scaleY = PHOTO_SCALE
+                    translationX = panX * size.width
+                    translationY = panY * size.height
+                },
+            )
             // Shade the top and bottom a little so the white clock and the page stand out on any photo.
             Box(
                 Modifier.fillMaxSize().background(
@@ -114,19 +130,27 @@ fun DayLayout(
     BoxWithConstraints(modifier) {
         val noteFont = with(LocalDensity.current) { (minOf(maxWidth, maxHeight) * 0.042f).coerceIn(14.dp, 22.dp).toSp() }
         if (landscape) {
-            Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
-                Column(
-                    Modifier.weight(1f).fillMaxHeight(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterVertically),
-                ) {
-                    ClockPanel(clock)
-                    if (settings.showCalendarEvents) {
-                        StickyNote(now, events, settings.use24h, theme, noteFont, Modifier.widthIn(max = 380.dp).weight(1f, fill = false))
+            // Every other hour the clock and the page trade places, so the bright page and the dark
+            // clock don't sit on the same pixels all day.
+            Crossfade(sidesSwapped(now.hour, settings.burnInProtection), animationSpec = tween(1500), label = "sides") { swapped ->
+                Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+                    val clockSide = @Composable {
+                        Column(
+                            Modifier.weight(1f).fillMaxHeight(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterVertically),
+                        ) {
+                            ClockPanel(clock)
+                            if (settings.showCalendarEvents) {
+                                StickyNote(now, events, settings.use24h, theme, noteFont, Modifier.widthIn(max = 380.dp).weight(1f, fill = false))
+                            }
+                        }
                     }
+                    val pageSide = @Composable { DeskPage(today, weeks, dots, theme, Modifier.weight(1f).fillMaxHeight()) }
+                    if (swapped) pageSide() else clockSide()
+                    Spacer(Modifier.width(24.dp))
+                    if (swapped) clockSide() else pageSide()
                 }
-                Spacer(Modifier.width(24.dp))
-                DeskPage(today, weeks, dots, theme, Modifier.weight(1f).fillMaxHeight())
             }
         } else {
             Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {

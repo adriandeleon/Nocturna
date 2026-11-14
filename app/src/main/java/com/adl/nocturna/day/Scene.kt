@@ -88,7 +88,8 @@ fun SceneBackground(theme: MonthTheme, time: LocalTime, seed: Int, modifier: Mod
         // The sun peeks in from the top corner, out of the clock's way; its rays turn slowly.
         val seconds = time.toSecondOfDay().toFloat()
         val sunR = minOf(w, h) * 0.13f
-        val sun = Offset(-sunR * 0.15f, -sunR * 0.15f)
+        val (wx, wy) = sunWobble(seconds)
+        val sun = Offset(sunR * (wx - 0.15f), sunR * (wy - 0.15f))
         drawCircle(Brush.radialGradient(listOf(Color(0x88FFF3B0), Color.Transparent), sun, sunR * 2.6f), sunR * 2.6f, sun)
         rotate(seconds * 0.5f % 360f, sun) {
             for (i in 0 until 16) {
@@ -124,7 +125,8 @@ fun SceneBackground(theme: MonthTheme, time: LocalTime, seed: Int, modifier: Mod
                 val steps = 64
                 for (s in 0..steps) {
                     val fx = s / steps.toFloat()
-                    lineTo(fx * w, hillY(hill, fx) * h)
+                    // The hills scroll very slowly, so their edges never sit on the same pixels for long.
+                    lineTo(fx * w, hillY(hill, fx + hillShift(seconds, i)) * h)
                 }
                 lineTo(w, h)
                 close()
@@ -135,15 +137,16 @@ fun SceneBackground(theme: MonthTheme, time: LocalTime, seed: Int, modifier: Mod
         val rnd = Random(seed * 31 + 7)
         if (theme.trees) {
             // On the near hill, so the page and the note don't hide them; sorted so lower trees draw in front.
-            List(14) { rnd.nextFloat() to rnd.nextFloat() }.sortedBy { it.second }.forEach { (fx, depth) ->
-                val top = hillY(HILLS[2], fx)
+            List(14) { rnd.nextFloat() to rnd.nextFloat() }.sortedBy { it.second }.forEach { (start, depth) ->
+                val fx = travel(start, seconds)
+                val top = nearHillY(fx, seconds)
                 tree(fx * w, (top + 0.02f + depth * (1f - top - 0.04f)) * h, minOf(w, h) * (0.07f + depth * 0.07f))
             }
         }
         if (theme.flowers.isNotEmpty()) {
             repeat(55) {
-                val fx = rnd.nextFloat()
-                val top = hillY(HILLS[2], fx)
+                val fx = travel(rnd.nextFloat(), seconds)
+                val top = nearHillY(fx, seconds)
                 val fy = top + 0.015f + rnd.nextFloat() * (1f - top - 0.03f)
                 // Nearer (lower) flowers are bigger.
                 val r = minOf(w, h) * (0.006f + 0.012f * (fy - top) / (1f - top))
@@ -152,6 +155,12 @@ fun SceneBackground(theme: MonthTheme, time: LocalTime, seed: Int, modifier: Mod
         }
     }
 }
+
+/** Where something on the near hill that started at [start] has travelled to, wrapping around the screen. */
+private fun travel(start: Float, seconds: Float): Float = ((start - hillShift(seconds, 2)) % 1f + 1f) % 1f
+
+/** The near hill's top at screen position [x], as it has scrolled by [seconds]. */
+private fun nearHillY(x: Float, seconds: Float): Float = hillY(HILLS[2], x + hillShift(seconds, 2))
 
 private fun DrawScope.cloud(x: Float, y: Float, w: Float) {
     val white = Color.White.copy(alpha = 0.92f)

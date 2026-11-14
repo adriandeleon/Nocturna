@@ -39,6 +39,8 @@ The bedside clock is for the night; Day mode is for the desk, when your phone si
 
 Side by side in landscape, stacked in portrait. Day mode never turns night red; brightness still follows the room light if *Adjust to room light* is on.
 
+**Burn-in protection**: Day mode stays on screen all day, so on OLED screens nothing in it stays put. With *Burn-in protection* on, the layout drifts around a tenth of the screen, and in landscape the clock and the calendar page swap sides every hour. The background keeps moving whatever the setting: the hills scroll slowly, the sun circles its corner and your own photo pans gently. The page and the note use warm tones a touch below white.
+
 **Turning it on**: in Settings › Day mode, pick *On*, or *On a schedule* with the hours and days you work, for example weekdays 09:00–18:00 (hours can run past midnight). On the clock, tap it, then *Day mode* or *Clock only*; with a schedule, that lasts until the schedule's next start or end. The screen saver follows the same setting.
 
 **Today's events** (Settings › Day mode › *Today's events*): read from the calendars synced to the phone, such as Google Calendar. Hidden calendars and invitations you declined are left out. Nocturna asks for calendar access when you turn this on and only ever reads; without access you get the calendar page alone.

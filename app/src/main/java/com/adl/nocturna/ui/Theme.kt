@@ -60,3 +60,6 @@ fun currentLocale(): Locale = LocalConfiguration.current.locales[0]
 
 /** The dim red used in night mode; red light disturbs night vision and sleep the least. */
 val NightRed = Color(0xFFC62828)
+
+/** The navy of day mode's desk clock and of the buttons over it. */
+val DeskNavy = Color(0xFF223049)

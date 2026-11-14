@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -67,6 +68,7 @@ import com.adl.nocturna.notify.NotificationIconService
 import com.adl.nocturna.radio.Radio
 import com.adl.nocturna.ui.Glyph
 import com.adl.nocturna.ui.GlyphIcon
+import com.adl.nocturna.ui.DeskNavy
 import com.adl.nocturna.ui.NightRed
 import com.adl.nocturna.weather.WeatherRepository
 import com.adl.nocturna.weather.pickForecast
@@ -159,8 +161,9 @@ fun ClockScreen(
             )
     ) {
         val landscape = maxWidth > maxHeight
-        // In day mode the clock gets half the width (landscape) or the top of the screen (portrait).
-        val clockWidth = if (day && landscape) maxWidth * 0.5f else maxWidth
+        // In day mode the clock gets half the width (landscape) or the top of the screen (portrait),
+        // less the burn-in margin and the desk clock panel's padding.
+        val clockWidth = if (day) maxWidth * (if (landscape) 0.5f else 1f) * 0.9f - 72.dp else maxWidth
         val clockFontDp: Dp = minOf(
             clockWidth * (if (landscape && !day) 0.62f else 0.85f) / (if (settings.showSeconds || !settings.use24h) 3.3f else 2.8f),
             maxHeight * when {
@@ -194,8 +197,10 @@ fun ClockScreen(
         if (day) DayBackground(now, settings.dayPhotoVersion, Modifier.fillMaxSize())
 
         DriftLayout(enabled = settings.burnInProtection, modifier = Modifier.safeDrawingPadding().padding(16.dp)) {
-            // Day mode fills the screen; leaving a sliver free still lets burn-in protection move it.
-            if (day) DayLayout(landscape, now, settings, Modifier.fillMaxSize(0.96f), clock) else clock()
+            // Day mode fills the screen and stays up all day: with burn-in protection it leaves a tenth
+            // of the screen free, so the drift moves it noticeably.
+            if (day) DayLayout(landscape, now, settings, Modifier.fillMaxSize(if (settings.burnInProtection) 0.9f else 0.96f), clock)
+            else clock()
         }
 
         if (interactive) {
@@ -234,7 +239,13 @@ private fun InfoBlock(
         Spacer(Modifier.height(glyphSize * 0.4f))
     }
 
-    Row(horizontalArrangement = Arrangement.spacedBy(glyphSize * 1.2f), verticalAlignment = Alignment.CenterVertically) {
+    // Weather, forecast, battery and next alarm wrap onto a second line when they don't fit; in a Row
+    // the last item was squeezed until it stacked one letter per line.
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(glyphSize * 1.2f, Alignment.CenterHorizontally),
+        verticalArrangement = Arrangement.spacedBy(glyphSize * 0.3f),
+        itemVerticalAlignment = Alignment.CenterVertically,
+    ) {
         val w = weather
         if (settings.showWeather && w != null) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -245,12 +256,12 @@ private fun InfoBlock(
                     Spacer(Modifier.width(glyphSize * 0.6f))
                     val forecastStyle = style.copy(color = style.color.copy(alpha = style.color.alpha * 0.75f))
                     if (pick.tomorrow) {
-                        Text(pick.day.date.dayOfWeek.getDisplayName(DateTextStyle.SHORT, locale), style = forecastStyle)
+                        Text(pick.day.date.dayOfWeek.getDisplayName(DateTextStyle.SHORT, locale), style = forecastStyle, softWrap = false)
                         Spacer(Modifier.width(glyphSize * 0.3f))
                         GlyphIcon(pick.day.glyph, forecastStyle.color, glyphSize)
                         Spacer(Modifier.width(glyphSize * 0.3f))
                     }
-                    Text(pick.day.highLowText(settings.weatherFahrenheit), style = forecastStyle)
+                    Text(pick.day.highLowText(settings.weatherFahrenheit), style = forecastStyle, softWrap = false)
                 }
             }
         }
@@ -260,7 +271,7 @@ private fun InfoBlock(
                 GlyphIcon(Glyph.BATTERY, style.color, glyphSize, level = b.level)
                 if (b.charging) GlyphIcon(Glyph.BOLT, style.color, glyphSize * 0.8f)
                 Spacer(Modifier.width(glyphSize * 0.2f))
-                Text("${(b.level * 100).toInt()}%", style = style)
+                Text("${(b.level * 100).toInt()}%", style = style, softWrap = false)
             }
         }
         val a = nextAlarm
@@ -287,7 +298,7 @@ private fun Item(glyph: Glyph, text: String, color: Color, style: TextStyle, siz
     Row(verticalAlignment = Alignment.CenterVertically) {
         GlyphIcon(glyph, style.color, size)
         Spacer(Modifier.width(size * 0.3f))
-        Text(text, style = style)
+        Text(text, style = style, softWrap = false)
     }
 }
 
@@ -322,11 +333,22 @@ private fun Controls(
     val radioOn by Radio.isOn.collectAsStateWithLifecycle()
     val sleepAt by Radio.sleepAt.collectAsStateWithLifecycle()
     val error by Radio.error.collectAsStateWithLifecycle()
-    val buttonColors = ButtonDefaults.outlinedButtonColors(contentColor = color)
-    val border = BorderStroke(1.dp, color.copy(alpha = 0.5f))
+    // Over day mode's bright background, see-through buttons vanish: fill them in the desk clock's navy.
+    val buttonColors = if (day) ButtonDefaults.outlinedButtonColors(containerColor = DeskNavy, contentColor = Color.White)
+    else ButtonDefaults.outlinedButtonColors(contentColor = color)
+    val border = if (day) BorderStroke(1.dp, Color.White.copy(alpha = 0.35f)) else BorderStroke(1.dp, color.copy(alpha = 0.5f))
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        error?.let { Text(it, color = color.copy(alpha = 0.8f), fontSize = 14.sp, modifier = Modifier.padding(bottom = 8.dp)) }
+        error?.let {
+            Text(
+                it,
+                color = if (day) Color.White else color.copy(alpha = 0.8f),
+                fontSize = 14.sp,
+                modifier = Modifier
+                    .padding(bottom = 8.dp)
+                    .then(if (day) Modifier.background(DeskNavy, RoundedCornerShape(12.dp)).padding(horizontal = 12.dp, vertical = 6.dp) else Modifier),
+            )
+        }
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
             itemVerticalAlignment = Alignment.CenterVertically,
