@@ -41,6 +41,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.Layout
@@ -56,6 +58,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.adl.nocturna.data.ClockStyle
 import com.adl.nocturna.data.Settings
 import com.adl.nocturna.data.SettingsStore
+import com.adl.nocturna.day.DayBackground
 import com.adl.nocturna.day.DayLayout
 import com.adl.nocturna.day.isDayModeActive
 import com.adl.nocturna.day.withDayModeToggled
@@ -118,7 +121,13 @@ fun ClockScreen(
     }
     LaunchedEffect(brightness) { onBrightness(brightness) }
 
-    val color = if (night) NightRed else Color(settings.color)
+    // Day mode's clock is white with a soft shadow, to read well over its colourful background.
+    val color = when {
+        day -> Color.White
+        night -> NightRed
+        else -> Color(settings.color)
+    }
+    val shadow = if (day) Shadow(Color.Black.copy(alpha = 0.35f), Offset(0f, 3f), 14f) else null
     val contentAlpha by animateFloatAsState(if (night) 0.55f else 1f, tween(2000), label = "alpha")
 
     LaunchedEffect(settings.showWeather, settings.weatherUseDeviceLocation, settings.weatherLat, settings.weatherLon) {
@@ -156,7 +165,7 @@ fun ClockScreen(
             clockWidth * (if (landscape && !day) 0.62f else 0.85f) / (if (settings.showSeconds || !settings.use24h) 3.3f else 2.8f),
             maxHeight * when {
                 day && !landscape -> 0.15f
-                day -> 0.3f
+                day -> if (settings.showCalendarEvents) 0.2f else 0.28f
                 landscape -> 0.5f
                 else -> 0.3f
             },
@@ -174,17 +183,19 @@ fun ClockScreen(
                 modifier = Modifier.alpha(contentAlpha),
             ) {
                 when (settings.style) {
-                    ClockStyle.DIGITAL -> DigitalClock(now, settings.use24h, settings.showSeconds, settings.font, color, clockSize)
+                    ClockStyle.DIGITAL -> DigitalClock(now, settings.use24h, settings.showSeconds, settings.font, color, clockSize, shadow)
                     ClockStyle.ANALOG -> AnalogClock(now, settings.showSeconds, color, analogSize)
                 }
                 Spacer(Modifier.height(infoFontDp * 0.6f))
-                InfoBlock(settings, now, color, infoSize, infoFontDp)
+                InfoBlock(settings, now, color, infoSize, infoFontDp, shadow)
             }
         }
 
+        if (day) DayBackground(now, settings.dayPhotoVersion, Modifier.fillMaxSize())
+
         DriftLayout(enabled = settings.burnInProtection, modifier = Modifier.safeDrawingPadding().padding(16.dp)) {
             // Day mode fills the screen; leaving a sliver free still lets burn-in protection move it.
-            if (day) DayLayout(landscape, now, settings, color, Modifier.fillMaxSize(0.96f), clock) else clock()
+            if (day) DayLayout(landscape, now, settings, Modifier.fillMaxSize(0.96f), clock) else clock()
         }
 
         if (interactive) {
@@ -201,8 +212,15 @@ fun ClockScreen(
 }
 
 @Composable
-private fun InfoBlock(settings: Settings, now: ZonedDateTime, color: Color, fontSize: androidx.compose.ui.unit.TextUnit, glyphSize: Dp) {
-    val style = TextStyle(color = color.copy(alpha = 0.85f), fontSize = fontSize)
+private fun InfoBlock(
+    settings: Settings,
+    now: ZonedDateTime,
+    color: Color,
+    fontSize: androidx.compose.ui.unit.TextUnit,
+    glyphSize: Dp,
+    shadow: Shadow? = null,
+) {
+    val style = TextStyle(color = color.copy(alpha = if (shadow != null) 1f else 0.85f), fontSize = fontSize, shadow = shadow)
     val battery by rememberBattery()
     val nextAlarm by rememberNextAlarm()
     val weather by WeatherRepository.weather.collectAsStateWithLifecycle()

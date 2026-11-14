@@ -36,21 +36,34 @@ fun monthGrid(month: YearMonth, firstDayOfWeek: DayOfWeek): List<List<LocalDate>
  * time. Timed events that have already ended are left out; ones in progress stay.
  */
 fun eventsForDay(events: List<CalendarEvent>, day: LocalDate, zone: ZoneId, now: Instant): List<CalendarEvent> {
-    val dayStart = day.atStartOfDay(zone).toInstant().toEpochMilli()
-    val dayEnd = day.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
     val nowMillis = now.toEpochMilli()
     return events
-        .filter { e ->
-            if (e.allDay) {
-                // All-day events are dates, not instants: read them in UTC, whatever the local zone.
-                val first = Instant.ofEpochMilli(e.begin).atZone(ZoneOffset.UTC).toLocalDate()
-                val last = Instant.ofEpochMilli(e.end).atZone(ZoneOffset.UTC).toLocalDate() // exclusive
-                !day.isBefore(first) && day.isBefore(maxOf(last, first.plusDays(1)))
-            } else {
-                e.begin < dayEnd && maxOf(e.end, e.begin + 1) > dayStart && e.end > nowMillis
-            }
-        }
+        .filter { it.covers(day, zone) && (it.allDay || it.end > nowMillis) }
         .sortedWith(compareByDescending<CalendarEvent> { it.allDay }.thenBy { it.begin }.thenBy { it.title })
+}
+
+/** Which of [days] have at least one event, for the dots on the calendar page. */
+fun daysWithEvents(events: List<CalendarEvent>, days: List<LocalDate>, zone: ZoneId): Set<LocalDate> =
+    days.filterTo(mutableSetOf()) { day -> events.any { it.covers(day, zone) } }
+
+/** Whether the event takes up any of [day] in [zone]. */
+fun CalendarEvent.covers(day: LocalDate, zone: ZoneId): Boolean {
+    if (allDay) {
+        // All-day events are dates, not instants: read them in UTC, whatever the local zone.
+        val first = Instant.ofEpochMilli(begin).atZone(ZoneOffset.UTC).toLocalDate()
+        val last = Instant.ofEpochMilli(end).atZone(ZoneOffset.UTC).toLocalDate() // exclusive
+        return !day.isBefore(first) && day.isBefore(maxOf(last, first.plusDays(1)))
+    }
+    val dayStart = day.atStartOfDay(zone).toInstant().toEpochMilli()
+    val dayEnd = day.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
+    return begin < dayEnd && maxOf(end, begin + 1) > dayStart
+}
+
+/** A friendly hello for the sticky note, by the hour of the day. */
+fun greeting(hour: Int): String = when (hour) {
+    in 5..11 -> "Good morning!"
+    in 12..17 -> "Good afternoon!"
+    else -> "Good evening!"
 }
 
 /** Whether a timed event is happening at [now]. */

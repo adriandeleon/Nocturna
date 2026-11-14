@@ -14,6 +14,7 @@ class SettingsJsonTest {
             dayModeDays = 0b100_0001,
             dayModeOverrideUntil = 1_789_000_000_000L,
             showCalendarEvents = true,
+            dayPhotoVersion = 1_794_590_985_000L,
         )
         assertEquals(settings, SettingsStore.decode(JSONObject(SettingsStore.encode(settings).toString())))
     }
@@ -22,10 +23,12 @@ class SettingsJsonTest {
         val old = SettingsStore.encode(Settings()).apply {
             remove("dayMode")
             remove("showCalendarEvents")
+            remove("dayPhotoVersion")
         }
         val loaded = SettingsStore.decode(JSONObject(old.toString()))
         assertEquals(DayMode.OFF, loaded.dayMode)
         assertFalse(loaded.showCalendarEvents)
+        assertEquals(0L, loaded.dayPhotoVersion)
     }
 
     @Test fun settingsSavedBeforeTheScheduleKeepTheirSwitch() {

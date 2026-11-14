@@ -12,6 +12,7 @@ import android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION
 import android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS
 import android.provider.Settings.canDrawOverlays
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -55,6 +56,7 @@ import com.adl.nocturna.data.DayMode
 import com.adl.nocturna.data.Settings
 import com.adl.nocturna.data.SettingsStore
 import com.adl.nocturna.day.CalendarEvents
+import com.adl.nocturna.day.DayPhoto
 import com.adl.nocturna.day.inDaySchedule
 import com.adl.nocturna.day.isDayModeActive
 import com.adl.nocturna.day.nextDayScheduleEdge
@@ -91,6 +93,16 @@ fun MainSettings(padding: PaddingValues, onNavigate: (String) -> Unit) {
         WeatherRepository.invalidate()
     }
     val calendarAccess = remember(refresh) { CalendarEvents.hasPermission(context) }
+    val scope = rememberCoroutineScope()
+    var photoFailed by remember { mutableStateOf(false) }
+    // The system photo picker needs no storage permission; the photo is copied in, so it lasts.
+    val pickPhoto = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri != null) scope.launch {
+            val saved = DayPhoto.save(context, uri)
+            photoFailed = !saved
+            if (saved) set { it.copy(dayPhotoVersion = System.currentTimeMillis()) }
+        }
+    }
     val calendarPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         set { it.copy(showCalendarEvents = granted) }
         refresh++
@@ -191,6 +203,21 @@ fun MainSettings(padding: PaddingValues, onNavigate: (String) -> Unit) {
         }
         if (s.showCalendarEvents && !calendarAccess) {
             item { ActionButton("Allow calendar access") { calendarPermission.launch(Manifest.permission.READ_CALENDAR) } }
+        }
+        item {
+            NavRow(
+                "Background",
+                if (s.dayPhotoVersion == 0L) "A cheerful picture for each month. Tap to use your own photo" else "Your photo. Tap to change it",
+            ) { pickPhoto.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
+        }
+        if (photoFailed) item { Hint("That photo couldn't be opened. Try another one") }
+        if (s.dayPhotoVersion != 0L) {
+            item {
+                ActionButton("Use the monthly pictures") {
+                    DayPhoto.clear(context)
+                    set { it.copy(dayPhotoVersion = 0L) }
+                }
+            }
         }
 
         item { SectionHeader("Brightness and night mode") }
