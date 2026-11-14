@@ -17,7 +17,7 @@ A bedside clock for Android: a big, dimmable clock for the nightstand while your
 - **Brightness**: follows the room's light sensor between a darkest and brightest level you set.
 - **Night mode**: when the room goes dark the clock turns dim red. Without a light sensor it follows the time (22:00–07:00).
 - **Burn-in protection**: the clock drifts slowly around the screen.
-- **Day mode**: for a phone on a desk stand while you work, made to look like a desk set: a desk clock, a spiral-bound calendar page for the month in its own colour, with dots on days that have events, and a sticky note with a hello and the rest of today's events from the calendars on the phone (needs calendar access; without it, the page alone). Behind them is a cheerful scene that changes every month, or a photo of your own. It never turns night red. Turn it on by hand or put it on a schedule, such as weekdays 09:00–18:00; the clock's *Day mode* / *Clock only* button overrides the schedule until its next start or end.
+- **Day mode**: a cheerful desk clock, calendar page and sticky note for a phone on a desk stand while you work. See [Day mode](#day-mode).
 - **Alarms**: repeat days, labels, snooze, a gentle volume ramp, vibration, and a full-screen wake-up screen over the lock screen. An alarm can wake you with a radio station, and falls back to the alarm tone if the station doesn't play. A repeating alarm can skip its next ring.
 - **Web radio**: any MP3/AAC/HLS stream, with a sleep timer that fades out (15/30/60/90 min).
 - **Starts on its own**:
@@ -25,6 +25,25 @@ A bedside clock for Android: a big, dimmable clock for the nightstand while your
   - with **Open when charging**, which opens the clock when you plug in a locked phone. This needs the "Display over other apps" permission; without it the app shows a full-screen notification instead.
 
 Tap the clock to show the controls (Day mode, Alarms, Radio, Sleep timer, Settings).
+
+## Day mode
+
+![Day mode on a desk stand, in landscape and portrait: a navy desk clock, a spiral-bound November calendar page and a yellow sticky note with today's events, over sunny hills](docs/images/day-mode.png)
+
+The bedside clock is for the night; Day mode is for the desk, when your phone sits on a charging stand while you work.
+
+- **Desk clock**: the time, date, weather, battery and next alarm, in white on a navy panel that reads over any background.
+- **Calendar page**: this month on a spiral-bound page in the month's own colour, with today circled, weekends highlighted and a dot under each day that has events.
+- **Sticky note**: a greeting for the time of day and the rest of today's events. The one happening now is marked *Now · until …*; finished ones drop off; if they don't all fit, the note says how many more there are.
+- **Background**: a sunny scene that changes every month, from snow in January to blossoms in April, sunflowers in August, autumn hills in October and fir trees in December. The clouds drift and the sun's rays turn slowly. To use a photo of your own instead, go to Settings › Day mode › *Background*. Nocturna keeps its own smaller copy, so it needs no storage permission and keeps working if you delete the original. *Use the monthly pictures* switches back.
+
+Side by side in landscape, stacked in portrait. Day mode never turns night red; brightness still follows the room light if *Adjust to room light* is on.
+
+**Burn-in protection**: Day mode stays on screen all day, so on OLED screens nothing in it stays put. With *Burn-in protection* on, the layout drifts around a tenth of the screen, and in landscape the clock and the calendar page swap sides every hour. The background keeps moving whatever the setting: the hills scroll slowly, the sun circles its corner and your own photo pans gently. The page and the note use warm tones a touch below white.
+
+**Turning it on**: in Settings › Day mode, pick *On*, or *On a schedule* with the hours and days you work, for example weekdays 09:00–18:00 (hours can run past midnight). On the clock, tap it, then *Day mode* or *Clock only*; with a schedule, that lasts until the schedule's next start or end. The screen saver follows the same setting.
+
+**Today's events** (Settings › Day mode › *Today's events*): read from the calendars synced to the phone, such as Google Calendar. Hidden calendars and invitations you declined are left out. Nocturna asks for calendar access when you turn this on and only ever reads; without access you get the calendar page alone.
 
 ## Build
 
@@ -42,7 +61,7 @@ The debug build installs as `com.adl.nocturna.debug`, so it can sit next to a re
 | Package | What's in it |
 |---|---|
 | `clock` | `ClockActivity`, the shared `ClockScreen`, clock faces, sensor/battery/alarm state |
-| `day` | Day mode: the month calendar, today's events from the calendar provider, the schedule |
+| `day` | Day mode: the desk calendar page and sticky note, the monthly scenes, the background photo, today's events from the calendar provider, the schedule |
 | `dream` | `NocturnaDream`, the screen saver |
 | `alarm` | Scheduling (`AlarmManager.setAlarmClock`), the ringing service, the wake-up screen, boot receiver |
 | `radio` | Media3 `RadioService` and the `Radio` controller with the sleep timer |
