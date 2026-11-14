@@ -53,3 +53,8 @@ one-line summary written for users.
   the clock when you plug in a locked phone.
 - **An About screen in Settings** with the version, links to the source code, bug reports and the licence, and
   credits for the open-source libraries and the weather data.
+- **Settings in tidy pages:** the first Settings page is now a short list (Clock face, Show on the clock,
+  Brightness and night mode, Day mode, Alarms, Radio stations, Weather, Starting the clock, About), each with a
+  line saying how it is set, and each opening its own page. *Clock face* shows a live preview of the clock as you
+  change it, and anything Android hasn't allowed yet, such as notification or calendar access, is gathered in a
+  *Needs your attention* card at the top with the button that fixes it.

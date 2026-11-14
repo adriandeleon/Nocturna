@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.Dp
 import kotlin.math.cos
 import kotlin.math.sin
 
-enum class Glyph { SUN, MOON, CLOUD, PARTLY_DAY, PARTLY_NIGHT, RAIN, SNOW, STORM, FOG, BATTERY, BOLT, ALARM }
+enum class Glyph { SUN, MOON, CLOUD, PARTLY_DAY, PARTLY_NIGHT, RAIN, SNOW, STORM, FOG, BATTERY, BOLT, ALARM, CLOCK, LIST, RADIO, INFO }
 
 /**
  * Small line icons drawn with Canvas so they can take any tint (including night-mode red)
@@ -89,6 +89,30 @@ fun GlyphIcon(glyph: Glyph, color: Color, size: Dp, modifier: Modifier = Modifie
                 drawLine(color, c, Offset(c.x + s * 0.13f, c.y + s * 0.06f), stroke.width, StrokeCap.Round)
                 drawLine(color, Offset(s * 0.12f, s * 0.22f), Offset(s * 0.26f, s * 0.1f), stroke.width, StrokeCap.Round)
                 drawLine(color, Offset(s * 0.88f, s * 0.22f), Offset(s * 0.74f, s * 0.1f), stroke.width, StrokeCap.Round)
+            }
+            Glyph.CLOCK -> {
+                val c = Offset(s / 2, s / 2)
+                drawCircle(color, s * 0.38f, c, style = stroke)
+                drawLine(color, c, Offset(c.x, c.y - s * 0.22f), stroke.width, StrokeCap.Round)
+                drawLine(color, c, Offset(c.x + s * 0.16f, c.y + s * 0.08f), stroke.width, StrokeCap.Round)
+            }
+            Glyph.LIST -> for (i in 0..2) {
+                val y = s * (0.3f + i * 0.2f)
+                drawCircle(color, s * 0.05f, Offset(s * 0.2f, y))
+                drawLine(color, Offset(s * 0.36f, y), Offset(s * 0.84f, y), stroke.width, StrokeCap.Round)
+            }
+            Glyph.RADIO -> {
+                val body = Rect(s * 0.12f, s * 0.36f, s * 0.88f, s * 0.84f)
+                drawRoundRect(color, body.topLeft, body.size, CornerRadius(s * 0.08f), style = stroke)
+                drawCircle(color, s * 0.12f, Offset(s * 0.36f, s * 0.6f), style = stroke)
+                drawLine(color, Offset(s * 0.58f, s * 0.52f), Offset(s * 0.74f, s * 0.52f), stroke.width, StrokeCap.Round)
+                drawLine(color, Offset(s * 0.58f, s * 0.68f), Offset(s * 0.74f, s * 0.68f), stroke.width, StrokeCap.Round)
+                drawLine(color, Offset(s * 0.3f, s * 0.36f), Offset(s * 0.72f, s * 0.14f), stroke.width, StrokeCap.Round)
+            }
+            Glyph.INFO -> {
+                drawCircle(color, s * 0.38f, Offset(s / 2, s / 2), style = stroke)
+                drawCircle(color, s * 0.05f, Offset(s / 2, s * 0.32f))
+                drawLine(color, Offset(s / 2, s * 0.46f), Offset(s / 2, s * 0.7f), stroke.width, StrokeCap.Round)
             }
         }
     }
