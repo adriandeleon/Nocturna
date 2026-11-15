@@ -29,6 +29,11 @@ class SummariesTest {
         infoLineSummary(Settings(showDate = false, showWeather = false, showNextAlarm = false, showNotifications = false)),
     )
 
+    @Test fun infoLineWithTheMoon() = assertEquals(
+        "Battery and moon",
+        infoLineSummary(Settings(showDate = false, showWeather = false, showNextAlarm = false, showNotifications = false, showMoon = true)),
+    )
+
     @Test fun infoLineWithNothing() = assertEquals(
         "Just the time",
         infoLineSummary(Settings(showDate = false, showWeather = false, showBattery = false, showNextAlarm = false, showNotifications = false)),

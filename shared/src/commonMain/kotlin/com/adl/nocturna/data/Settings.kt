@@ -34,6 +34,8 @@ data class Settings(
     val showNextAlarm: Boolean = true,
     /** "in 7 h 20 m" after the next alarm's time when it is within 12 hours. */
     val showTimeToAlarm: Boolean = true,
+    /** The moon's phase on the night clock, e.g. "Waxing gibbous" with a little drawing of it. */
+    val showMoon: Boolean = false,
     val showWeather: Boolean = true,
     /** Today's high and low next to the weather, or tomorrow's in the evening. */
     val showForecast: Boolean = true,

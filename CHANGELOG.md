@@ -25,6 +25,10 @@ one-line summary written for users.
   dimming off.
 - **Night mode:** when the room goes dark the clock turns dim red; without a light sensor it follows the time
   (22:00–07:00).
+- **The moon's phase on the night clock:** Settings › Show on the clock › *Moon phase* (off by default) adds
+  the moon's phase to the info line, a small drawing of the lit part with its name (*Waxing gibbous*), worked
+  out on the phone to within about a day, no network needed. It follows night mode's red, and Day mode keeps
+  its own moon.
 - **Tap to peek at the dim clock:** in the dark, a tap on the dim red clock brightens it for about six seconds,
   to a comfortable 40% of your brightest level and a soft warm colour, then it fades back; tap again during the
   peek for the controls. The screen saver peeks too, and a second tap closes it. Before an alarm, whichever is
@@ -81,6 +85,11 @@ one-line summary written for users.
   wake-up screen leaves the station playing after you dismiss the alarm.
 - **Skip the next alarm:** a repeating alarm can skip its next ring, for a day off, without being switched
   off and back on. *Undo skip* brings it back, and changing the alarm's time or days drops the skip.
+- **One-time alarms on a date:** an alarm without repeat days can be set for a day of your choice, such as a
+  flight on Friday, with *Date* on its card; the list shows the day (*Fri 21 Nov*). It rings once, at its time
+  on that day, and then switches itself off. Without a date a one-time alarm rings the next time its time comes,
+  as before. A date and repeat days don't go together: picking days takes the date off. Past dates can't be
+  picked, days off don't silence it, and switching it back on after its day takes the date off.
 - **Alarms that make sure you're awake:** each alarm has *To stop it*: *Just tap* (as before), *Solve a sum*
   or *Hold the button 3 s*. *Solve a sum* asks for one to three additions such as 37 + 48, typed on a numeric
   keypad (*Sums to stop an alarm* under Settings › Alarms); a wrong answer just brings a new sum, never a wait,

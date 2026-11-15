@@ -21,10 +21,10 @@ val SunriseWhite = Color(0xFFFFF3E0)
 /**
  * When the next of [alarms] rings after [now], or null when none is on. Only the alarms themselves count:
  * a snooze is not a new sunrise, and a skipped occurrence or a one-time alarm that was dismissed (and so
- * turned off) is not ahead any more.
+ * turned off) is not ahead any more, nor is one whose date has passed.
  */
 fun nextAlarmRing(alarms: List<Alarm>, now: Instant, zone: TimeZone): Instant? =
-    alarms.filter { it.enabled }.minOfOrNull { it.nextTrigger(now, zone) }
+    alarms.filter { it.enabled }.mapNotNull { it.nextTrigger(now, zone) }.minOrNull()
 
 /**
  * How far into the sunrise [now] is, from 0 when it starts [windowMinutes] before [ring] to 1 when the

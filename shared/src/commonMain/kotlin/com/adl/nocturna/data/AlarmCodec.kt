@@ -24,6 +24,7 @@ object AlarmCodec {
                     it.station?.let { st -> put("station", buildJsonObject { put("name", st.name); put("url", st.url) }) }
                     it.skipDate?.let { d -> put("skipDate", d.toString()) }
                     if (it.skipDaysOff) put("skipDaysOff", true)
+                    it.ringDate?.let { d -> put("date", d.toString()) }
                     if (it.challenge != DismissChallenge.TAP) put("challenge", it.challenge.key)
                 }
             )
@@ -35,20 +36,26 @@ object AlarmCodec {
         val arr = Json.parseToJsonElement(json) as? JsonArray ?: throw IllegalArgumentException("Not a JSON array")
         return arr.map { element ->
             val o = element as? JsonObject ?: throw IllegalArgumentException("Not a JSON object")
+            val days = o.optInt("days", 0) and Alarm.ALL_DAYS
             Alarm(
                 id = o.getLong("id"),
                 hour = o.getInt("hour").coerceIn(0, 23),
                 minute = o.getInt("minute").coerceIn(0, 59),
-                days = o.optInt("days", 0) and Alarm.ALL_DAYS,
+                days = days,
                 enabled = o.optBoolean("enabled", true),
                 label = o.optString("label", ""),
                 station = o.optObject("station")?.let { st ->
                     st.optString("url").takeIf { it.isNotBlank() }?.let { Station(st.optString("name").ifBlank { it }, it) }
                 },
-                skipDate = o.optString("skipDate").takeIf { it.isNotBlank() }?.let { runCatching { LocalDate.parse(it) }.getOrNull() },
+                skipDate = o.optDate("skipDate"),
                 skipDaysOff = o.optBoolean("skipDaysOff", false),
+                // A date and repeat days never go together: the days win.
+                date = if (days != 0) null else o.optDate("date"),
                 challenge = DismissChallenge.of(o.optString("challenge")),
             )
         }
     }
+
+    private fun JsonObject.optDate(key: String): LocalDate? =
+        optString(key).takeIf { it.isNotBlank() }?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
 }
