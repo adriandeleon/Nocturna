@@ -1,0 +1,127 @@
+package com.adl.nocturna.text
+
+/** Mexican Spanish, with "tú": warm and plain, like the English. */
+object SpanishStrings : Strings {
+    override fun andList(items: List<String>) =
+        if (items.size <= 1) items.joinToString() else items.dropLast(1).joinToString(", ") + " y " + items.last()
+
+    override fun hoursMinutes(hours: Long, minutes: Long) = when {
+        hours == 0L -> "$minutes min"
+        minutes == 0L -> "$hours h"
+        else -> "$hours h $minutes min"
+    }
+
+    override val off = "Desactivado"
+    override fun minutesShort(minutes: Int) = "$minutes min"
+
+    override fun inTime(time: String) = "en $time"
+    override fun inUnderMinutes(minutes: Long) = "en < $minutes min"
+
+    override val moonNew = "Luna nueva"
+    override val moonWaxingCrescent = "Creciente"
+    override val moonFirstQuarter = "Cuarto creciente"
+    override val moonWaxingGibbous = "Gibosa creciente"
+    override val moonFull = "Luna llena"
+    override val moonWaningGibbous = "Gibosa menguante"
+    override val moonLastQuarter = "Cuarto menguante"
+    override val moonWaningCrescent = "Menguante"
+
+    override val once = "Una vez"
+    override val repeats = "Se repite"
+    override fun datePassed(day: String) = "$day · ya pasó"
+    override fun alarmDescription(repeat: String, skipping: String?, next: String) =
+        repeat + skipping?.let { " · se omite el $it" }.orEmpty() + " · próxima: $next"
+    override fun rampLabel(seconds: Int) = if (seconds == 0) "no" else "$seconds s hasta el volumen máximo"
+    override fun sumsLabel(count: Int, easiest: Boolean, hardest: Boolean) = when {
+        easiest -> "$count (fácil)"
+        hardest -> "$count (difícil)"
+        else -> "$count"
+    }
+
+    override fun bedtimeReminder(sleep: String, alarmTime: String) =
+        "Hora de dormir: $sleep antes de tu alarma de ${article(alarmTime)} $alarmTime"
+
+    override val challengeTap = "Solo tocar"
+    override val challengeSum = "Resolver una suma"
+    override fun challengeHold(seconds: Long) = "Mantener el botón $seconds s"
+    override fun sumSpoken(a: Int, b: Int) = "$a más $b"
+
+    override val goodMorning = "¡Buenos días!"
+    override val goodAfternoon = "¡Buenas tardes!"
+    override val goodEvening = "¡Buenas noches!"
+    override val calendarMonth = "Mes"
+    override val calendarWeek = "Semana"
+    override val calendarDay = "Día"
+    override fun meetingIn(minutes: Int, time: String) = "En $minutes min · $time"
+    override fun meetingLine(title: String, minutes: Int) = "$title en $minutes min"
+    override val nextEvent = "Próximo evento"
+    override val focus = "Concentración"
+    override val focusBreak = "Descanso"
+    override val focusLongBreak = "Descanso largo"
+    override fun focusLabel(phase: String, paused: Boolean, left: String) =
+        "$phase${if (paused) " en pausa" else ""} · quedan $left"
+
+    override val styleDigital = "Digital"
+    override val styleAnalog = "Analógico"
+    override val hour24 = "24 horas"
+    override val hour12 = "12 horas"
+    override val seconds = "segundos"
+    override val fontThin = "Delgada"
+    override val fontLight = "Ligera"
+    override val fontRegular = "Normal"
+    override val fontCondensed = "Condensada"
+    override val fontMono = "Mono"
+    override val fontSerif = "Serif"
+    override val infoDate = "fecha"
+    override val infoWeather = "clima"
+    override val infoBattery = "batería"
+    override val infoNextAlarm = "próxima alarma"
+    override val infoMoon = "luna"
+    override val infoNotifications = "notificaciones"
+    override val justTheTime = "Solo la hora"
+    override val dimmingOff = "Atenuación desactivada"
+    override val followsRoomLight = "Sigue la luz del cuarto"
+    override val phoneBrightness = "Brillo del teléfono"
+    override val nightMode = "modo noche"
+    override val dayModeAlways = "Siempre"
+    override val dayModeAlwaysOn = "Siempre activado"
+    override val dayModeScheduled = "Con horario"
+    override val noDays = "Ningún día"
+    override val everyDay = "Todos los días"
+    override val weekdays = "Entre semana"
+    override val weekends = "Fines de semana"
+    override val yourLocation = "Tu ubicación"
+    override val noPlaceSet = "Sin lugar definido"
+    override val startOnCharge = "Se abre cuando conectas el teléfono bloqueado"
+    override val startYourself = "Como protector de pantalla, o ábrelo tú"
+    override val noAlarmsYet = "Todavía no hay alarmas"
+    override fun alarmsOn(on: Int, total: Int) = "$on de $total ${if (on == 1) "activada" else "activadas"}"
+    override fun dayModeNow(active: Boolean) = if (active) "Modo día ahora" else "Solo reloj ahora"
+    override fun pickScheduleDays(state: String) = "$state. Elige los días en que empieza el modo día."
+    override fun switchedFromClock(state: String, until: String?) =
+        if (until == null) "$state, cambiado desde el reloj" else "$state, cambiado desde el reloj hasta el $until"
+    override fun stateUntil(state: String, until: String) = "$state, hasta el $until"
+
+    override val soundWhite = "Ruido blanco"
+    override val soundWhiteAbout = "Un siseo parejo en todos los tonos"
+    override val soundPink = "Ruido rosa"
+    override val soundPinkAbout = "Más suave y cálido, como un viento constante"
+    override val soundBrown = "Ruido café"
+    override val soundBrownAbout = "Un retumbo profundo, como una cascada a lo lejos"
+    override val soundRain = "Lluvia"
+    override val soundRainAbout = "Lluvia constante con gotas que caen cerca"
+    override val soundSurf = "Oleaje"
+    override val soundSurfAbout = "Olas lentas que llegan a la orilla"
+
+    override fun version(name: String, code: Int) = "Versión $name ($code)"
+
+    override fun backupSummary(alarms: Int, stations: Int) =
+        "${if (alarms == 1) "1 alarma" else "$alarms alarmas"}, " +
+            if (stations == 1) "1 estación de radio" else "$stations estaciones de radio"
+    override val backupNotABackup = "Este archivo no es un respaldo de Nocturna."
+    override val backupNewerFormat = "Este respaldo es de una versión más nueva de Nocturna. Actualiza la app y vuelve a importarlo."
+    override val backupDamaged = "Este respaldo está dañado y no se puede importar."
+
+    /** "la" before one o'clock ("la 1:30"), "las" before any other hour ("las 6:30", "las 13:00"). */
+    private fun article(time: String) = if (time.takeWhile { it.isDigit() }.toIntOrNull() == 1) "la" else "las"
+}

@@ -1,0 +1,330 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Spanish (Mexican usage, tú) for the shared screens. Same keys as values/strings.xml; a key missing here
+  shows in English. Android's own Spanish names for its settings screens: "No molestar",
+  "Mostrar sobre otras apps", "Acceso a notificaciones".
+-->
+<resources>
+    <!-- Shared -->
+    <string name="ok">Aceptar</string>
+    <string name="cancel">Cancelar</string>
+
+    <!-- Settings hub -->
+    <string name="settings_issue_notifications_title">Las notificaciones están desactivadas</string>
+    <string name="settings_issue_notifications_detail">Las alarmas suenan igual, pero con el teléfono bloqueado no aparece una pantalla para detenerlas</string>
+    <string name="settings_issue_turn_on">Activar</string>
+    <string name="settings_issue_full_screen_title">Las alarmas en pantalla completa están desactivadas</string>
+    <string name="settings_issue_full_screen_detail">Una alarma que suena no puede ocupar la pantalla bloqueada</string>
+    <string name="settings_issue_allow">Permitir</string>
+    <string name="settings_issue_notification_access_title">Los íconos de notificaciones necesitan acceso</string>
+    <string name="settings_issue_notification_access_detail">O desactívalos en Mostrar en el reloj</string>
+    <string name="settings_issue_grant">Dar acceso</string>
+    <string name="settings_issue_calendar_title">Los eventos de hoy necesitan acceso al calendario</string>
+    <string name="settings_issue_calendar_detail">Mientras tanto, el modo día muestra solo la hoja del calendario</string>
+    <string name="settings_issue_overlay_title">Abrir al cargar necesita un permiso</string>
+    <string name="settings_issue_overlay_detail">Permite “Mostrar sobre otras apps”</string>
+    <string name="settings_group_clock">Reloj</string>
+    <string name="settings_clock_face">Carátula del reloj</string>
+    <string name="settings_show_on_clock">Mostrar en el reloj</string>
+    <string name="settings_brightness">Brillo y modo noche</string>
+    <string name="settings_day_mode">Modo día</string>
+    <string name="settings_group_alarms_radio">Alarmas y radio</string>
+    <string name="settings_alarms">Alarmas</string>
+    <string name="settings_radio_stations">Estaciones de radio</string>
+    <string name="settings_none">Ninguna</string>
+    <string name="settings_group_more">Más</string>
+    <string name="settings_weather">Clima</string>
+    <string name="settings_starting">Cómo se abre el reloj</string>
+    <string name="settings_about">Acerca de Nocturna</string>
+    <string name="settings_about_summary">%1$s · Respaldo</string>
+    <string name="notifications_off_title">Las notificaciones están desactivadas</string>
+    <string name="notifications_off_detail">Las alarmas sonarán igual, pero con el teléfono bloqueado no tendrás una pantalla para detenerlas. Activa las notificaciones de Nocturna.</string>
+    <string name="notifications_off_fix">Activar notificaciones</string>
+    <string name="settings_needs_attention">Necesita tu atención</string>
+
+    <!-- Backup -->
+    <string name="backup_title">Respaldo</string>
+    <string name="backup_export">Exportar…</string>
+    <string name="backup_export_detail">Guarda tus ajustes, estaciones de radio y alarmas en un archivo</string>
+    <string name="backup_import">Importar…</string>
+    <string name="backup_import_detail">Los reemplaza con los de un archivo de respaldo</string>
+    <string name="backup_no_photo">La foto del modo día no se incluye en el respaldo.</string>
+    <string name="backup_import_question">¿Importar este respaldo?</string>
+    <string name="backup_replace">Reemplazar</string>
+    <string name="backup_saved">Respaldo guardado</string>
+    <string name="backup_imported">Respaldo importado</string>
+    <string name="backup_cant_export">No se pudo exportar</string>
+    <string name="backup_cant_export_detail">No se pudo guardar el respaldo ahí. Prueba en otro lugar.</string>
+    <string name="backup_cant_import">No se pudo importar</string>
+    <string name="backup_cant_import_detail">No se pudo abrir el archivo. No se cambió nada.</string>
+    <string name="backup_import_detail_summary">%1$s; reemplaza tus ajustes, estaciones de radio y alarmas actuales.</string>
+
+    <!-- Components -->
+    <string name="color_from_wallpaper">Del fondo de pantalla</string>
+
+    <!-- Clock face, info line and brightness pages -->
+    <string name="clock_look">Aspecto</string>
+    <string name="clock_style">Estilo</string>
+    <string name="clock_font">Fuente</string>
+    <string name="clock_colour">Color</string>
+    <string name="clock_time">Hora</string>
+    <string name="clock_24h">Formato de 24 horas</string>
+    <string name="clock_show_seconds">Mostrar segundos</string>
+    <string name="info_hint">La línea de detalles bajo la hora</string>
+    <string name="info_date">Fecha</string>
+    <string name="info_battery">Batería</string>
+    <string name="info_next_alarm">Próxima alarma</string>
+    <string name="info_next_alarm_detail">En las próximas 24 horas</string>
+    <string name="info_time_to_alarm">Tiempo para la alarma</string>
+    <string name="info_time_to_alarm_detail">“en 7 h 20 min” cuando falten menos de 12 horas</string>
+    <string name="info_moon">Fase lunar</string>
+    <string name="info_moon_detail">“Gibosa creciente” de noche; el modo día dibuja su propia luna</string>
+    <string name="info_forecast">Pronóstico</string>
+    <string name="info_forecast_detail">Máxima y mínima de hoy; las de mañana por la noche</string>
+    <string name="info_place_units">Lugar y unidades</string>
+    <string name="info_notifications">Notificaciones</string>
+    <string name="info_notification_icons">Íconos de notificaciones</string>
+    <string name="info_notification_icons_detail">Íconos de las apps con notificaciones</string>
+    <string name="info_needs_notification_access">Necesita acceso a notificaciones</string>
+    <string name="info_grant_notification_access">Dar acceso a notificaciones</string>
+    <string name="brightness_no_sensor">Sin sensor de luz: el modo noche sigue al reloj (22:00–07:00)</string>
+    <string name="brightness_dimming">Atenuación</string>
+    <string name="brightness_dimming_detail">También desde el reloj: tócalo y luego el botón de luna o sol</string>
+    <string name="brightness_title">Brillo</string>
+    <string name="brightness_room_light">Ajustar a la luz del cuarto</string>
+    <string name="brightness_room_light_off">Desactivado: el brillo del teléfono</string>
+    <string name="brightness_darkest">Más oscuro</string>
+    <string name="brightness_brightest">Más brillante</string>
+    <string name="brightness_tap_to_peek">Tocar para ver</string>
+    <string name="brightness_tap_to_peek_detail">Un toque en el reloj atenuado lo ilumina unos segundos; toca otra vez para ver los controles</string>
+    <string name="brightness_wave_to_peek">Saludar para ver</string>
+    <string name="brightness_wave_to_peek_detail">Pasar la mano sobre la parte de arriba del teléfono también lo ilumina, de noche</string>
+    <string name="brightness_night_mode">Modo noche</string>
+    <string name="brightness_night_mode_detail">Reloj rojo y tenue cuando el cuarto está oscuro</string>
+    <string name="brightness_turn_on_below">Activar por debajo de</string>
+    <string name="brightness_screen_care">Cuidado de la pantalla</string>
+    <string name="brightness_burn_in">Protección contra quemado</string>
+    <string name="brightness_burn_in_detail">Mueve el reloj despacio por la pantalla</string>
+    <string name="brightness_light_sensor">El sensor de luz marca %1$s lux ahora</string>
+
+    <!-- Day mode page -->
+    <string name="daypage_hint">El reloj junto a un calendario, para un soporte de escritorio. También desde el reloj: tócalo y luego Modo día</string>
+    <string name="daypage_show">Mostrar modo día</string>
+    <string name="daypage_schedule">Horario</string>
+    <string name="daypage_from">Desde</string>
+    <string name="daypage_until">Hasta</string>
+    <string name="daypage_calendar">Calendario</string>
+    <string name="daypage_events">Eventos de hoy</string>
+    <string name="daypage_needs_calendar">Necesita acceso al calendario</string>
+    <string name="daypage_events_detail">De los calendarios de este teléfono</string>
+    <string name="daypage_allow_calendar">Permitir acceso al calendario</string>
+    <string name="daypage_calendar_view">Vista del calendario</string>
+    <string name="daypage_calendar_swipe">En el reloj, desliza la hoja del calendario para cambiar entre mes, semana y día</string>
+    <string name="daypage_chime">Aviso antes de reuniones</string>
+    <string name="daypage_next_hours">Próximas horas</string>
+    <string name="daypage_next_hours_detail">La temperatura de las próximas horas bajo el clima, y la probabilidad de lluvia</string>
+    <string name="daypage_focus_timer">Temporizador de concentración</string>
+    <string name="daypage_focus">Concentración</string>
+    <string name="daypage_short_break">Descanso corto</string>
+    <string name="daypage_long_break">Descanso largo</string>
+    <string name="daypage_background">Fondo</string>
+    <string name="daypage_monthly_pictures">Imágenes del mes</string>
+    <string name="daypage_your_photo">Tu foto</string>
+    <string name="daypage_monthly_detail">Una imagen alegre para cada mes que sigue la hora del día. Toca para usar tu propia foto</string>
+    <string name="daypage_change_photo">Toca para cambiarla</string>
+    <string name="daypage_photo_failed">No se pudo abrir esa foto. Prueba con otra</string>
+    <string name="daypage_use_monthly">Usar las imágenes del mes</string>
+    <string name="daypage_until_next_day">%1$s del día siguiente</string>
+    <string name="daypage_chime_detail">La nota cuenta los minutos para las reuniones de la próxima hora. El aviso es un tono suave al volumen de las notificaciones, solo mientras se ve el modo día, y no en silencio ni en No molestar</string>
+    <string name="daypage_focus_detail">Toca el reloj y elige Concentración para empezar. Después de cada cuarto bloque, el descanso es largo. Un tono suave marca cada cambio, al volumen de las notificaciones. Al salir del modo día se detiene el temporizador</string>
+    <string name="daypage_brightest_detail">El modo día sigue la luz del cuarto hasta este punto, nunca por encima del máximo del reloj. Una pantalla más tenue se desgasta mucho más despacio</string>
+    <string name="daypage_phone_brightness">El modo día usa el brillo del teléfono. Para bajarlo, activa Ajustar a la luz del cuarto en Brillo y modo noche</string>
+
+    <!-- Settings screen -->
+    <string name="settings_title">Ajustes</string>
+    <string name="settings_about_title">Acerca de</string>
+    <string name="settings_back">‹ Atrás</string>
+
+    <!-- Starting the clock page -->
+    <string name="start_while_charging">Mientras carga</string>
+    <string name="start_screen_saver">Protector de pantalla</string>
+    <string name="start_screen_saver_detail">Elige Nocturna y configúralo para que se inicie mientras carga</string>
+    <string name="start_open_charging">Abrir al cargar</string>
+    <string name="start_open_charging_detail">Abre el reloj cuando conectas el teléfono bloqueado</string>
+    <string name="start_allow_overlay">Permitir “Mostrar sobre otras apps”</string>
+    <string name="start_at_night">De noche</string>
+    <string name="start_full_screen_hint">Android necesita tu permiso para que una alarma que suena ocupe la pantalla bloqueada</string>
+    <string name="start_allow_full_screen">Permitir alarmas en pantalla completa</string>
+
+    <!-- About -->
+    <string name="about_description">Un reloj de buró para Android: un reloj grande y atenuable para tu mesita de noche mientras carga el teléfono.</string>
+    <string name="about_source">Código fuente</string>
+    <string name="about_report">Reportar un problema</string>
+    <string name="about_report_detail">Abre un reporte en GitHub</string>
+    <string name="about_licence">Licencia</string>
+    <string name="about_made_by">Hecho por Adrián De León</string>
+    <string name="about_libraries">Bibliotecas de código abierto</string>
+    <string name="about_data">Datos</string>
+    <string name="about_radio_note">Las estaciones de radio se reproducen desde sus propios servidores; Nocturna no incluye nada de su contenido.</string>
+
+    <!-- Credits -->
+    <string name="credit_androidx">Core, Activity, Lifecycle y SavedState</string>
+    <string name="credit_compose">Interfaz y Material 3</string>
+    <string name="credit_compose_mp">Interfaz compartida: runtime, foundation, UI, Material 3 y recursos</string>
+    <string name="credit_media3">ExoPlayer, HLS y sesión multimedia</string>
+    <string name="credit_datetime">Fechas, horas y zonas horarias</string>
+    <string name="credit_serialization">JSON de los ajustes y alarmas guardados</string>
+    <string name="credit_coroutines">Trabajo en segundo plano y actualizaciones en vivo</string>
+    <string name="credit_atomicfu">Cambios seguros a los ajustes</string>
+    <string name="credit_kotlin">JetBrains y colaboradores de Kotlin</string>
+    <string name="credit_open_meteo">Clima y búsqueda de ciudades</string>
+    <string name="credit_geonames">Nombres de lugares para la búsqueda de ciudades</string>
+
+    <!-- Do Not Disturb at night -->
+    <string name="dnd_not_allowed">No permitido: Nocturna no tiene acceso a No molestar</string>
+    <string name="dnd_not_turned_on">No se activa: tu configuración de No molestar silenciaría las alarmas</string>
+    <string name="dnd_detail">Activa No molestar mientras el reloj está en pantalla de noche</string>
+    <string name="dnd_title">No molestar de noche</string>
+    <string name="dnd_allow_access">Permitir acceso a No molestar</string>
+    <string name="dnd_allow_alarms">Permite las alarmas en la configuración de No molestar de tu teléfono y Nocturna lo activará de noche.</string>
+    <string name="dnd_continue">Continuar</string>
+    <string name="dnd_hours">De %1$s a %2$s, o desde que empieza el modo noche por la tarde. Solo prioridad, así que las alarmas sí suenan.</string>
+    <string name="dnd_explain">Para silenciar las notificaciones de noche, Nocturna necesita tu permiso para cambiar No molestar. En la siguiente pantalla, busca Nocturna y permítelo. Solo activa el modo de prioridad, así que las alarmas sí suenan, y deja todo como estaba cuando el reloj sale de la pantalla o en la mañana.</string>
+
+    <!-- Weather page -->
+    <string name="weather_hidden">El clima está oculto</string>
+    <string name="weather_hidden_detail">Toca para mostrarlo bajo el reloj</string>
+    <string name="weather_place">Lugar</string>
+    <string name="weather_use_location">Usar mi ubicación</string>
+    <string name="weather_use_location_detail">Solo ubicación aproximada</string>
+    <string name="weather_units">Unidades</string>
+    <string name="weather_temperature">Temperatura</string>
+    <string name="weather_attribution">Datos del clima de Open-Meteo.com (CC BY 4.0). Búsqueda de ciudades basada en GeoNames.</string>
+    <string name="weather_city_fallback">Se usa cuando tu ubicación no está disponible</string>
+    <string name="weather_search_city">Busca una ciudad</string>
+    <string name="weather_find">Buscar</string>
+    <string name="weather_fahrenheit">Fahrenheit (°F)</string>
+    <string name="weather_celsius">Celsius (°C)</string>
+    <string name="weather_city">Ciudad: %1$s</string>
+    <string name="weather_city_not_set">Ciudad: sin definir</string>
+    <string name="weather_no_match">Sin resultados (o sin conexión)</string>
+
+    <!-- Other time zones -->
+    <string name="zones_title">Otras zonas horarias</string>
+    <string name="zones_remove">Quitar</string>
+    <string name="zones_add">Agregar una zona horaria</string>
+    <string name="zones_add_another">Agregar otra</string>
+    <string name="zones_search">Ciudad o zona horaria</string>
+    <string name="zones_no_match">No hay ninguna ciudad ni zona horaria con ese nombre</string>
+    <string name="zones_hint">Hasta %1$d, bajo la hora del reloj de escritorio, con +1 o −1 cuando allá ya es otro día. Se ocultan cuando no caben en la pantalla</string>
+
+    <!-- Radio stations page -->
+    <string name="stations_sleep_sounds">Sonidos para dormir</string>
+    <string name="stations_play">▶  Reproducir</string>
+    <string name="stations_stop">■  Detener</string>
+    <string name="stations_add_title">Agregar una estación</string>
+    <string name="stations_name">Nombre</string>
+    <string name="stations_url">URL de la transmisión</string>
+    <string name="stations_add">Agregar</string>
+    <string name="stations_hint">Elige qué reproduce el botón Radio del reloj: una estación en línea (sirve cualquier URL de transmisión MP3, AAC o HLS) o uno de los sonidos para dormir de abajo.</string>
+    <string name="stations_sounds_hint">Se generan en tu teléfono, así que suenan sin internet. Se repiten el tiempo que quieras, y el temporizador para dormir los apaga poco a poco, como a una estación.</string>
+
+    <!-- Alarms page -->
+    <string name="alarms_add">+  Agregar alarma</string>
+    <string name="alarms_cancel_snooze">Cancelar posposición</string>
+    <string name="alarms_none">Todavía no hay alarmas.</string>
+    <string name="alarms_behaviour">Cómo suenan las alarmas</string>
+    <string name="alarms_snooze_length">Duración de posponer</string>
+    <string name="alarms_gentle">Despertar suave</string>
+    <string name="alarms_vibrate">Vibrar</string>
+    <string name="alarms_wave">Saludar para posponer</string>
+    <string name="alarms_wave_detail">Pasar la mano sobre la parte de arriba del teléfono pospone una alarma que suena</string>
+    <string name="alarms_sums">Sumas para detener una alarma</string>
+    <string name="alarms_show_weather">Mostrar el clima</string>
+    <string name="alarms_show_weather_detail">El clima de hoy bajo la hora cuando suena una alarma</string>
+    <string name="alarms_sunrise">Amanecer antes de las alarmas</string>
+    <string name="alarms_sunrise_detail">El reloj se ilumina y entibia poco a poco hasta un blanco suave antes de que suene una alarma, del rojo de la noche pasando por el ámbar. No antes de una alarma pospuesta.</string>
+    <string name="alarms_bedtime">Recordatorio para dormir</string>
+    <string name="alarms_date">Fecha</string>
+    <string name="alarms_date_none">Suena la próxima vez que llegue esta hora</string>
+    <string name="alarms_date_set">Suena una vez, ese día</string>
+    <string name="alarms_pick_date">Elegir fecha</string>
+    <string name="alarms_clear">Borrar</string>
+    <string name="alarms_undo_skip">Deshacer omisión</string>
+    <string name="alarms_skip_next">Omitir la próxima</string>
+    <string name="alarms_delete">Eliminar</string>
+    <string name="alarms_sound">Sonido</string>
+    <string name="alarms_tone">Tono de alarma</string>
+    <string name="alarms_to_stop">Para detenerla</string>
+    <string name="alarms_skip_days_off">Omitir en días libres</string>
+    <string name="alarms_skip_days_off_off">No sonar en los días festivos de tu calendario</string>
+    <string name="alarms_skip_days_off_on">No suena en eventos de todo el día como festivos y vacaciones</string>
+    <string name="alarms_skip_days_off_no_access">Necesita acceso al calendario; mientras tanto, esta alarma también suena en días libres</string>
+    <string name="alarms_days_off">Días libres</string>
+    <string name="alarms_default_words">Usar las palabras predeterminadas</string>
+    <string name="alarms_label">Etiqueta</string>
+    <string name="alarms_snoozed_until">Pospuesta hasta %1$s</string>
+    <string name="alarms_deleted">Alarma %1$s eliminada</string>
+    <string name="alarms_undo">Deshacer</string>
+    <string name="alarms_bedtime_detail">Una notificación discreta la noche antes de una alarma de la mañana, un cuarto de hora antes de que tengas que dormir para descansar %1$s. No si el reloj ya está en pantalla.</string>
+    <string name="alarms_needs_notifications">Necesita notificaciones.</string>
+    <string name="alarms_already_passed">%1$s del %2$s ya pasó</string>
+    <string name="alarms_stream_fallback">Si la estación no empieza a sonar en %1$d s, suena el tono de alarma.</string>
+    <string name="alarms_skips_day">Omite %1$s · %2$s</string>
+    <string name="alarms_days_off_detail">Las alarmas con Omitir en días libres no suenan los días con un evento de todo el día cuyo título tenga alguna de estas palabras. Sepáralas con comas; no importan las mayúsculas ni los acentos.</string>
+
+    <!-- The clock's buttons -->
+    <string name="clock_clock_only">Solo reloj</string>
+    <string name="clock_focus_on">■  Concentración</string>
+    <string name="clock_radio_on">■  Radio</string>
+    <string name="clock_radio_off">▶  Radio</string>
+    <string name="clock_sleep_off">Dormir: no</string>
+    <string name="clock_sleep_minutes">Dormir: %1$d min</string>
+    <string name="clock_dimming_on">Atenuación activada</string>
+    <string name="brightness_dimming_off">Atenuación desactivada</string>
+
+    <!-- Alarm screen -->
+    <string name="alarm_back">Volver</string>
+    <string name="alarm_default_label">Alarma</string>
+    <string name="alarm_hold_to_stop">Mantén para detener</string>
+    <string name="alarm_dismiss">Descartar</string>
+    <string name="alarm_keep_listening">Seguir escuchando</string>
+    <string name="alarm_snooze">Posponer %1$d min</string>
+
+    <!-- Dismiss challenges -->
+    <string name="challenge_not_quite">Casi. Aquí va otra.</string>
+    <string name="challenge_delete">Borrar</string>
+    <string name="challenge_check">Revisar respuesta</string>
+    <string name="challenge_sum_spoken">¿%1$s es igual a?</string>
+    <string name="challenge_answer_empty">Tu respuesta, vacía</string>
+    <string name="challenge_answer">Tu respuesta, %1$s</string>
+    <string name="challenge_sum_count">Suma %1$d de %2$d</string>
+    <plurals name="challenge_hold_description">
+        <item quantity="one">%1$s: mantén presionado %2$d segundo</item>
+        <item quantity="many">%1$s: mantén presionado %2$d segundos</item>
+        <item quantity="other">%1$s: mantén presionado %2$d segundos</item>
+    </plurals>
+    <string name="challenge_keep_holding">Sigue presionando</string>
+    <string name="challenge_keep_holding_dots">Sigue presionando…</string>
+
+    <!-- Day mode -->
+    <string name="day_focus_actions">Pausar, saltar o detener el temporizador de concentración</string>
+    <string name="day_resume">Reanudar</string>
+    <string name="day_pause">Pausar</string>
+    <string name="day_skip">Saltar</string>
+    <string name="day_stop">Detener</string>
+    <string name="day_open_calendar">Abrir en tu calendario</string>
+    <string name="day_turn_on_events">Activa Eventos de hoy en Ajustes para ver tu día aquí</string>
+    <string name="day_allow_calendar">Permite el acceso al calendario en Ajustes para ver tu día aquí</string>
+    <string name="day_nothing_today">No hay nada en tu calendario hoy</string>
+    <string name="day_all_day">Todo el día</string>
+    <string name="day_event_placeholder">Evento</string>
+    <string name="day_open_today">Abrir hoy en tu calendario</string>
+    <string name="day_allow_calendar_note">Permite el acceso al calendario en Ajustes para ver aquí los eventos de hoy</string>
+    <string name="day_nothing_else">No hay nada más en tu calendario hoy. ¡Disfruta!</string>
+    <string name="day_week_number">Semana %1$d</string>
+    <string name="day_more">+%1$d más</string>
+    <string name="day_more_today">+%1$d más hoy</string>
+    <string name="day_now_until">Ahora · hasta %1$s</string>
+    <string name="day_show_view">Ver vista de %1$s</string>
+</resources>

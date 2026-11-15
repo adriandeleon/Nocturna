@@ -7,6 +7,9 @@
 
 A bedside clock for Android: a big, dimmable clock for the nightstand while your phone charges.
 
+Nocturna is in English and Spanish (Mexican usage); it follows your phone's language, and any other language
+gets English.
+
 ![Nocturna showing the time, date and battery level on a black screen](docs/images/clock.png)
 
 ## Features
