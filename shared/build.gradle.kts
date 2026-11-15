@@ -47,9 +47,12 @@ kotlin {
             implementation(libs.compose.mp.ui)
             api(libs.kotlinx.datetime)
             implementation(libs.kotlinx.serialization.json)
+            api(libs.kotlinx.coroutines.core)
+            implementation(libs.atomicfu)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+            implementation(libs.kotlinx.coroutines.test)
         }
     }
 }

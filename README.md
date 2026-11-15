@@ -70,11 +70,11 @@ the code that doesn't depend on Android, ready for an iOS app later. Both use th
 | `dream` | `NocturnaDream`, the screen saver |
 | `alarm` | Scheduling (`AlarmManager.setAlarmClock`), the ringing service, the wake-up screen, boot receiver |
 | `radio` | Media3 `RadioService` and the `Radio` controller with the sleep timer |
-| `weather` | Open-Meteo current conditions and city search |
+| `weather` | Open-Meteo current conditions, forecast and city search; the phone's location (`app`) |
 | `notify` | Notification listener that mirrors notification icons |
 | `charging` | Foreground service that opens the clock when the charger is connected |
 | `settings` | The Settings hub and its pages: clock face, info line, brightness, day mode, weather, starting, alarms, stations, About |
-| `data` | Settings and alarms, stored as JSON in SharedPreferences |
+| `data` | Settings and alarms and their stores, kept as JSON in device-protected SharedPreferences on Android |
 
 ## License
 

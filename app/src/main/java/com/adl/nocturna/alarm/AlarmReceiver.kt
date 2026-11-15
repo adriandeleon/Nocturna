@@ -31,8 +31,7 @@ class BootReceiver : BroadcastReceiver() {
         // NocturnaApp.onCreate has already loaded the stores. After the first unlock, load them again:
         // that is when data from older versions (in normal storage) can be moved to device storage.
         if (intent.action == Intent.ACTION_BOOT_COMPLETED || intent.action == Intent.ACTION_MY_PACKAGE_REPLACED) {
-            SettingsStore.init(context)
-            AlarmStore.init(context)
+            Storage.loadStores(context)
         }
         AlarmScheduler.reschedule(context)
         if (SettingsStore.current.autoStartOnCharge && Storage.isUnlocked(context) &&

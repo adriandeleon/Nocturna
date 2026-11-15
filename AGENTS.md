@@ -60,6 +60,10 @@ The debug build installs as `com.adl.nocturna.debug`, beside a release build.
 - `local.properties` is not committed; CI writes none, since the runner's `ANDROID_HOME` is enough.
 - Exact alarms: `USE_EXACT_ALARM` on API 33+, `SCHEDULE_EXACT_ALARM` below it. Alarms go through
   `AlarmManager.setAlarmClock` and are rescheduled after boot.
+- `SettingsStore` and `AlarmStore` live in `:shared` and keep their JSON in a `KeyValueStore`. On Android,
+  `Storage.loadStores` gives them SharedPreferences in **device-protected** storage, so alarms load before
+  the first unlock after a reboot; a store opened anywhere else breaks that. `AlarmStore` calls back into
+  `AlarmScheduler` through the `reschedule` it was loaded with.
 - `:shared` builds for iOS too, so `commonMain` takes only Kotlin and multiplatform libraries: no `java.*`
   (`Math`, `java.time`, `String.format`), no `android.*`, no `org.json`. Only the metadata compile above
   catches a slip; the Android build alone does not. Its iOS targets link only on macOS, but

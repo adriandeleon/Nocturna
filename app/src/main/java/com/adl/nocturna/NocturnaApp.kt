@@ -5,15 +5,13 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import com.adl.nocturna.alarm.AlarmScheduler
 import com.adl.nocturna.charging.ChargingService
-import com.adl.nocturna.data.AlarmStore
 import com.adl.nocturna.data.SettingsStore
 import com.adl.nocturna.data.Storage
 
 class NocturnaApp : Application() {
     override fun onCreate() {
         super.onCreate()
-        SettingsStore.init(this)
-        AlarmStore.init(this)
+        Storage.loadStores(this)
         createChannels()
         AlarmScheduler.reschedule(this)
         // Before the first unlock after a reboot only alarm components may run.

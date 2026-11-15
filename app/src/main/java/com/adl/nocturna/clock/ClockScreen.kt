@@ -72,6 +72,7 @@ import com.adl.nocturna.ui.Glyph
 import com.adl.nocturna.ui.GlyphIcon
 import com.adl.nocturna.ui.DeskNavy
 import com.adl.nocturna.ui.NightRed
+import com.adl.nocturna.weather.DeviceLocation
 import com.adl.nocturna.weather.WeatherRepository
 import com.adl.nocturna.weather.pickForecast
 import kotlinx.coroutines.delay
@@ -138,7 +139,7 @@ fun ClockScreen(
     LaunchedEffect(settings.showWeather, settings.weatherUseDeviceLocation, settings.weatherLat, settings.weatherLon) {
         if (!settings.showWeather) return@LaunchedEffect
         while (true) {
-            WeatherRepository.refreshIfStale(context, settings)
+            WeatherRepository.refreshIfStale(settings) { DeviceLocation.get(context) }
             delay(10 * 60_000L)
         }
     }
