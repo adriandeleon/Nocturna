@@ -275,7 +275,7 @@ private fun DrawScope.cloud(x: Float, y: Float, w: Float, color: Color) {
  * point below it, as if on a stem, and turns with the lean.
  */
 private fun DrawScope.flower(spot: Offset, r: Float, petals: Color, sway: Float, alpha: Float) {
-    val lean = Math.toRadians(sway.toDouble())
+    val lean = sway * PI / 180
     val stem = r * 2.5f
     val center = Offset(spot.x + stem * sin(lean).toFloat(), spot.y + stem * (1f - cos(lean).toFloat()))
     for (i in 0 until 5) {
