@@ -89,6 +89,10 @@ one-line summary written for users.
   tag under the desk clock instead. For a soft chime 1, 2 or 5 minutes before, set *Chime before meetings* in
   Settings › Day mode: one quiet tone at the notification volume, once per meeting, only while Day mode is
   showing and never on silent or Do Not Disturb.
+- **Quick Settings tiles and a home-screen widget:** the *Nocturna* tile opens the clock, and the *Sleep
+  radio* tile shows your station, lights up while it plays, and with one tap plays it with a 30-minute sleep
+  timer that fades out; tap again to stop. The dark *Nocturna clock* widget shows the time and your next
+  alarm, with *Clock* and *Sleep radio* buttons, and resizes to fit.
 
 ### Changed
 

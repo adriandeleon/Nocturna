@@ -33,6 +33,9 @@ object Radio {
     /** Epoch millis at which playback fades out and stops, or null. */
     val sleepAt = MutableStateFlow<Long?>(null)
 
+    /** Sleep timer asked for with [play], started once the stream is on (the timer needs a stream to stop). */
+    private var pendingSleepMinutes = 0
+
     private val listener = object : Player.Listener {
         override fun onEvents(player: Player, events: Player.Events) = sync(player)
         override fun onPlayerError(error: PlaybackException) {
@@ -45,6 +48,10 @@ object Radio {
         onState.value = on
         titleState.value = if (on) p.mediaMetadata.title?.toString() else null
         if (!on) sleepAt.value = null
+        if (on && pendingSleepMinutes > 0) {
+            sleepAt.value = System.currentTimeMillis() + pendingSleepMinutes * 60_000L
+            pendingSleepMinutes = 0
+        }
     }
 
     fun connect(context: Context, then: (MediaController) -> Unit = {}) {
@@ -71,8 +78,10 @@ object Radio {
         }, ContextCompat.getMainExecutor(app))
     }
 
-    fun play(context: Context, station: Station) {
+    /** Plays [station]; with [sleepMinutes] it fades out and stops after that long. */
+    fun play(context: Context, station: Station, sleepMinutes: Int = 0) {
         errorState.value = null
+        pendingSleepMinutes = sleepMinutes
         connect(context) { c ->
             val item = MediaItem.Builder()
                 .setMediaId(station.url)
@@ -87,6 +96,7 @@ object Radio {
 
     fun stop(context: Context) {
         sleepAt.value = null
+        pendingSleepMinutes = 0
         connect(context) { c ->
             c.stop()
             c.clearMediaItems()

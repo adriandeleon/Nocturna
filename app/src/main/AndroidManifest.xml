@@ -111,6 +111,56 @@
             </intent-filter>
         </service>
 
+        <!-- Quick Settings tile "Nocturna": opens the clock. Bound only by the system UI. -->
+        <service
+            android:name=".widget.ClockTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_tile_clock"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <!-- Quick Settings tile "Sleep radio": plays the selected station with a 30-minute sleep timer, or stops it. -->
+        <service
+            android:name=".widget.SleepRadioTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_tile_radio"
+            android:label="@string/tile_sleep_radio"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+            <!-- An on/off tile, so screen readers announce it as a switch. -->
+            <meta-data
+                android:name="android.service.quicksettings.TOGGLEABLE_TILE"
+                android:value="true" />
+        </service>
+
+        <!-- Home-screen widget: time, next alarm, Clock and Sleep radio buttons. Redrawn when the next alarm,
+             time zone or language changes (broadcasts apps may still receive in the manifest), never polled. -->
+        <receiver
+            android:name=".widget.ClockWidget"
+            android:exported="true"
+            android:label="@string/widget_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.app.action.NEXT_ALARM_CLOCK_CHANGED" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.LOCALE_CHANGED" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/clock_widget_info" />
+        </receiver>
+
+        <!-- The widget's Sleep radio button; reached only through Nocturna's own PendingIntent. -->
+        <receiver
+            android:name=".widget.SleepRadioReceiver"
+            android:exported="false" />
+
         <receiver
             android:name=".alarm.AlarmReceiver"
             android:directBootAware="true"

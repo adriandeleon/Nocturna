@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Home-screen widget (ClockWidget). Only views RemoteViews allows; the code fills in the texts and taps. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_background"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="12dp">
+
+    <TextClock
+        android:id="@+id/widget_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif-light"
+        android:format12Hour="h:mm"
+        android:format24Hour="HH:mm"
+        android:includeFontPadding="false"
+        android:maxLines="1"
+        android:textColor="@color/widget_text"
+        android:textSize="48sp" />
+
+    <TextView
+        android:id="@+id/widget_alarm"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:drawablePadding="4dp"
+        android:drawableTint="@color/widget_accent"
+        android:gravity="center_vertical"
+        android:maxLines="1"
+        android:textColor="@color/widget_text_dim"
+        android:textSize="14sp"
+        android:visibility="gone"
+        android:drawableStart="@drawable/ic_widget_alarm" />
+
+    <TextView
+        android:id="@+id/widget_playing"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="@color/widget_primary"
+        android:textSize="13sp"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/widget_clock"
+            style="@style/Widget.Nocturna.Button"
+            android:layout_marginEnd="4dp"
+            android:drawableStart="@drawable/ic_tile_clock"
+            android:text="@string/widget_clock" />
+
+        <TextView
+            android:id="@+id/widget_radio"
+            style="@style/Widget.Nocturna.Button"
+            android:layout_marginStart="4dp"
+            android:drawableStart="@drawable/ic_tile_radio"
+            android:text="@string/tile_sleep_radio" />
+    </LinearLayout>
+</LinearLayout>

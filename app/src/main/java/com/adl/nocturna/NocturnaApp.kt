@@ -7,6 +7,7 @@ import com.adl.nocturna.alarm.AlarmScheduler
 import com.adl.nocturna.charging.ChargingService
 import com.adl.nocturna.data.SettingsStore
 import com.adl.nocturna.data.Storage
+import com.adl.nocturna.widget.ClockWidget
 
 class NocturnaApp : Application() {
     override fun onCreate() {
@@ -14,6 +15,7 @@ class NocturnaApp : Application() {
         Storage.loadStores(this)
         createChannels()
         AlarmScheduler.reschedule(this)
+        ClockWidget.watch(this)
         // Before the first unlock after a reboot only alarm components may run.
         if (SettingsStore.current.autoStartOnCharge && Storage.isUnlocked(this)) ChargingService.start(this)
     }

@@ -15,6 +15,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -33,6 +36,13 @@ class RadioService : MediaSessionService() {
             .setWakeMode(C.WAKE_MODE_NETWORK)
             .setHandleAudioBecomingNoisy(true)
             .build()
+        player.addListener(object : Player.Listener {
+            override fun onEvents(player: Player, events: Player.Events) {
+                val on = player.playWhenReady && player.playbackState != Player.STATE_IDLE &&
+                    player.playbackState != Player.STATE_ENDED
+                playing.value = if (on) player.mediaMetadata.title?.toString().orEmpty() else null
+            }
+        })
 
         session = MediaSession.Builder(this, player)
             .setCallback(object : MediaSession.Callback {
@@ -81,6 +91,7 @@ class RadioService : MediaSessionService() {
     }
 
     override fun onDestroy() {
+        playing.value = null
         scope.cancel()
         session?.run {
             player.release()
@@ -90,7 +101,14 @@ class RadioService : MediaSessionService() {
         super.onDestroy()
     }
 
-    private companion object {
-        const val FADE_MS = 15_000L
+    companion object {
+        private const val FADE_MS = 15_000L
+        private val playing = MutableStateFlow<String?>(null)
+
+        /**
+         * The station playing or buffering, null when the radio is off. Read from the player itself, so the
+         * tile and the widget see the real state without connecting a controller.
+         */
+        val nowPlaying: StateFlow<String?> = playing.asStateFlow()
     }
 }
