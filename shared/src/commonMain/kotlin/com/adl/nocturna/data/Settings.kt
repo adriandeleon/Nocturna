@@ -76,6 +76,8 @@ data class Settings(
     val snoozeMinutes: Int = 9,
     val alarmRampSeconds: Int = 45,
     val alarmVibrate: Boolean = true,
+    /** Minutes before an alarm over which the clock brightens and warms up; 0 turns it off. */
+    val sunriseMinutes: Int = 20,
     // Radio
     val stations: List<Station> = DEFAULT_STATIONS,
     val selectedStation: Int = 0,
@@ -98,6 +100,8 @@ data class Settings(
         const val WEEKDAYS = 0b001_1111
         /** What [dayMaxBrightness] may be set to. */
         val DAY_BRIGHTNESS_RANGE = 0.2f..1f
+        /** What [sunriseMinutes] may be set to; 0 is off. */
+        val SUNRISE_CHOICES = listOf(0, 10, 20, 30)
 
         val DEFAULT_STATIONS = MONTERREY_STATIONS + listOf(
             Station("SomaFM Groove Salad", "https://ice1.somafm.com/groovesalad-128-mp3"),

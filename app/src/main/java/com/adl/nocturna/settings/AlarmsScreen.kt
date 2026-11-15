@@ -47,6 +47,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.adl.nocturna.alarm.AlarmService
 import com.adl.nocturna.data.Alarm
 import com.adl.nocturna.data.AlarmStore
+import com.adl.nocturna.data.Settings
 import com.adl.nocturna.data.SettingsStore
 import com.adl.nocturna.data.Station
 import com.adl.nocturna.clock.Moment
@@ -142,6 +143,15 @@ fun AlarmsScreen(padding: PaddingValues) {
                 ) { v -> SettingsStore.update { it.copy(alarmRampSeconds = v.roundToInt()) } }
             }
             item { SwitchRow("Vibrate", s.alarmVibrate) { v -> SettingsStore.update { it.copy(alarmVibrate = v) } } }
+            item {
+                ChoiceRow(
+                    "Sunrise before alarms", Settings.SUNRISE_CHOICES, s.sunriseMinutes,
+                    { if (it == 0) "Off" else "$it min" },
+                ) { v -> SettingsStore.update { it.copy(sunriseMinutes = v) } }
+            }
+            if (s.sunriseMinutes > 0) {
+                item { Hint("The clock slowly brightens and warms to a soft white before an alarm rings, from night red through amber at night. Not before a snooze.") }
+            }
         }
 
         SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).padding(16.dp))
