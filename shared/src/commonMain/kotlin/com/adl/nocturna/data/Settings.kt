@@ -28,6 +28,8 @@ data class Settings(
     val showDate: Boolean = true,
     val showBattery: Boolean = true,
     val showNextAlarm: Boolean = true,
+    /** "in 7 h 20 m" after the next alarm's time when it is within 12 hours. */
+    val showTimeToAlarm: Boolean = true,
     val showWeather: Boolean = true,
     /** Today's high and low next to the weather, or tomorrow's in the evening. */
     val showForecast: Boolean = true,
@@ -89,6 +91,8 @@ data class Settings(
     val alarmShowWeather: Boolean = true,
     /** Comma-separated words that make an all-day calendar event a day off, for alarms that skip them. */
     val dayOffKeywords: String = DEFAULT_DAY_OFF_KEYWORDS,
+    /** Hours of sleep the bedtime reminder leaves before a morning alarm: one of [BEDTIME_SLEEP_HOURS]; 0 is off. */
+    val bedtimeSleepHours: Float = 0f,
     // Radio
     val stations: List<Station> = DEFAULT_STATIONS,
     val selectedStation: Int = 0,
@@ -115,6 +119,8 @@ data class Settings(
         val SUNRISE_CHOICES = listOf(0, 10, 20, 30)
         /** What [meetingChimeMinutes] may be set to; 0 is off. */
         val MEETING_CHIME_MINUTES = listOf(0, 1, 2, 5)
+        /** What [bedtimeSleepHours] may be set to; 0 is off. */
+        val BEDTIME_SLEEP_HOURS = listOf(0f, 6f, 6.5f, 7f, 7.5f, 8f, 8.5f, 9f)
 
         val DEFAULT_STATIONS = MONTERREY_STATIONS + listOf(
             Station("SomaFM Groove Salad", "https://ice1.somafm.com/groovesalad-128-mp3"),

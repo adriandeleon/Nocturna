@@ -32,6 +32,7 @@ class NocturnaApp : Application() {
                 NotificationChannel(CHANNEL_LAUNCH, getString(R.string.channel_launch), NotificationManager.IMPORTANCE_HIGH).apply {
                     setSound(null, null)
                 },
+                NotificationChannel(CHANNEL_BEDTIME, getString(R.string.channel_bedtime), NotificationManager.IMPORTANCE_LOW),
             )
         )
     }
@@ -40,5 +41,6 @@ class NocturnaApp : Application() {
         const val CHANNEL_ALARM = "alarm"
         const val CHANNEL_SERVICE = "service"
         const val CHANNEL_LAUNCH = "launch"
+        const val CHANNEL_BEDTIME = "bedtime"
     }
 }

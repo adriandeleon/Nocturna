@@ -13,6 +13,7 @@ import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.adl.nocturna.clock.AndroidClockPlatform
 import com.adl.nocturna.clock.ClockScreen
+import com.adl.nocturna.clock.ClockVisibility
 import com.adl.nocturna.clock.LocalClockPlatform
 import com.adl.nocturna.clock.setBrightness
 import com.adl.nocturna.data.SettingsStore
@@ -64,11 +65,13 @@ class NocturnaDream : DreamService(), LifecycleOwner, SavedStateRegistryOwner {
 
     override fun onDreamingStarted() {
         super.onDreamingStarted()
+        ClockVisibility.shown()
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START)
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
     }
 
     override fun onDreamingStopped() {
+        ClockVisibility.hidden()
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_PAUSE)
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_STOP)
         super.onDreamingStopped()

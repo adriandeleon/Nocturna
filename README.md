@@ -24,6 +24,8 @@ A bedside clock for Android: a big, dimmable clock for the nightstand while your
 - **Sunrise before alarms**: in the 10, 20 or 30 minutes before an alarm (not a snooze) the clock brightens to your brightest level and warms from night red through amber to a soft white.
 - **Sleep sounds**: white, pink and brown noise, rain and surf, made on the phone so they play offline; they loop seamlessly and play from the Radio button like a station, sleep timer included.
 - **Weather on waking**: the wake-up screen shows the current conditions and today's high and low under the time, refreshed in the background if they are old (Settings › Alarms › *Show weather*).
+- **Time until the alarm**: within 12 hours of the next alarm the info line counts down to it (*06:30 · in 7 h 20 m*, in steps of 5 minutes), switchable under *Show on the clock*.
+- **Bedtime reminder**: a quiet notification the evening before a morning alarm, 15 minutes before you'd need to sleep to get 6 to 9 hours (Settings › Alarms › *Bedtime reminder*, off by default). Not sent while the clock is showing; needs notifications.
 - **Skip on days off**: a repeating alarm can stay quiet on days with an all-day calendar event titled as a day off (holiday, vacation, PTO, día libre…, editable), and says which ring it skips. Needs calendar access; without it the alarm rings as usual.
 - **Web radio**: any MP3/AAC/HLS stream, with a sleep timer that fades out (15/30/60/90 min).
 - **Backup**: export settings, radio stations and alarms to one JSON file and import them on this or another phone (Settings › About › Backup). The Day mode photo isn't included. No storage permission: you pick the file.
@@ -78,7 +80,7 @@ the code that doesn't depend on Android, ready for an iOS app later. Both use th
 | `clock` | `ClockScreen` and the clock faces (`shared`), which reach the phone through `ClockPlatform`; `ClockActivity`, `AndroidClockPlatform` and its sensor/battery/alarm state (`app`); the brightness curve, the sunrise before alarms and tap to peek |
 | `day` | Day mode: the desk calendar page and sticky note and the monthly scenes (`shared`); the background photo and today's events from the calendar provider (`app`); the schedule |
 | `dream` | `NocturnaDream`, the screen saver |
-| `alarm` | Scheduling (`AlarmManager.setAlarmClock`), the ringing service, the wake-up screen, boot receiver; days off read from the calendar (`app`) and the rules for skipping them (`shared`) |
+| `alarm` | Scheduling (`AlarmManager.setAlarmClock`), the ringing service, the wake-up screen, boot receiver; days off read from the calendar (`app`) and the rules for skipping them (`shared`); the bedtime reminder (`app`) and its timing and the countdown to the next alarm (`shared`) |
 | `radio` | Media3 `RadioService` and the `Radio` controller with the sleep timer |
 | `sound` | The sleep sounds: seeded noise, rain and surf generators that loop seamlessly, and the WAV encoder (`shared`); their cached WAV files (`app`, in `radio`) |
 | `weather` | Open-Meteo current conditions, forecast and city search; the phone's location (`app`) |

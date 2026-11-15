@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.adl.nocturna.alarm.alarmCountdownLabel
 import com.adl.nocturna.data.AlarmStore
 import com.adl.nocturna.data.ClockStyle
 import com.adl.nocturna.data.Settings
@@ -323,7 +324,11 @@ private fun InfoBlock(
             val pattern = remember(locale, settings.use24h) {
                 DateTimePattern(bestDateTimePattern(if (settings.use24h) "EEEHHmm" else "EEEhmma", locale), locale)
             }
-            Item(Glyph.ALARM, pattern.format(t), color, style, glyphSize)
+            // Within 12 hours: "6:30 · in 7 h 20 m" instead of the day and time.
+            val countdown = if (settings.showTimeToAlarm) {
+                alarmCountdownLabel(Instant.fromEpochMilliseconds(a), now.instant, now.zone, settings.use24h, locale)
+            } else null
+            Item(Glyph.ALARM, countdown ?: pattern.format(t), color, style, glyphSize)
         }
     }
 
