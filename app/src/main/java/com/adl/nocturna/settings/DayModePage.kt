@@ -139,6 +139,7 @@ fun DayModePage(padding: PaddingValues) {
                 Modifier.padding(bottom = 6.dp),
             )
         }
+        WorldZonesGroup(s.worldZones)
         SettingsGroup("Screen care") {
             if (s.dimEnabled && s.autoBrightness) {
                 SliderRow("Brightest", s.dayMaxBrightness, Settings.DAY_BRIGHTNESS_RANGE, { "${(it * 100).roundToInt()}%" }) { v ->

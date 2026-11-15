@@ -66,6 +66,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
@@ -204,8 +205,14 @@ fun DayLayout(
         DeskPage(view, now, weeks, dots, events, settings.showCalendarEvents, settings.use24h, theme, paper, openDay, openEvent, onView, m)
     }
 
+    // Other time zones under the desk clock's time, worked out once a minute.
+    val worldText = remember(settings.worldZones, minute, now.zone, settings.use24h, locale) {
+        worldClockLine(settings.worldZones, Instant.fromEpochMilliseconds(minute * 60_000L), now.zone, settings.use24h, locale)
+    }
+
     BoxWithConstraints(modifier) {
         val noteFont = with(LocalDensity.current) { (minOf(maxWidth, maxHeight) * 0.042f).coerceIn(14.dp, 22.dp).toSp() }
+        val worldLine: (@Composable () -> Unit)? = worldText?.let { text -> { WorldLine(text, noteFont) } }
         // The focus timer sits in the desk clock under its info line, so it drifts with it and never
         // takes the meeting countdown's place under the clock or on the note.
         val focusLine: (@Composable () -> Unit)? = focus?.let { timer ->
@@ -221,7 +228,9 @@ fun DayLayout(
                         // when its greeting and at least one event fit under it.
                         ClockOverNote(
                             gap = 32.dp,
-                            clock = { ClockPanel(clock, focusLine, Modifier.drift(clockDrift, 28.dp, 14.dp)) },
+                            clock = { ClockPanel(clock, focusLine, Modifier.drift(clockDrift, 28.dp, 14.dp), worldLine) },
+                            // Without the world clock line, for when it leaves no room for the note.
+                            bareClock = worldLine?.let { { ClockPanel(clock, focusLine, Modifier.drift(clockDrift, 28.dp, 14.dp)) } },
                             note = if (!showNote) null else {
                                 {
                                     StickyNote(
@@ -251,7 +260,10 @@ fun DayLayout(
                 Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
                     val clockEnd = @Composable {
                         Column(Modifier.padding(vertical = 16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                            ClockPanel(clock, focusLine, Modifier.drift(clockDrift, 24.dp, 8.dp))
+                            PortraitDeskClock(
+                                full = { ClockPanel(clock, focusLine, Modifier.drift(clockDrift, 24.dp, 8.dp), worldLine) },
+                                bare = worldLine?.let { { ClockPanel(clock, focusLine, Modifier.drift(clockDrift, 24.dp, 8.dp)) } },
+                            )
                             // Without the note (the day view), the countdown hangs under the desk clock.
                             if (!showNote && upcoming != null) {
                                 Spacer(Modifier.height(COUNTDOWN_GAP))
@@ -282,12 +294,14 @@ fun DayLayout(
  * The clock with the sticky note under it, the pair centred in the space. [note] is left out when
  * [smallestNote] (the note with its greeting and one event) doesn't fit under the clock, and
  * otherwise gets all the height the clock leaves. When the note is left out, [countdown] (if any)
- * goes under the clock instead, no wider than it, and only if it fits too.
+ * goes under the clock instead, no wider than it, and only if it fits too. [bareClock] is the clock
+ * without its world clock line, used when the line leaves no room for the note or doesn't fit at all.
  */
 @Composable
 private fun ClockOverNote(
     gap: Dp,
     clock: @Composable () -> Unit,
+    bareClock: (@Composable () -> Unit)?,
     note: (@Composable () -> Unit)?,
     smallestNote: @Composable () -> Unit,
     countdown: (@Composable () -> Unit)?,
@@ -296,12 +310,17 @@ private fun ClockOverNote(
     SubcomposeLayout(modifier) { constraints ->
         val loose = constraints.copy(minWidth = 0, minHeight = 0)
         val gapPx = gap.roundToPx()
-        val clockPlaceables = subcompose("clock", clock).map { it.measure(loose) }
+        val fullClock = subcompose("clock", clock).map { it.measure(loose) }
+        val fullHeight = fullClock.maxOfOrNull { it.height } ?: 0
+        val noteMin = note?.let { subcompose("smallest", smallestNote).maxOfOrNull { it.measure(loose).height } ?: 0 }
+        // The clock without its world clock line is only composed when the full one leaves no room.
+        val fullFits = if (noteMin != null) noteFits(fullHeight, gapPx, noteMin, constraints.maxHeight) else fullHeight <= constraints.maxHeight
+        val bare = if (fullFits) null else bareClock?.let { b -> subcompose("bare", b).map { it.measure(loose) } }
+        val fit = deskFit(fullHeight, bare?.maxOfOrNull { it.height } ?: fullHeight, gapPx, noteMin, constraints.maxHeight)
+        val clockPlaceables = if (fit.worldLine || bare == null) fullClock else bare
         val clockHeight = clockPlaceables.maxOfOrNull { it.height } ?: 0
-        val notePlaceables = if (note == null) emptyList() else {
-            val noteMin = subcompose("smallest", smallestNote).maxOfOrNull { it.measure(loose).height } ?: 0
-            if (!noteFits(clockHeight, gapPx, noteMin, constraints.maxHeight)) emptyList()
-            else subcompose("note", note).map { it.measure(loose.copy(maxHeight = constraints.maxHeight - clockHeight - gapPx)) }
+        val notePlaceables = if (note == null || !fit.note) emptyList() else {
+            subcompose("note", note).map { it.measure(loose.copy(maxHeight = constraints.maxHeight - clockHeight - gapPx)) }
         }
         val noteHeight = notePlaceables.maxOfOrNull { it.height } ?: 0
         val clockWidth = clockPlaceables.maxOfOrNull { it.width } ?: 0
@@ -329,10 +348,15 @@ private fun ClockOverNote(
 
 /**
  * The clock sits in a navy desk clock, solid so clouds or a busy photo never wash out its digits.
- * [below] (the focus timer) goes under the clock, inside the panel.
+ * [world] (the other time zones) and then [below] (the focus timer) go under the clock, inside the panel.
  */
 @Composable
-private fun ClockPanel(clock: @Composable () -> Unit, below: (@Composable () -> Unit)?, modifier: Modifier = Modifier) {
+private fun ClockPanel(
+    clock: @Composable () -> Unit,
+    below: (@Composable () -> Unit)?,
+    modifier: Modifier = Modifier,
+    world: (@Composable () -> Unit)? = null,
+) {
     val shape = RoundedCornerShape(28.dp)
     Box(
         modifier
@@ -343,7 +367,42 @@ private fun ClockPanel(clock: @Composable () -> Unit, below: (@Composable () -> 
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             clock()
+            world?.invoke()
             below?.invoke()
+        }
+    }
+}
+
+/** The other time zones in the desk clock, e.g. "London 19:42 · Tokyo 04:42 +1", a little dimmer than the info line. */
+@Composable
+private fun WorldLine(text: String, fontSize: TextUnit) {
+    Text(
+        text,
+        style = TextStyle(
+            color = Color.White.copy(alpha = 0.78f),
+            fontSize = fontSize * 0.85f,
+            fontFeatureSettings = "tnum",
+            textAlign = TextAlign.Center,
+        ),
+        modifier = Modifier.padding(top = 4.dp),
+    )
+}
+
+/**
+ * Portrait's desk clock: [full], with the world clock line, while it leaves the calendar page most of
+ * the screen (see [worldLineFitsPortrait]), and [bare] without it otherwise.
+ */
+@Composable
+private fun PortraitDeskClock(full: @Composable () -> Unit, bare: (@Composable () -> Unit)?) {
+    if (bare == null) return full()
+    SubcomposeLayout { constraints ->
+        val loose = constraints.copy(minWidth = 0, minHeight = 0)
+        val withLine = subcompose("full", full).map { it.measure(loose) }
+        val shown = if (worldLineFitsPortrait(withLine.maxOfOrNull { it.height } ?: 0, constraints.maxHeight)) withLine
+        else subcompose("bare", bare).map { it.measure(loose) }
+        val width = shown.maxOfOrNull { it.width } ?: 0
+        layout(width, shown.maxOfOrNull { it.height } ?: 0) {
+            shown.forEach { it.place((width - it.width) / 2, 0) }
         }
     }
 }

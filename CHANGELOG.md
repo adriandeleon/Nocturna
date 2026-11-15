@@ -126,6 +126,11 @@ one-line summary written for users.
   *Break · 3:10 left* beside a thin ring of the time gone; tap it to pause, skip or stop. A soft chime (the
   meeting chime's tone, never the alarm's) marks each switch. Set the lengths in Settings › Day mode › *Focus
   timer*. Turning the phone keeps it going; leaving Day mode or the app stops it.
+- **A world clock on Day mode's desk clock:** add up to two other time zones in Settings › Day mode › *Other
+  time zones*, picked from a searchable list of about 160 cities, or by time zone name. The desk clock shows
+  them under its time, e.g. *London 19:42 · Tokyo 04:42 +1*, in your 12 or 24-hour format, with +1 or −1 when
+  it's already another day there. They drift with the clock and step aside when the screen has no room, so
+  the sticky note keeps its place. None by default.
 - **Quick Settings tiles and a home-screen widget:** the *Nocturna* tile opens the clock, and the *Sleep
   radio* tile shows your station, lights up while it plays, and with one tap plays it with a 30-minute sleep
   timer that fades out; tap again to stop. The dark *Nocturna clock* widget shows the time and your next

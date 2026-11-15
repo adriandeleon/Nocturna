@@ -2,6 +2,7 @@ package com.adl.nocturna.data
 
 import com.adl.nocturna.alarm.DEFAULT_DAY_OFF_KEYWORDS
 import com.adl.nocturna.sound.SleepSound
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -206,5 +207,25 @@ class SettingsJsonTest {
         val loaded = SettingsCodec.decode(stored(Settings(dndWhileShowing = true, autoStartOnCharge = true), remove = listOf("dndWhileShowing")))
         assertFalse(loaded.dndWhileShowing)
         assertEquals(true, loaded.autoStartOnCharge)
+    }
+
+    @Test fun worldZonesSurviveRoundTrip() {
+        val settings = Settings(worldZones = listOf(WorldZone("London", "Europe/London"), WorldZone("Tokyo", "Asia/Tokyo")))
+        assertEquals(settings, roundTrip(settings))
+    }
+
+    @Test fun settingsSavedBeforeWorldZonesLoadWithNone() {
+        val loaded = SettingsCodec.decode(stored(Settings(focusMinutes = 50), remove = listOf("worldZones")))
+        assertEquals(emptyList(), loaded.worldZones)
+        assertEquals(50, loaded.focusMinutes)
+    }
+
+    @Test fun damagedWorldZonesAreSkippedAndCapped() {
+        fun zone(label: String, zone: String) = JsonObject(mapOf("label" to JsonPrimitive(label), "zone" to JsonPrimitive(zone)))
+        val zones = JsonArray(
+            listOf(JsonPrimitive("Paris"), zone(" ", "Europe/Paris"), zone("Lima", "America/Lima"), zone("Seoul", "Asia/Seoul"), zone("Oslo", "Europe/Oslo")),
+        )
+        val loaded = SettingsCodec.decode(stored(put = mapOf("worldZones" to zones)))
+        assertEquals(listOf(WorldZone("Lima", "America/Lima"), WorldZone("Seoul", "Asia/Seoul")), loaded.worldZones)
     }
 }
