@@ -43,6 +43,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.adl.nocturna.alarm.DAYS_OFF_LOOK_AHEAD
 import com.adl.nocturna.alarm.DEFAULT_DAY_OFF_KEYWORDS
 import com.adl.nocturna.alarm.DaysOff
+import com.adl.nocturna.alarm.DismissChallenge
+import com.adl.nocturna.alarm.SUM_COUNTS
 import com.adl.nocturna.alarm.STREAM_TIMEOUT_MS
 import com.adl.nocturna.alarm.daysOff
 import com.adl.nocturna.alarm.nextDayOffSkip
@@ -159,6 +161,13 @@ fun AlarmsScreen(padding: PaddingValues) {
                 ) { v -> SettingsStore.update { it.copy(alarmRampSeconds = v.roundToInt()) } }
             }
             item { SwitchRow("Vibrate", s.alarmVibrate) { v -> SettingsStore.update { it.copy(alarmVibrate = v) } } }
+            if (alarms.any { it.challenge == DismissChallenge.SUM }) {
+                item {
+                    ChoiceRow("Sums to stop an alarm", SUM_COUNTS.toList(), s.alarmSums, ::sumsLabel) { v ->
+                        SettingsStore.update { it.copy(alarmSums = v) }
+                    }
+                }
+            }
             item {
                 SwitchRow("Show weather", s.alarmShowWeather, "Today's weather under the time when an alarm rings") { v ->
                     SettingsStore.update { it.copy(alarmShowWeather = v) }
@@ -254,6 +263,7 @@ private fun AlarmCard(
             DayToggles(alarm.days, locale) { days -> AlarmStore.update(alarm.id) { it.copy(days = days) } }
             if (alarm.repeats) SkipDaysOffRow(alarm, calendarAllowed, onAskCalendar)
             SoundPicker(alarm, stations)
+            ChallengePicker(alarm)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 LabelField(alarm, Modifier.weight(1f).padding(top = 8.dp))
                 TextButton(onClick = onDelete) { Text("Delete", color = MaterialTheme.colorScheme.error) }
@@ -288,6 +298,31 @@ private fun SoundPicker(alarm: Alarm, stations: List<Station>) {
             color = muted,
         )
     }
+}
+
+/** *To stop it*: what it takes to stop the alarm when it rings. Snoozing is always one tap. */
+@Composable
+private fun ChallengePicker(alarm: Alarm) {
+    var open by remember { mutableStateOf(false) }
+    fun choose(challenge: DismissChallenge) {
+        open = false
+        AlarmStore.update(alarm.id) { it.copy(challenge = challenge) }
+    }
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text("To stop it", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+        Box {
+            TextButton(onClick = { open = true }) { Text(alarm.challenge.label) }
+            DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+                DismissChallenge.entries.forEach { c -> DropdownMenuItem(text = { Text(c.label) }, onClick = { choose(c) }) }
+            }
+        }
+    }
+}
+
+private fun sumsLabel(n: Int) = when (n) {
+    1 -> "1 (easy)"
+    SUM_COUNTS.last -> "$n (hard)"
+    else -> "$n"
 }
 
 /** The ring the alarm skips for a day off, and the calendar event that makes it one. */

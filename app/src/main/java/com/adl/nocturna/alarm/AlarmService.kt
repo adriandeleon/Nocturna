@@ -46,9 +46,16 @@ import java.time.format.FormatStyle
 
 /**
  * What is ringing right now, if anything. [station] is the radio station playing, or null while the
- * alarm tone plays (chosen, or because the station failed).
+ * alarm tone plays (chosen, or because the station failed). [challenge] is what it takes to stop it,
+ * [DismissChallenge.TAP] again once the challenge screen has failed.
  */
-data class Ringing(val alarmId: Long, val label: String, val startedAt: Long, val station: Station? = null)
+data class Ringing(
+    val alarmId: Long,
+    val label: String,
+    val startedAt: Long,
+    val station: Station? = null,
+    val challenge: DismissChallenge = DismissChallenge.TAP,
+)
 
 /**
  * The alarm notification's text: the time the alarm started ringing and, while it plays, the station.
@@ -76,6 +83,7 @@ class AlarmService : Service() {
         when (intent?.action) {
             ACTION_SNOOZE -> snooze()
             ACTION_DISMISS -> finishRinging()
+            ACTION_CHALLENGE_FAILED -> challengeFailed()
             else -> ring(intent?.getLongExtra(AlarmScheduler.EXTRA_ALARM_ID, 0L) ?: 0L)
         }
         return START_NOT_STICKY
@@ -85,7 +93,7 @@ class AlarmService : Service() {
         stopSound()
         val alarm = AlarmStore.get(alarmId)
         val station = alarm?.station
-        val r = Ringing(alarmId, alarm?.label.orEmpty(), System.currentTimeMillis(), station)
+        val r = Ringing(alarmId, alarm?.label.orEmpty(), System.currentTimeMillis(), station, alarm?.challenge ?: DismissChallenge.TAP)
         ringingState.value = r
         postNotification(r, alert = true)
         wakeLock?.takeIf { it.isHeld }?.release()
@@ -130,8 +138,21 @@ class AlarmService : Service() {
             .apply { if (alert) setFullScreenIntent(fullScreen, true) }
             .setContentIntent(fullScreen)
             .addAction(0, "Snooze", serviceIntent(this, ACTION_SNOOZE))
-            .addAction(0, "Dismiss", serviceIntent(this, ACTION_DISMISS))
+            // With a challenge, stopping happens on the wake-up screen, not in one tap from the notification.
+            .apply {
+                if (r.challenge == DismissChallenge.TAP) addAction(0, "Dismiss", serviceIntent(this@AlarmService, ACTION_DISMISS))
+                else addAction(0, "Stop…", fullScreen)
+            }
             .build()
+    }
+
+    /** The challenge screen couldn't be used: let the alarm be stopped with one tap, there and in the notification. */
+    private fun challengeFailed() {
+        val r = ringingState.value ?: return
+        if (r.challenge == DismissChallenge.TAP) return
+        val tap = r.copy(challenge = DismissChallenge.TAP)
+        ringingState.value = tap
+        postNotification(tap, alert = false)
     }
 
     private fun startSound(station: Station?) {
@@ -317,6 +338,8 @@ class AlarmService : Service() {
         private const val MAX_RING_MS = 10 * 60_000L
         const val ACTION_SNOOZE = "com.adl.nocturna.SNOOZE"
         const val ACTION_DISMISS = "com.adl.nocturna.DISMISS"
+        /** Sent by the wake-up screen when its challenge fails, to fall back to [DismissChallenge.TAP]. */
+        const val ACTION_CHALLENGE_FAILED = "com.adl.nocturna.CHALLENGE_FAILED"
 
         private val ringingState = MutableStateFlow<Ringing?>(null)
         val ringing: StateFlow<Ringing?> = ringingState.asStateFlow()
