@@ -58,6 +58,9 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 
 The debug build installs as `com.adl.nocturna.debug`, so it can sit next to a release build.
 
+The project has two Gradle modules: `app`, the Android app, and `shared`, a Kotlin Multiplatform module with
+the code that doesn't depend on Android, ready for an iOS app later. Both use the packages below.
+
 ## Layout
 
 | Package | What's in it |
