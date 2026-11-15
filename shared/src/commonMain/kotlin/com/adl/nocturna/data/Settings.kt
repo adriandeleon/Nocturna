@@ -1,5 +1,6 @@
 package com.adl.nocturna.data
 
+import com.adl.nocturna.alarm.DEFAULT_DAY_OFF_KEYWORDS
 import com.adl.nocturna.sound.SleepSound
 
 enum class ClockStyle { DIGITAL, ANALOG }
@@ -84,6 +85,8 @@ data class Settings(
     val sunriseMinutes: Int = 20,
     /** Today's weather under the time on the wake-up screen. */
     val alarmShowWeather: Boolean = true,
+    /** Comma-separated words that make an all-day calendar event a day off, for alarms that skip them. */
+    val dayOffKeywords: String = DEFAULT_DAY_OFF_KEYWORDS,
     // Radio
     val stations: List<Station> = DEFAULT_STATIONS,
     val selectedStation: Int = 0,

@@ -74,6 +74,13 @@ one-line summary written for users.
   when the alarm rings. It starts gently and speeds up, like a real dawn, and ends when the alarm rings. It
   doesn't run before a snooze, before a skipped ring or in Day mode. Pick 10, 20 or 30 minutes, or turn it
   off, under Settings › Alarms › *Sunrise before alarms*.
+- **Alarms that sleep in on holidays:** turn on *Skip on days off* for a repeating alarm and it stays quiet on
+  days with an all-day event in your calendars whose title says it's a day off, such as *Holiday*,
+  *Vacation*, *PTO*, *OOO* or *Día libre*. The alarm list says which ring it skips and why (*Skips Mon 16 Nov
+  · Revolution Day holiday*), and the next alarm everywhere, including the clock and Android's own, is the
+  first day that isn't off. Change the words under Settings › Alarms › *Days off*; case and accents don't
+  matter. It needs calendar access and asks for it; without it, or if the calendar can't be read, alarms ring
+  as usual.
 - **Starts on its own while charging,** as the Android screen saver or with *Open when charging*, which opens
   the clock when you plug in a locked phone.
 - **An About screen in Settings** with the version, links to the source code, bug reports, the licence and

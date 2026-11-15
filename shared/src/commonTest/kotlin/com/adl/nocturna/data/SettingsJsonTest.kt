@@ -1,5 +1,6 @@
 package com.adl.nocturna.data
 
+import com.adl.nocturna.alarm.DEFAULT_DAY_OFF_KEYWORDS
 import com.adl.nocturna.sound.SleepSound
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -149,4 +150,11 @@ class SettingsJsonTest {
 
     @Test fun settingsSavedBeforeTheWakeWeatherShowIt() =
         assertEquals(true, SettingsCodec.decode(stored(remove = listOf("alarmShowWeather"))).alarmShowWeather)
+    @Test fun dayOffKeywordsSurviveRoundTrip() {
+        val settings = Settings(dayOffKeywords = "Feriado, puente")
+        assertEquals(settings, roundTrip(settings))
+    }
+
+    @Test fun settingsSavedBeforeDayOffKeywordsGetTheDefaults() =
+        assertEquals(DEFAULT_DAY_OFF_KEYWORDS, SettingsCodec.decode(stored(remove = listOf("dayOffKeywords"))).dayOffKeywords)
 }

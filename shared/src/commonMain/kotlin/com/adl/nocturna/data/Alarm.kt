@@ -16,6 +16,8 @@ import kotlin.time.Instant
  * into the station list, so editing or deleting stations never changes what an alarm plays.
  * [skipDate] is the date of one occurrence of a repeating alarm that won't ring; a date already past
  * does nothing.
+ * [skipDaysOff] makes a repeating alarm stay quiet on days off in the phone's calendars
+ * (see `com.adl.nocturna.alarm.nextRing`).
  */
 data class Alarm(
     val id: Long,
@@ -26,6 +28,7 @@ data class Alarm(
     val label: String = "",
     val station: Station? = null,
     val skipDate: LocalDate? = null,
+    val skipDaysOff: Boolean = false,
 ) {
     val repeats: Boolean get() = days != 0
 

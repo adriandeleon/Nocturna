@@ -22,6 +22,7 @@ object AlarmCodec {
                     put("label", it.label)
                     it.station?.let { st -> put("station", buildJsonObject { put("name", st.name); put("url", st.url) }) }
                     it.skipDate?.let { d -> put("skipDate", d.toString()) }
+                    if (it.skipDaysOff) put("skipDaysOff", true)
                 }
             )
         }
@@ -43,6 +44,7 @@ object AlarmCodec {
                     st.optString("url").takeIf { it.isNotBlank() }?.let { Station(st.optString("name").ifBlank { it }, it) }
                 },
                 skipDate = o.optString("skipDate").takeIf { it.isNotBlank() }?.let { runCatching { LocalDate.parse(it) }.getOrNull() },
+                skipDaysOff = o.optBoolean("skipDaysOff", false),
             )
         }
     }
