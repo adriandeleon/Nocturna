@@ -10,6 +10,10 @@ one-line summary written for users.
 
 ### Added
 
+- **Nocturna habla español:** with your phone in Spanish, the clock, Day mode, Settings, the wake-up screen,
+  the notifications, the tiles and the widget are all in Mexican Spanish (*alarma*, *posponer*, *modo noche*,
+  *No molestar*…). Dates and times follow your phone's region as before, and any other language stays in
+  English.
 - **A big bedside clock for the nightstand:** digital, in six font styles, 12 or 24 hours, with or without
   seconds, or analog, in a colour you pick.
 - **A clock in your wallpaper's colours (Material You):** on Android 12 and later, pick *From wallpaper* in

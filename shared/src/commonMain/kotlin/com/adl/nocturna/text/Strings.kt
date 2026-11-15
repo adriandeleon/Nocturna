@@ -7,7 +7,7 @@ package com.adl.nocturna.text
  * functions stay plain Kotlin that `commonTest` checks without a Compose runtime or resource files, on
  * Android and iOS alike.
  *
- * One object per language. A language that has none reads [EnglishStrings].
+ * One object per language: [EnglishStrings] and [SpanishStrings]. A language that has none reads English.
  */
 interface Strings {
     // Lists and units
@@ -175,6 +175,7 @@ interface Strings {
 
 /** The [Strings] for [locale]'s language. */
 fun strings(locale: PlatformLocale): Strings = when (locale.languageCode) {
+    "es" -> SpanishStrings
     else -> EnglishStrings
 }
 
