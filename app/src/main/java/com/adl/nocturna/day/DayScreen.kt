@@ -57,6 +57,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.SubcomposeLayout
@@ -87,6 +88,8 @@ import kotlinx.coroutines.launch
 
 // Warm and a touch below white: kinder to OLED pixels lit all day, and it still reads as paper.
 private val Paper = Color(0xFFF8F2E4)
+// Where the paper dims to after hours on screen (see paperDim): about a quarter less light, still paper.
+private val DimPaper = Color(0xFFDDD3BE)
 private val Ink = Color(0xFF3B3A36)
 private val NoteYellow = Color(0xFFF8E68C)
 private val NoteInk = Color(0xFF4A3F1F)
@@ -167,8 +170,12 @@ fun DayLayout(
     val clockDrift = rememberDrift(burnIn, phase = 0)
     val pageDrift = rememberDrift(burnIn, phase = 1)
     val noteDrift = rememberDrift(burnIn, phase = 2)
+    // The page is the brightest thing on screen, so its paper slowly dims the longer it stays up.
+    val shownSince = rememberSaveable { now.toInstant().toEpochMilli() }
+    val minutesShown = (now.toInstant().toEpochMilli() - shownSince) / 60_000f
+    val paper = if (burnIn) lerp(Paper, DimPaper, paperDim(minutesShown)) else Paper
     val page: @Composable (Modifier) -> Unit = { m ->
-        DeskPage(view, now, weeks, dots, events, settings.showCalendarEvents, settings.use24h, theme, openDay, openEvent, onView, m)
+        DeskPage(view, now, weeks, dots, events, settings.showCalendarEvents, settings.use24h, theme, paper, openDay, openEvent, onView, m)
     }
 
     BoxWithConstraints(modifier) {
@@ -200,15 +207,23 @@ fun DayLayout(
                 }
             }
         } else {
-            Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
-                Box(Modifier.padding(vertical = 16.dp)) { ClockPanel(clock, Modifier.drift(clockDrift, 24.dp, 8.dp)) }
-                page(Modifier.fillMaxWidth().weight(1.6f).drift(pageDrift, 16.dp, 8.dp))
-                if (showNote) {
-                    Spacer(Modifier.height(20.dp))
-                    StickyNote(
-                        now, events, settings.use24h, theme, noteFont, openDay, openEvent,
-                        Modifier.fillMaxWidth(0.9f).weight(1f, fill = false).drift(noteDrift, 20.dp, 8.dp),
-                    )
+            // Every other hour the clock moves from the top to the bottom, so the page and the note
+            // move up by its height and nothing keeps the same rows of pixels all day.
+            Crossfade(sidesSwapped(now.hour, settings.burnInProtection), animationSpec = tween(1500), label = "ends") { swapped ->
+                Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
+                    val clockEnd = @Composable {
+                        Box(Modifier.padding(vertical = 16.dp)) { ClockPanel(clock, Modifier.drift(clockDrift, 24.dp, 8.dp)) }
+                    }
+                    if (!swapped) clockEnd()
+                    page(Modifier.fillMaxWidth().weight(1.6f).drift(pageDrift, 16.dp, 8.dp))
+                    if (showNote) {
+                        Spacer(Modifier.height(20.dp))
+                        StickyNote(
+                            now, events, settings.use24h, theme, noteFont, openDay, openEvent,
+                            Modifier.fillMaxWidth(0.9f).weight(1f, fill = false).drift(noteDrift, 20.dp, 8.dp),
+                        )
+                    }
+                    if (swapped) clockEnd()
                 }
             }
         }
@@ -278,6 +293,7 @@ private fun DeskPage(
     showEvents: Boolean,
     use24h: Boolean,
     theme: MonthTheme,
+    paper: Color,
     onOpenDay: ((LocalDate) -> Unit)?,
     onOpenEvent: ((CalendarEvent) -> Unit)?,
     onView: ((CalendarView) -> Unit)?,
@@ -321,7 +337,7 @@ private fun DeskPage(
                     .padding(top = cell * 0.3f)
                     .shadow(cell * 0.3f, shape)
                     .clip(shape)
-                    .background(Paper)
+                    .background(paper)
                     .fillMaxWidth()
                     .then(swipe)
             ) {

@@ -7,13 +7,17 @@ import kotlin.math.sin
 /*
  * Day mode stays on screen for a whole working day, so on OLED screens nothing in it may stay put:
  * the layout drifts (ClockScreen's DriftLayout), the clock, the page and the note each drift on their
- * own as well (DayScreen), the two sides swap every hour in landscape, and everything in the
- * background keeps moving: the sun and the moon cross the sky, the clouds float up and down, the
+ * own as well (DayScreen), the clock and the page trade places every other hour (sides in
+ * landscape, top and bottom in portrait), the page's bright paper slowly dims the longer it stays up,
+ * and everything in the background keeps moving: the sun and the moon cross the sky, the clouds float up and down, the
  * hills scroll and rise and fall, and the flowers are replanted every hour. These are the timings,
  * kept here so they can be tested.
  */
 
-/** Whether the clock and the calendar page trade places: every other hour, when burn-in protection is on. */
+/**
+ * Whether the clock and the calendar page trade places: every other hour, when burn-in protection is
+ * on. In landscape they swap sides; in portrait the clock moves from the top to the bottom.
+ */
 fun sidesSwapped(hour: Int, burnInProtection: Boolean): Boolean = burnInProtection && hour % 2 == 1
 
 /** Seconds for the near hill to scroll one screen width; farther hills go slower, for depth. */
@@ -96,3 +100,15 @@ fun planting(seconds: Float): Planting {
     val now = (seconds / FIELD_PERIOD).toInt().mod(count)
     return Planting(now, (now + count - 1) % count, ((seconds % FIELD_PERIOD) / FIELD_FADE).coerceIn(0f, 1f))
 }
+
+/** The page's paper starts dimming after half an hour on screen and is as dim as it goes after four hours. */
+private const val DIM_FROM_MINUTES = 30f
+private const val DIM_FULL_MINUTES = 240f
+
+/**
+ * How far the calendar page's paper has dimmed (0 = fresh, 1 = as dim as it goes) after [minutesShown]
+ * minutes on screen: so slowly that nobody sees it happen, since the bright page is what wears an
+ * OLED screen most.
+ */
+fun paperDim(minutesShown: Float): Float =
+    ((minutesShown - DIM_FROM_MINUTES) / (DIM_FULL_MINUTES - DIM_FROM_MINUTES)).coerceIn(0f, 1f)

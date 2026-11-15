@@ -98,4 +98,17 @@ class BurnInTest {
         val midnight = planting(0f)
         assertEquals(planting(86_399f).now, midnight.before)
     }
+
+    @Test fun paperStaysFreshForHalfAnHour() {
+        assertEquals(0f, paperDim(0f), 0.0001f)
+        assertEquals(0f, paperDim(30f), 0.0001f)
+    }
+
+    @Test fun paperDimsSlowlyThenHolds() {
+        assertEquals(0.5f, paperDim(135f), 0.0001f)
+        assertEquals(1f, paperDim(240f), 0.0001f)
+        assertEquals(1f, paperDim(600f), 0.0001f)
+        // A minute's change is far too small to see.
+        assertTrue(paperDim(101f) - paperDim(100f) < 0.01f)
+    }
 }
