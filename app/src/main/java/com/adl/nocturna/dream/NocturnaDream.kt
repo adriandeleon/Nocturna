@@ -14,6 +14,7 @@ import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.adl.nocturna.clock.AndroidClockPlatform
 import com.adl.nocturna.clock.ClockScreen
 import com.adl.nocturna.clock.ClockVisibility
+import com.adl.nocturna.clock.DndWhileShowing
 import com.adl.nocturna.clock.LocalClockPlatform
 import com.adl.nocturna.clock.setBrightness
 import com.adl.nocturna.data.SettingsStore
@@ -55,6 +56,7 @@ class NocturnaDream : DreamService(), LifecycleOwner, SavedStateRegistryOwner {
                             interactive = false,
                             onBrightness = { window?.setBrightness(it) },
                             onDismiss = if (tapToPeek) ({ finish() }) else null,
+                            onNight = { DndWhileShowing.nightChanged(this@NocturnaDream, it) },
                         )
                     }
                 }
@@ -68,10 +70,12 @@ class NocturnaDream : DreamService(), LifecycleOwner, SavedStateRegistryOwner {
         ClockVisibility.shown()
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START)
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
+        DndWhileShowing.shown(this)
     }
 
     override fun onDreamingStopped() {
         ClockVisibility.hidden()
+        DndWhileShowing.hidden(this)
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_PAUSE)
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_STOP)
         super.onDreamingStopped()

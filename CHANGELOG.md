@@ -30,6 +30,13 @@ one-line summary written for users.
   peek for the controls. The screen saver peeks too, and a second tap closes it. Before an alarm, whichever is
   brighter of the peek and the sunrise wins, and Day mode isn't affected. Turn it off under Settings ›
   Brightness and night mode › *Tap to peek*.
+- **Do Not Disturb at night:** Settings › Starting the clock › *Do Not Disturb at night* (off by default)
+  turns on priority-only Do Not Disturb while the clock or its screen saver is on screen from 22:00 to 07:00,
+  or from when night mode starts in the evening, and turns it off again when the clock leaves the screen or
+  at 07:00. Alarms still ring. It only undoes what it changed: Do Not Disturb that was already on, or that you
+  change yourself, is left alone, and Day mode never touches it. It needs Do Not Disturb access, which the
+  switch asks for; without it nothing changes. If your Do Not Disturb settings would silence alarms, Nocturna
+  doesn't turn it on.
 - **Burn-in protection:** the clock drifts slowly around the screen.
 - **Day mode, a cheerful desk set for while you work:** a desk clock, a spiral-bound calendar page for the
   month in its own colour, with dots on the days that have events, and a sticky note that says hello and lists

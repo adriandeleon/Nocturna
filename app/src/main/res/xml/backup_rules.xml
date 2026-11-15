@@ -2,4 +2,5 @@
 <!-- Android 11 and older. Per-device flags (e.g. "already asked for notifications") stay on this phone. -->
 <full-backup-content>
     <exclude domain="sharedpref" path="nocturna_local.xml" />
+    <exclude domain="device_sharedpref" path="nocturna_dnd.xml" />
 </full-backup-content>
