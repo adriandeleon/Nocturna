@@ -5,6 +5,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.adl.nocturna.data.SettingsStore
+import com.adl.nocturna.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun StartPage(padding: PaddingValues) {
@@ -13,25 +15,25 @@ fun StartPage(padding: PaddingValues) {
     val access = platform.access()
 
     SettingsPage(padding) {
-        SettingsGroup("While charging") {
-            NavRow("Screen saver", "Choose Nocturna and set it to start while charging") {
+        SettingsGroup(stringResource(Res.string.start_while_charging)) {
+            NavRow(stringResource(Res.string.start_screen_saver), stringResource(Res.string.start_screen_saver_detail)) {
                 platform.open(SystemPage.SCREEN_SAVER)
             }
-            SwitchRow("Open when charging", s.autoStartOnCharge, "Opens the clock when you plug in a locked phone") { v ->
+            SwitchRow(stringResource(Res.string.start_open_charging), s.autoStartOnCharge, stringResource(Res.string.start_open_charging_detail)) { v ->
                 SettingsStore.update { it.copy(autoStartOnCharge = v) }
                 platform.setOpenOnCharge(v)
             }
             if (s.autoStartOnCharge && !access.overlay) {
-                ActionButton("Allow “Display over other apps”") { platform.open(SystemPage.OVERLAY) }
+                ActionButton(stringResource(Res.string.start_allow_overlay)) { platform.open(SystemPage.OVERLAY) }
             }
         }
-        SettingsGroup("At night") {
+        SettingsGroup(stringResource(Res.string.start_at_night)) {
             DndRow(s.dndWhileShowing)
         }
         if (!access.fullScreen) {
-            SettingsGroup("Alarms") {
-                Hint("Android needs your OK before a ringing alarm can fill the locked screen")
-                ActionButton("Allow full-screen alarms") { platform.open(SystemPage.FULL_SCREEN_ALARMS) }
+            SettingsGroup(stringResource(Res.string.settings_alarms)) {
+                Hint(stringResource(Res.string.start_full_screen_hint))
+                ActionButton(stringResource(Res.string.start_allow_full_screen)) { platform.open(SystemPage.FULL_SCREEN_ALARMS) }
             }
         }
     }

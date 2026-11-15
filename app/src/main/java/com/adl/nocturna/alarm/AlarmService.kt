@@ -35,14 +35,16 @@ import com.adl.nocturna.R
 import com.adl.nocturna.data.AlarmStore
 import com.adl.nocturna.data.SettingsStore
 import com.adl.nocturna.data.Station
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import com.adl.nocturna.sound.displayName
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+import java.util.Locale
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 /**
  * What is ringing right now, if anything. [station] is the radio station playing, or null while the
@@ -62,7 +64,8 @@ data class Ringing(
  * The start time, not the current one, so an update a few minutes in doesn't show a different time.
  */
 fun ringingText(r: Ringing, zone: ZoneId, formatter: DateTimeFormatter): String =
-    listOfNotNull(Instant.ofEpochMilli(r.startedAt).atZone(zone).format(formatter), r.station?.name).joinToString(" · ")
+    listOfNotNull(Instant.ofEpochMilli(r.startedAt).atZone(zone).format(formatter), r.station?.displayName(Locale.getDefault()))
+        .joinToString(" · ")
 
 /**
  * Rings the alarm: plays the alarm's radio station, or the default alarm sound, on the alarm stream with
@@ -129,7 +132,7 @@ class AlarmService : Service() {
         val text = ringingText(r, ZoneId.systemDefault(), DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT))
         return NotificationCompat.Builder(this, NocturnaApp.CHANNEL_ALARM)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle(r.label.ifBlank { "Alarm" })
+            .setContentTitle(r.label.ifBlank { getString(R.string.alarm_default_title) })
             .setContentText(text)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setPriority(NotificationCompat.PRIORITY_MAX)
@@ -137,11 +140,11 @@ class AlarmService : Service() {
             .setOnlyAlertOnce(true)
             .apply { if (alert) setFullScreenIntent(fullScreen, true) }
             .setContentIntent(fullScreen)
-            .addAction(0, "Snooze", serviceIntent(this, ACTION_SNOOZE))
+            .addAction(0, getString(R.string.alarm_snooze), serviceIntent(this, ACTION_SNOOZE))
             // With a challenge, stopping happens on the wake-up screen, not in one tap from the notification.
             .apply {
-                if (r.challenge == DismissChallenge.TAP) addAction(0, "Dismiss", serviceIntent(this@AlarmService, ACTION_DISMISS))
-                else addAction(0, "Stop…", fullScreen)
+                if (r.challenge == DismissChallenge.TAP) addAction(0, getString(R.string.alarm_dismiss), serviceIntent(this@AlarmService, ACTION_DISMISS))
+                else addAction(0, getString(R.string.alarm_stop), fullScreen)
             }
             .build()
     }

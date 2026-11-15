@@ -15,15 +15,16 @@ import com.adl.nocturna.R
 import com.adl.nocturna.clock.ClockActivity
 import com.adl.nocturna.data.SettingsStore
 import com.adl.nocturna.radio.RadioService
+import com.adl.nocturna.sound.displayName
 import com.adl.nocturna.text.DateTimePattern
 import com.adl.nocturna.text.bestDateTimePattern
+import kotlin.time.Clock
+import kotlin.time.Instant
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
-import kotlin.time.Clock
-import kotlin.time.Instant
 
 /**
  * Home-screen widget: the time, the next alarm and buttons for the clock and the sleep radio. The time is a
@@ -94,7 +95,7 @@ class ClockWidget : AppWidgetProvider() {
             views.setViewVisibility(R.id.widget_alarm, if (alarm == null) View.GONE else View.VISIBLE)
 
             val playing = RadioService.nowPlaying.value
-            val nowPlaying = playing?.ifEmpty { settings.currentStation?.name }
+            val nowPlaying = playing?.ifEmpty { settings.currentStation?.displayName(locale) }
             views.setTextViewText(R.id.widget_playing, nowPlaying?.let { "♪ $it" }.orEmpty())
             views.setViewVisibility(R.id.widget_playing, if (nowPlaying == null) View.GONE else View.VISIBLE)
             views.setTextViewText(

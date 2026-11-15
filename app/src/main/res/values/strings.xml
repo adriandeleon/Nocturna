@@ -12,4 +12,20 @@
     <string name="widget_clock">Clock</string>
     <string name="widget_stop_radio">Stop radio</string>
     <string name="channel_bedtime">Bedtime reminder</string>
+
+    <!-- Notifications -->
+    <string name="alarm_default_title">Alarm</string>
+    <string name="alarm_snooze">Snooze</string>
+    <string name="alarm_dismiss">Dismiss</string>
+    <string name="alarm_stop">Stop…</string>
+    <string name="tap_to_open_clock">Tap to open the clock</string>
+    <string name="charging_waiting_title">Waiting for the charger</string>
+    <string name="charging_waiting_text">Nocturna opens when you plug in your phone</string>
+
+    <!-- Radio, calendar and the clock -->
+    <string name="radio_cant_play">Can\'t play this station (%1$s)</string>
+    <string name="radio_unavailable">Radio service unavailable</string>
+    <string name="calendar_no_title">(No title)</string>
+    <string name="no_calendar_app">No calendar app found</string>
+    <string name="tile_description">%1$s, %2$s</string>
 </resources>

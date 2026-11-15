@@ -1,6 +1,8 @@
 package com.adl.nocturna.day
 
 import com.adl.nocturna.data.CalendarView
+import com.adl.nocturna.text.PlatformLocale
+import com.adl.nocturna.text.strings
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
@@ -68,10 +70,10 @@ fun CalendarEvent.covers(day: LocalDate, zone: TimeZone): Boolean {
 }
 
 /** A friendly hello for the sticky note, by the hour of the day. */
-fun greeting(hour: Int): String = when (hour) {
-    in 5..11 -> "Good morning!"
-    in 12..17 -> "Good afternoon!"
-    else -> "Good evening!"
+fun greeting(hour: Int, locale: PlatformLocale): String = when (hour) {
+    in 5..11 -> strings(locale).goodMorning
+    in 12..17 -> strings(locale).goodAfternoon
+    else -> strings(locale).goodEvening
 }
 
 /** Whether a timed event is happening at [now]. */
@@ -124,8 +126,8 @@ fun swipeView(view: CalendarView, towardsDetail: Boolean): CalendarView {
 }
 
 /** How a calendar view is called on the page and in Settings. */
-fun CalendarView.label(): String = when (this) {
-    CalendarView.MONTH -> "Month"
-    CalendarView.WEEK -> "Week"
-    CalendarView.DAY -> "Day"
+fun CalendarView.label(locale: PlatformLocale): String = when (this) {
+    CalendarView.MONTH -> strings(locale).calendarMonth
+    CalendarView.WEEK -> strings(locale).calendarWeek
+    CalendarView.DAY -> strings(locale).calendarDay
 }

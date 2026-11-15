@@ -27,26 +27,30 @@ import com.adl.nocturna.data.ClockFont
 import com.adl.nocturna.data.ClockStyle
 import com.adl.nocturna.data.Settings
 import com.adl.nocturna.data.SettingsStore
+import com.adl.nocturna.resources.*
 import com.adl.nocturna.text.formatNumber
+import com.adl.nocturna.text.strings
 import com.adl.nocturna.ui.currentLocale
 import kotlin.math.roundToInt
+import org.jetbrains.compose.resources.stringResource
 
 private fun set(block: (Settings) -> Settings) = SettingsStore.update(block)
 
 @Composable
 fun ClockFacePage(padding: PaddingValues) {
     val s by SettingsStore.settings.collectAsStateWithLifecycle()
+    val locale = currentLocale()
     SettingsPage(padding) {
         ClockPreview(s)
-        SettingsGroup("Look") {
-            ChoiceRow("Style", ClockStyle.entries, s.style, { if (it == ClockStyle.DIGITAL) "Digital" else "Analog" }) { v ->
+        SettingsGroup(stringResource(Res.string.clock_look)) {
+            ChoiceRow(stringResource(Res.string.clock_style), ClockStyle.entries, s.style, { if (it == ClockStyle.DIGITAL) strings(locale).styleDigital else strings(locale).styleAnalog }) { v ->
                 set { it.copy(style = v) }
             }
             if (s.style == ClockStyle.DIGITAL) {
-                ChoiceRow("Font", ClockFont.entries, s.font, { it.label() }) { v -> set { it.copy(font = v) } }
+                ChoiceRow(stringResource(Res.string.clock_font), ClockFont.entries, s.font, { it.label(locale) }) { v -> set { it.copy(font = v) } }
             }
         }
-        SettingsGroup("Colour") {
+        SettingsGroup(stringResource(Res.string.clock_colour)) {
             val wallpaper = LocalClockPlatform.current.wallpaperColor()
             ColorRow(
                 Settings.COLORS, selectedSwatch(s, wallpaper),
@@ -54,9 +58,9 @@ fun ClockFacePage(padding: PaddingValues) {
                 onSelectWallpaper = { set { it.copy(colorFromWallpaper = true) } },
             ) { v -> set { it.copy(color = v, colorFromWallpaper = false) } }
         }
-        SettingsGroup("Time") {
-            SwitchRow("24-hour time", s.use24h) { v -> set { it.copy(use24h = v) } }
-            SwitchRow("Show seconds", s.showSeconds) { v -> set { it.copy(showSeconds = v) } }
+        SettingsGroup(stringResource(Res.string.clock_time)) {
+            SwitchRow(stringResource(Res.string.clock_24h), s.use24h) { v -> set { it.copy(use24h = v) } }
+            SwitchRow(stringResource(Res.string.clock_show_seconds), s.showSeconds) { v -> set { it.copy(showSeconds = v) } }
         }
     }
 }
@@ -84,39 +88,40 @@ private fun ClockPreview(s: Settings) {
 @Composable
 fun InfoLinePage(padding: PaddingValues, onNavigate: (String) -> Unit) {
     val platform = LocalSettingsPlatform.current
+    val locale = currentLocale()
     val s by SettingsStore.settings.collectAsStateWithLifecycle()
     val access = platform.access()
     SettingsPage(padding) {
-        Hint("The line of small details under the time", Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+        Hint(stringResource(Res.string.info_hint), Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
         SettingsGroup {
-            SwitchRow("Date", s.showDate) { v -> set { it.copy(showDate = v) } }
-            SwitchRow("Battery", s.showBattery) { v -> set { it.copy(showBattery = v) } }
-            SwitchRow("Next alarm", s.showNextAlarm, "Within the next 24 hours") { v -> set { it.copy(showNextAlarm = v) } }
+            SwitchRow(stringResource(Res.string.info_date), s.showDate) { v -> set { it.copy(showDate = v) } }
+            SwitchRow(stringResource(Res.string.info_battery), s.showBattery) { v -> set { it.copy(showBattery = v) } }
+            SwitchRow(stringResource(Res.string.info_next_alarm), s.showNextAlarm, stringResource(Res.string.info_next_alarm_detail)) { v -> set { it.copy(showNextAlarm = v) } }
             if (s.showNextAlarm) {
-                SwitchRow("Time until the alarm", s.showTimeToAlarm, "\"in 7 h 20 m\" when it's within 12 hours") { v ->
+                SwitchRow(stringResource(Res.string.info_time_to_alarm), s.showTimeToAlarm, stringResource(Res.string.info_time_to_alarm_detail)) { v ->
                     set { it.copy(showTimeToAlarm = v) }
                 }
             }
-            SwitchRow("Moon phase", s.showMoon, "\"Waxing gibbous\" at night; Day mode draws its own moon") { v ->
+            SwitchRow(stringResource(Res.string.info_moon), s.showMoon, stringResource(Res.string.info_moon_detail)) { v ->
                 set { it.copy(showMoon = v) }
             }
         }
-        SettingsGroup("Weather") {
-            SwitchRow("Weather", s.showWeather) { v -> set { it.copy(showWeather = v) } }
+        SettingsGroup(stringResource(Res.string.settings_weather)) {
+            SwitchRow(stringResource(Res.string.settings_weather), s.showWeather) { v -> set { it.copy(showWeather = v) } }
             if (s.showWeather) {
-                SwitchRow("Forecast", s.showForecast, "Today's high and low; tomorrow's in the evening") { v ->
+                SwitchRow(stringResource(Res.string.info_forecast), s.showForecast, stringResource(Res.string.info_forecast_detail)) { v ->
                     set { it.copy(showForecast = v) }
                 }
-                NavRow("Place and units", weatherSummary(s)) { onNavigate(SettingsPages.WEATHER) }
+                NavRow(stringResource(Res.string.info_place_units), weatherSummary(s, locale)) { onNavigate(SettingsPages.WEATHER) }
             }
         }
-        SettingsGroup("Notifications") {
+        SettingsGroup(stringResource(Res.string.info_notifications)) {
             SwitchRow(
-                "Notification icons", s.showNotifications,
-                if (access.notificationAccess) "Icons of the apps with notifications" else "Needs notification access",
+                stringResource(Res.string.info_notification_icons), s.showNotifications,
+                if (access.notificationAccess) stringResource(Res.string.info_notification_icons_detail) else stringResource(Res.string.info_needs_notification_access),
             ) { v -> set { it.copy(showNotifications = v) } }
             if (s.showNotifications && !access.notificationAccess) {
-                ActionButton("Grant notification access") { platform.open(SystemPage.NOTIFICATION_ACCESS) }
+                ActionButton(stringResource(Res.string.info_grant_notification_access)) { platform.open(SystemPage.NOTIFICATION_ACCESS) }
             }
         }
     }
@@ -129,54 +134,54 @@ fun BrightnessPage(padding: PaddingValues) {
     val locale = currentLocale()
     SettingsPage(padding) {
         Hint(
-            lux?.let { "Light sensor reads ${formatNumber(it.toDouble(), 1, locale)} lux now" }
-                ?: "No light sensor: night mode follows the clock (22:00–07:00)",
+            lux?.let { stringResource(Res.string.brightness_light_sensor, formatNumber(it.toDouble(), 1, locale)) }
+                ?: stringResource(Res.string.brightness_no_sensor),
             Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
         )
         SettingsGroup {
-            SwitchRow("Dimming", s.dimEnabled, "Also on the clock: tap it, then the moon/sun button") { v ->
+            SwitchRow(stringResource(Res.string.brightness_dimming), s.dimEnabled, stringResource(Res.string.brightness_dimming_detail)) { v ->
                 set { it.copy(dimEnabled = v) }
             }
         }
         if (s.dimEnabled) {
-            SettingsGroup("Brightness") {
+            SettingsGroup(stringResource(Res.string.brightness_title)) {
                 SwitchRow(
-                    "Adjust to room light", s.autoBrightness,
-                    if (s.autoBrightness) null else "Off: the phone's own brightness",
+                    stringResource(Res.string.brightness_room_light), s.autoBrightness,
+                    if (s.autoBrightness) null else stringResource(Res.string.brightness_room_light_off),
                 ) { v -> set { it.copy(autoBrightness = v) } }
                 if (s.autoBrightness) {
-                SliderRow("Darkest", s.minBrightness, 0.01f..0.3f, { "${(it * 100).roundToInt()}%" }) { v ->
+                SliderRow(stringResource(Res.string.brightness_darkest), s.minBrightness, 0.01f..0.3f, { "${(it * 100).roundToInt()}%" }) { v ->
                     set { it.copy(minBrightness = v) }
                 }
-                SliderRow("Brightest", s.maxBrightness, 0.3f..1f, { "${(it * 100).roundToInt()}%" }) { v ->
+                SliderRow(stringResource(Res.string.brightness_brightest), s.maxBrightness, 0.3f..1f, { "${(it * 100).roundToInt()}%" }) { v ->
                     set { it.copy(maxBrightness = v) }
                 }
                 }
                 // Night mode dims the clock even without the room light, so this shows either way.
                 SwitchRow(
-                    "Tap to peek", s.tapToPeek,
-                    "A tap on the dim clock brightens it for a few seconds; tap again for the controls",
+                    stringResource(Res.string.brightness_tap_to_peek), s.tapToPeek,
+                    stringResource(Res.string.brightness_tap_to_peek_detail),
                 ) { v -> set { it.copy(tapToPeek = v) } }
                 if (s.tapToPeek && LocalClockPlatform.current.proximity != null) {
                     SwitchRow(
-                        "Wave to peek", s.waveToPeek,
-                        "A wave of the hand over the top of the phone peeks too, at night",
+                        stringResource(Res.string.brightness_wave_to_peek), s.waveToPeek,
+                        stringResource(Res.string.brightness_wave_to_peek_detail),
                     ) { v -> set { it.copy(waveToPeek = v) } }
                 }
             }
-            SettingsGroup("Night mode") {
-                SwitchRow("Night mode", s.nightModeEnabled, "Dim red clock when the room is dark") { v ->
+            SettingsGroup(stringResource(Res.string.brightness_night_mode)) {
+                SwitchRow(stringResource(Res.string.brightness_night_mode), s.nightModeEnabled, stringResource(Res.string.brightness_night_mode_detail)) { v ->
                     set { it.copy(nightModeEnabled = v) }
                 }
                 if (s.nightModeEnabled) {
-                    SliderRow("Turn on below", s.nightModeLux, 0.5f..30f, { "${formatNumber(it.toDouble(), 1, locale)} lux" }) { v ->
+                    SliderRow(stringResource(Res.string.brightness_turn_on_below), s.nightModeLux, 0.5f..30f, { "${formatNumber(it.toDouble(), 1, locale)} lux" }) { v ->
                         set { it.copy(nightModeLux = v) }
                     }
                 }
             }
         }
-        SettingsGroup("Screen care") {
-            SwitchRow("Burn-in protection", s.burnInProtection, "Slowly moves the clock around the screen") { v ->
+        SettingsGroup(stringResource(Res.string.brightness_screen_care)) {
+            SwitchRow(stringResource(Res.string.brightness_burn_in), s.burnInProtection, stringResource(Res.string.brightness_burn_in_detail)) { v ->
                 set { it.copy(burnInProtection = v) }
             }
         }

@@ -1,7 +1,8 @@
 package com.adl.nocturna.clock
 
 import com.adl.nocturna.text.PlatformLocale
-import com.adl.nocturna.text.capitalizedFirst
+import com.adl.nocturna.text.Strings
+import com.adl.nocturna.text.strings
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.floor
@@ -30,19 +31,19 @@ fun moonCycle(at: Instant): Double {
 fun moonIllumination(cycle: Double): Double = (1 - cos(2 * PI * cycle)) / 2
 
 /** The eight named phases, each an eighth of the cycle centred on its own point. */
-enum class MoonPhase(private val words: String) {
-    NEW("new moon"),
-    WAXING_CRESCENT("waxing crescent"),
-    FIRST_QUARTER("first quarter"),
-    WAXING_GIBBOUS("waxing gibbous"),
-    FULL("full moon"),
-    WANING_GIBBOUS("waning gibbous"),
-    LAST_QUARTER("last quarter"),
-    WANING_CRESCENT("waning crescent"),
+enum class MoonPhase(private val words: (Strings) -> String) {
+    NEW(Strings::moonNew),
+    WAXING_CRESCENT(Strings::moonWaxingCrescent),
+    FIRST_QUARTER(Strings::moonFirstQuarter),
+    WAXING_GIBBOUS(Strings::moonWaxingGibbous),
+    FULL(Strings::moonFull),
+    WANING_GIBBOUS(Strings::moonWaningGibbous),
+    LAST_QUARTER(Strings::moonLastQuarter),
+    WANING_CRESCENT(Strings::moonWaningCrescent),
     ;
 
     /** The info line's name for it: "Waxing gibbous". */
-    fun label(locale: PlatformLocale): String = words.capitalizedFirst(locale)
+    fun label(locale: PlatformLocale): String = words(strings(locale))
 
     companion object {
         /** The phase at [cycle] (see [moonCycle]): new moon from 15/16 to 1/16, and so on round. */

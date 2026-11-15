@@ -17,20 +17,23 @@ import com.adl.nocturna.data.CalendarView
 import com.adl.nocturna.data.DayMode
 import com.adl.nocturna.data.Settings
 import com.adl.nocturna.data.SettingsStore
-import com.adl.nocturna.day.label
 import com.adl.nocturna.day.inDaySchedule
 import com.adl.nocturna.day.isDayModeActive
+import com.adl.nocturna.day.label
 import com.adl.nocturna.day.nextDayScheduleEdge
+import com.adl.nocturna.resources.*
 import com.adl.nocturna.text.DateTimePattern
 import com.adl.nocturna.text.PlatformLocale
 import com.adl.nocturna.text.bestDateTimePattern
 import com.adl.nocturna.text.formatTime
+import com.adl.nocturna.text.strings
 import com.adl.nocturna.ui.currentLocale
-import kotlinx.datetime.LocalTime
-import kotlinx.datetime.toLocalDateTime
+import kotlin.math.roundToInt
 import kotlin.time.Clock
 import kotlin.time.Instant
-import kotlin.math.roundToInt
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun DayModePage(padding: PaddingValues) {
@@ -65,21 +68,24 @@ fun DayModePage(padding: PaddingValues) {
 
     SettingsPage(padding) {
         Hint(
-            "The clock beside a calendar, for a desk stand. Also on the clock: tap it, then Day mode",
+            stringResource(Res.string.daypage_hint),
             Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
         )
         SettingsGroup {
-            ChoiceRow("Show day mode", DayMode.entries, s.dayMode, { it.label() }) { v ->
+            ChoiceRow(stringResource(Res.string.daypage_show), DayMode.entries, s.dayMode, { it.label(locale) }) { v ->
                 set { it.copy(dayMode = v, dayModeOverrideUntil = 0L) }
             }
         }
         if (s.dayMode == DayMode.SCHEDULED) {
-            SettingsGroup("Schedule") {
-                NavRow("From", formatTime(LocalTime(s.dayModeStart / 60, s.dayModeStart % 60), s.use24h, locale)) {
+            SettingsGroup(stringResource(Res.string.daypage_schedule)) {
+                NavRow(stringResource(Res.string.daypage_from), formatTime(LocalTime(s.dayModeStart / 60, s.dayModeStart % 60), s.use24h, locale)) {
                     editingTime = DayScheduleTime.START
                 }
-                val endsNextDay = if (s.dayModeEnd <= s.dayModeStart) " the next day" else ""
-                NavRow("Until", formatTime(LocalTime(s.dayModeEnd / 60, s.dayModeEnd % 60), s.use24h, locale) + endsNextDay) {
+                val until = formatTime(LocalTime(s.dayModeEnd / 60, s.dayModeEnd % 60), s.use24h, locale)
+                NavRow(
+                    stringResource(Res.string.daypage_until),
+                    if (s.dayModeEnd <= s.dayModeStart) stringResource(Res.string.daypage_until_next_day, until) else until,
+                ) {
                     editingTime = DayScheduleTime.END
                 }
                 DayToggles(s.dayModeDays, locale, Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) { days ->
@@ -90,82 +96,78 @@ fun DayModePage(padding: PaddingValues) {
                 Hint(dayScheduleStatus(s, now, locale), Modifier.padding(bottom = 6.dp))
             }
         }
-        SettingsGroup("Calendar") {
+        SettingsGroup(stringResource(Res.string.daypage_calendar)) {
             SwitchRow(
-                "Today's events", s.showCalendarEvents,
-                if (s.showCalendarEvents && !access.calendar) "Needs calendar access" else "From the calendars on this phone",
+                stringResource(Res.string.daypage_events), s.showCalendarEvents,
+                if (s.showCalendarEvents && !access.calendar) stringResource(Res.string.daypage_needs_calendar) else stringResource(Res.string.daypage_events_detail),
             ) { v ->
                 if (v && !access.calendar) askCalendar()
                 else set { it.copy(showCalendarEvents = v) }
             }
             if (s.showCalendarEvents && !access.calendar) {
-                ActionButton("Allow calendar access") { askCalendar() }
+                ActionButton(stringResource(Res.string.daypage_allow_calendar)) { askCalendar() }
             }
-            ChoiceRow("Calendar view", CalendarView.entries, s.dayCalendarView, { it.label() }) { v ->
+            ChoiceRow(stringResource(Res.string.daypage_calendar_view), CalendarView.entries, s.dayCalendarView, { it.label(locale) }) { v ->
                 set { it.copy(dayCalendarView = v) }
             }
-            Hint("On the clock, swipe the calendar page to switch between month, week and day", Modifier.padding(bottom = 6.dp))
+            Hint(stringResource(Res.string.daypage_calendar_swipe), Modifier.padding(bottom = 6.dp))
             if (s.showCalendarEvents) {
-                ChoiceRow("Chime before meetings", Settings.MEETING_CHIME_MINUTES, s.meetingChimeMinutes, { if (it == 0) "Off" else "$it min" }) { v ->
+                ChoiceRow(stringResource(Res.string.daypage_chime), Settings.MEETING_CHIME_MINUTES, s.meetingChimeMinutes, { if (it == 0) strings(locale).off else strings(locale).minutesShort(it) }) { v ->
                     set { it.copy(meetingChimeMinutes = v) }
                 }
                 Hint(
-                    "The note counts down to meetings in the next hour. The chime is one soft tone at the notification " +
-                        "volume, only while day mode is showing, and not on silent or Do Not Disturb",
+                    stringResource(Res.string.daypage_chime_detail),
                     Modifier.padding(bottom = 6.dp),
                 )
             }
         }
         // The strip needs the weather on and a place to fetch it for.
         if (s.showWeather && (s.weatherUseDeviceLocation || s.hasWeatherLocation)) {
-            SettingsGroup("Weather") {
-                SwitchRow("Next hours", s.dayHourlyWeather, "Temperature for the next few hours under the weather, and the chance of rain") { v ->
+            SettingsGroup(stringResource(Res.string.settings_weather)) {
+                SwitchRow(stringResource(Res.string.daypage_next_hours), s.dayHourlyWeather, stringResource(Res.string.daypage_next_hours_detail)) { v ->
                     set { it.copy(dayHourlyWeather = v) }
                 }
             }
         }
-        SettingsGroup("Focus timer") {
-            ChoiceRow("Focus", Settings.FOCUS_MINUTES, s.focusMinutes, { "$it min" }) { v -> set { it.copy(focusMinutes = v) } }
-            ChoiceRow("Short break", Settings.FOCUS_BREAK_MINUTES, s.focusBreakMinutes, { "$it min" }) { v ->
+        SettingsGroup(stringResource(Res.string.daypage_focus_timer)) {
+            ChoiceRow(stringResource(Res.string.daypage_focus), Settings.FOCUS_MINUTES, s.focusMinutes, { strings(locale).minutesShort(it) }) { v -> set { it.copy(focusMinutes = v) } }
+            ChoiceRow(stringResource(Res.string.daypage_short_break), Settings.FOCUS_BREAK_MINUTES, s.focusBreakMinutes, { strings(locale).minutesShort(it) }) { v ->
                 set { it.copy(focusBreakMinutes = v) }
             }
-            ChoiceRow("Long break", Settings.FOCUS_LONG_BREAK_MINUTES, s.focusLongBreakMinutes, { "$it min" }) { v ->
+            ChoiceRow(stringResource(Res.string.daypage_long_break), Settings.FOCUS_LONG_BREAK_MINUTES, s.focusLongBreakMinutes, { strings(locale).minutesShort(it) }) { v ->
                 set { it.copy(focusLongBreakMinutes = v) }
             }
             Hint(
-                "Tap the clock and pick Focus to start. After every fourth focus block the break is a long one. " +
-                    "A soft chime marks each switch, at the notification volume. Leaving day mode stops the timer",
+                stringResource(Res.string.daypage_focus_detail),
                 Modifier.padding(bottom = 6.dp),
             )
         }
         WorldZonesGroup(s.worldZones)
-        SettingsGroup("Screen care") {
+        SettingsGroup(stringResource(Res.string.brightness_screen_care)) {
             if (s.dimEnabled && s.autoBrightness) {
-                SliderRow("Brightest", s.dayMaxBrightness, Settings.DAY_BRIGHTNESS_RANGE, { "${(it * 100).roundToInt()}%" }) { v ->
+                SliderRow(stringResource(Res.string.brightness_brightest), s.dayMaxBrightness, Settings.DAY_BRIGHTNESS_RANGE, { "${(it * 100).roundToInt()}%" }) { v ->
                     set { it.copy(dayMaxBrightness = v) }
                 }
                 Hint(
-                    "Day mode follows the room's light up to this, never above the clock's own brightest. " +
-                        "A dimmer screen wears much more slowly",
+                    stringResource(Res.string.daypage_brightest_detail),
                     Modifier.padding(bottom = 6.dp),
                 )
             } else {
                 Hint(
-                    "Day mode uses the phone's own brightness. To keep it lower, turn on Adjust to room light " +
-                        "in Brightness and night mode",
+                    stringResource(Res.string.daypage_phone_brightness),
                     Modifier.padding(vertical = 6.dp),
                 )
             }
         }
-        SettingsGroup("Background") {
+        SettingsGroup(stringResource(Res.string.daypage_background)) {
             NavRow(
-                if (s.dayPhotoVersion == 0L) "Monthly pictures" else "Your photo",
-                if (s.dayPhotoVersion == 0L) "A cheerful picture for each month that follows the time of day. Tap to use your own photo"
-                else "Tap to change it",
+                if (s.dayPhotoVersion == 0L) stringResource(Res.string.daypage_monthly_pictures) else stringResource(Res.string.daypage_your_photo),
+                if (s.dayPhotoVersion == 0L) stringResource(Res.string.daypage_monthly_detail)
+                else stringResource(Res.string.daypage_change_photo),
             ) { pickPhoto() }
-            if (photoFailed) Hint("That photo couldn't be opened. Try another one")
+            if (photoFailed) Hint(stringResource(Res.string.daypage_photo_failed))
             if (s.dayPhotoVersion != 0L) {
-                ActionButton("Use the monthly pictures") {
+                ActionButton(stringResource(Res.string.daypage_use_monthly)) {
                     platform.clearDayPhoto()
                     set { it.copy(dayPhotoVersion = 0L) }
                 }
@@ -176,26 +178,26 @@ fun DayModePage(padding: PaddingValues) {
 
 private enum class DayScheduleTime { START, END }
 
-private fun DayMode.label() = when (this) {
-    DayMode.OFF -> "Off"
-    DayMode.ON -> "Always"
-    DayMode.SCHEDULED -> "On a schedule"
+private fun DayMode.label(locale: PlatformLocale) = when (this) {
+    DayMode.OFF -> strings(locale).off
+    DayMode.ON -> strings(locale).dayModeAlways
+    DayMode.SCHEDULED -> strings(locale).dayModeScheduled
 }
 
 /** What the schedule is doing at [now] and when that changes, e.g. "Day mode now, until Fri 18:00". */
 private fun dayScheduleStatus(s: Settings, now: Moment, locale: PlatformLocale): String {
     val active = isDayModeActive(s, now.instant, now.zone)
-    val state = if (active) "Day mode now" else "Clock only now"
-    if (s.dayModeDays == 0) return "$state. Pick the days day mode starts on."
+    val t = strings(locale)
+    val state = t.dayModeNow(active)
+    if (s.dayModeDays == 0) return t.pickScheduleDays(state)
     val overridden = active != inDaySchedule(s, now.instant, now.zone)
     val until = if (overridden) s.dayModeOverrideUntil.takeIf { it != Long.MAX_VALUE }?.let { Instant.fromEpochMilliseconds(it) }
     else nextDayScheduleEdge(s, now.instant, now.zone)
     val pattern = DateTimePattern(bestDateTimePattern(if (s.use24h) "EEEHHmm" else "EEEhmma", locale), locale)
     val whenText = until?.let { pattern.format(it.toLocalDateTime(now.zone)) }
     return when {
-        overridden && whenText != null -> "$state, switched from the clock until $whenText"
-        overridden -> "$state, switched from the clock"
-        whenText != null -> "$state, until $whenText"
+        overridden -> t.switchedFromClock(state, whenText)
+        whenText != null -> t.stateUntil(state, whenText)
         else -> state
     }
 }

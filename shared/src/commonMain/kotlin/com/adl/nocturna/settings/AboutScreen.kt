@@ -15,6 +15,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
+import com.adl.nocturna.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun AboutScreen(padding: PaddingValues) {
@@ -30,28 +32,28 @@ fun AboutScreen(padding: PaddingValues) {
                 Text(LocalSettingsPlatform.current.versionLabel, style = MaterialTheme.typography.bodyMedium)
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    "A bedside clock for Android: a big, dimmable clock for the nightstand while your phone charges.",
+                    stringResource(Res.string.about_description),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                 )
             }
         }
 
-        item { NavRow("Source code", REPOSITORY_URL.removePrefix("https://")) { open(REPOSITORY_URL) } }
-        item { NavRow("Report a problem", "Opens an issue on GitHub") { open("$REPOSITORY_URL/issues/new/choose") } }
-        item { NavRow("Licence", "MIT · $COPYRIGHT") { open("$REPOSITORY_URL/blob/main/LICENSE") } }
-        item { NavRow("Made by Adrián De León", HOMEPAGE_URL.removePrefix("https://www.")) { open(HOMEPAGE_URL) } }
+        item { NavRow(stringResource(Res.string.about_source), REPOSITORY_URL.removePrefix("https://")) { open(REPOSITORY_URL) } }
+        item { NavRow(stringResource(Res.string.about_report), stringResource(Res.string.about_report_detail)) { open("$REPOSITORY_URL/issues/new/choose") } }
+        item { NavRow(stringResource(Res.string.about_licence), "MIT · $COPYRIGHT") { open("$REPOSITORY_URL/blob/main/LICENSE") } }
+        item { NavRow(stringResource(Res.string.about_made_by), HOMEPAGE_URL.removePrefix("https://www.")) { open(HOMEPAGE_URL) } }
 
         item { BackupRows() }
 
-        item { SectionHeader("Open-source libraries") }
+        item { SectionHeader(stringResource(Res.string.about_libraries)) }
         items(LIBRARY_CREDITS) { CreditRow(it) }
 
-        item { SectionHeader("Data") }
+        item { SectionHeader(stringResource(Res.string.about_data)) }
         items(DATA_CREDITS) { CreditRow(it) }
         item {
             Text(
-                "Radio streams play from the stations' own servers; Nocturna carries none of their content.",
+                stringResource(Res.string.about_radio_note),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
@@ -64,5 +66,5 @@ fun AboutScreen(padding: PaddingValues) {
 @Composable
 private fun CreditRow(credit: Credit) {
     val uriHandler = LocalUriHandler.current
-    NavRow(credit.name, "${credit.detail} · ${credit.licence}") { runCatching { uriHandler.openUri(credit.url) } }
+    NavRow(credit.name, "${stringResource(credit.detail)} · ${credit.licence}") { runCatching { uriHandler.openUri(credit.url) } }
 }

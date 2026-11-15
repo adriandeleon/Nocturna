@@ -56,7 +56,7 @@ object BedtimeReminder {
         val n = NotificationCompat.Builder(context, NocturnaApp.CHANNEL_BEDTIME)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle(text)
-            .setContentText("Tap to open the clock")
+            .setContentText(context.getString(R.string.tap_to_open_clock))
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setSilent(true)

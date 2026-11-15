@@ -30,12 +30,13 @@ import com.adl.nocturna.clock.DndWhileShowing
 import com.adl.nocturna.day.CalendarEvents
 import com.adl.nocturna.day.DayPhoto
 import com.adl.nocturna.notify.NotificationIconService
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
+import java.util.Locale
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * The Settings pages' view of an Android phone: its permissions, system settings pages, photo and file
@@ -177,5 +178,7 @@ class AndroidSettingsPlatform(private val activity: Context) : SettingsPlatform 
 
     override val versionName: String = BuildConfig.VERSION_NAME
 
-    override val versionLabel: String = versionLabel(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE, BuildConfig.DEBUG)
+    // Read each time, so it follows a change of the phone's language.
+    override val versionLabel: String
+        get() = versionLabel(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE, BuildConfig.DEBUG, Locale.getDefault())
 }

@@ -1,0 +1,329 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The text of the shared screens, read with stringResource(Res.string.…) and pluralStringResource(Res.plurals.…).
+  Text that plain functions build (summaries, countdowns, the focus timer…) is in text/Strings.kt instead.
+  Placeholders are positional: %1$s for text, %1$d for whole numbers.
+-->
+<resources>
+    <!-- Shared -->
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+
+    <!-- Settings hub -->
+    <string name="settings_issue_notifications_title">Notifications are off</string>
+    <string name="settings_issue_notifications_detail">Alarms still sound, but a locked phone won't show a screen to stop them</string>
+    <string name="settings_issue_turn_on">Turn on</string>
+    <string name="settings_issue_full_screen_title">Full-screen alarms are off</string>
+    <string name="settings_issue_full_screen_detail">A ringing alarm can't fill the locked screen</string>
+    <string name="settings_issue_allow">Allow</string>
+    <string name="settings_issue_notification_access_title">Notification icons need access</string>
+    <string name="settings_issue_notification_access_detail">Or switch them off in Show on the clock</string>
+    <string name="settings_issue_grant">Grant</string>
+    <string name="settings_issue_calendar_title">Today's events need calendar access</string>
+    <string name="settings_issue_calendar_detail">Day mode shows the calendar page alone until then</string>
+    <string name="settings_issue_overlay_title">Opening when charging needs a permission</string>
+    <string name="settings_issue_overlay_detail">Allow “Display over other apps”</string>
+    <string name="settings_group_clock">Clock</string>
+    <string name="settings_clock_face">Clock face</string>
+    <string name="settings_show_on_clock">Show on the clock</string>
+    <string name="settings_brightness">Brightness and night mode</string>
+    <string name="settings_day_mode">Day mode</string>
+    <string name="settings_group_alarms_radio">Alarms and radio</string>
+    <string name="settings_alarms">Alarms</string>
+    <string name="settings_radio_stations">Radio stations</string>
+    <string name="settings_none">None</string>
+    <string name="settings_group_more">More</string>
+    <string name="settings_weather">Weather</string>
+    <string name="settings_starting">Starting the clock</string>
+    <string name="settings_about">About Nocturna</string>
+    <string name="settings_about_summary">%1$s · Backup</string>
+    <string name="notifications_off_title">Notifications are off</string>
+    <string name="notifications_off_detail">Alarms will still sound, but on a locked phone you won't get a screen to stop them. Turn notifications on for Nocturna.</string>
+    <string name="notifications_off_fix">Turn on notifications</string>
+    <string name="settings_needs_attention">Needs your attention</string>
+
+    <!-- Backup -->
+    <string name="backup_title">Backup</string>
+    <string name="backup_export">Export…</string>
+    <string name="backup_export_detail">Saves your settings, radio stations and alarms to a file</string>
+    <string name="backup_import">Import…</string>
+    <string name="backup_import_detail">Replaces them with the ones in a backup file</string>
+    <string name="backup_no_photo">The Day mode photo isn't included in a backup.</string>
+    <string name="backup_import_question">Import this backup?</string>
+    <string name="backup_replace">Replace</string>
+    <string name="backup_saved">Backup saved</string>
+    <string name="backup_imported">Backup imported</string>
+    <string name="backup_cant_export">Can't export</string>
+    <string name="backup_cant_export_detail">The backup couldn't be saved there. Try another place.</string>
+    <string name="backup_cant_import">Can't import</string>
+    <string name="backup_cant_import_detail">The file couldn't be opened. Nothing was changed.</string>
+    <string name="backup_import_detail_summary">%1$s; replaces your current settings, radio stations and alarms.</string>
+
+    <!-- Components -->
+    <string name="color_from_wallpaper">From wallpaper</string>
+
+    <!-- Clock face, info line and brightness pages -->
+    <string name="clock_look">Look</string>
+    <string name="clock_style">Style</string>
+    <string name="clock_font">Font</string>
+    <string name="clock_colour">Colour</string>
+    <string name="clock_time">Time</string>
+    <string name="clock_24h">24-hour time</string>
+    <string name="clock_show_seconds">Show seconds</string>
+    <string name="info_hint">The line of small details under the time</string>
+    <string name="info_date">Date</string>
+    <string name="info_battery">Battery</string>
+    <string name="info_next_alarm">Next alarm</string>
+    <string name="info_next_alarm_detail">Within the next 24 hours</string>
+    <string name="info_time_to_alarm">Time until the alarm</string>
+    <string name="info_time_to_alarm_detail">"in 7 h 20 m" when it's within 12 hours</string>
+    <string name="info_moon">Moon phase</string>
+    <string name="info_moon_detail">"Waxing gibbous" at night; Day mode draws its own moon</string>
+    <string name="info_forecast">Forecast</string>
+    <string name="info_forecast_detail">Today's high and low; tomorrow's in the evening</string>
+    <string name="info_place_units">Place and units</string>
+    <string name="info_notifications">Notifications</string>
+    <string name="info_notification_icons">Notification icons</string>
+    <string name="info_notification_icons_detail">Icons of the apps with notifications</string>
+    <string name="info_needs_notification_access">Needs notification access</string>
+    <string name="info_grant_notification_access">Grant notification access</string>
+    <string name="brightness_no_sensor">No light sensor: night mode follows the clock (22:00–07:00)</string>
+    <string name="brightness_dimming">Dimming</string>
+    <string name="brightness_dimming_detail">Also on the clock: tap it, then the moon/sun button</string>
+    <string name="brightness_title">Brightness</string>
+    <string name="brightness_room_light">Adjust to room light</string>
+    <string name="brightness_room_light_off">Off: the phone's own brightness</string>
+    <string name="brightness_darkest">Darkest</string>
+    <string name="brightness_brightest">Brightest</string>
+    <string name="brightness_tap_to_peek">Tap to peek</string>
+    <string name="brightness_tap_to_peek_detail">A tap on the dim clock brightens it for a few seconds; tap again for the controls</string>
+    <string name="brightness_wave_to_peek">Wave to peek</string>
+    <string name="brightness_wave_to_peek_detail">A wave of the hand over the top of the phone peeks too, at night</string>
+    <string name="brightness_night_mode">Night mode</string>
+    <string name="brightness_night_mode_detail">Dim red clock when the room is dark</string>
+    <string name="brightness_turn_on_below">Turn on below</string>
+    <string name="brightness_screen_care">Screen care</string>
+    <string name="brightness_burn_in">Burn-in protection</string>
+    <string name="brightness_burn_in_detail">Slowly moves the clock around the screen</string>
+    <string name="brightness_light_sensor">Light sensor reads %1$s lux now</string>
+
+    <!-- Day mode page -->
+    <string name="daypage_hint">The clock beside a calendar, for a desk stand. Also on the clock: tap it, then Day mode</string>
+    <string name="daypage_show">Show day mode</string>
+    <string name="daypage_schedule">Schedule</string>
+    <string name="daypage_from">From</string>
+    <string name="daypage_until">Until</string>
+    <string name="daypage_calendar">Calendar</string>
+    <string name="daypage_events">Today's events</string>
+    <string name="daypage_needs_calendar">Needs calendar access</string>
+    <string name="daypage_events_detail">From the calendars on this phone</string>
+    <string name="daypage_allow_calendar">Allow calendar access</string>
+    <string name="daypage_calendar_view">Calendar view</string>
+    <string name="daypage_calendar_swipe">On the clock, swipe the calendar page to switch between month, week and day</string>
+    <string name="daypage_chime">Chime before meetings</string>
+    <string name="daypage_next_hours">Next hours</string>
+    <string name="daypage_next_hours_detail">Temperature for the next few hours under the weather, and the chance of rain</string>
+    <string name="daypage_focus_timer">Focus timer</string>
+    <string name="daypage_focus">Focus</string>
+    <string name="daypage_short_break">Short break</string>
+    <string name="daypage_long_break">Long break</string>
+    <string name="daypage_background">Background</string>
+    <string name="daypage_monthly_pictures">Monthly pictures</string>
+    <string name="daypage_your_photo">Your photo</string>
+    <string name="daypage_monthly_detail">A cheerful picture for each month that follows the time of day. Tap to use your own photo</string>
+    <string name="daypage_change_photo">Tap to change it</string>
+    <string name="daypage_photo_failed">That photo couldn't be opened. Try another one</string>
+    <string name="daypage_use_monthly">Use the monthly pictures</string>
+    <string name="daypage_until_next_day">%1$s the next day</string>
+    <string name="daypage_chime_detail">The note counts down to meetings in the next hour. The chime is one soft tone at the notification volume, only while day mode is showing, and not on silent or Do Not Disturb</string>
+    <string name="daypage_focus_detail">Tap the clock and pick Focus to start. After every fourth focus block the break is a long one. A soft chime marks each switch, at the notification volume. Leaving day mode stops the timer</string>
+    <string name="daypage_brightest_detail">Day mode follows the room's light up to this, never above the clock's own brightest. A dimmer screen wears much more slowly</string>
+    <string name="daypage_phone_brightness">Day mode uses the phone's own brightness. To keep it lower, turn on Adjust to room light in Brightness and night mode</string>
+
+    <!-- Settings screen -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_about_title">About</string>
+    <string name="settings_back">‹ Back</string>
+
+    <!-- Starting the clock page -->
+    <string name="start_while_charging">While charging</string>
+    <string name="start_screen_saver">Screen saver</string>
+    <string name="start_screen_saver_detail">Choose Nocturna and set it to start while charging</string>
+    <string name="start_open_charging">Open when charging</string>
+    <string name="start_open_charging_detail">Opens the clock when you plug in a locked phone</string>
+    <string name="start_allow_overlay">Allow “Display over other apps”</string>
+    <string name="start_at_night">At night</string>
+    <string name="start_full_screen_hint">Android needs your OK before a ringing alarm can fill the locked screen</string>
+    <string name="start_allow_full_screen">Allow full-screen alarms</string>
+
+    <!-- About -->
+    <string name="about_description">A bedside clock for Android: a big, dimmable clock for the nightstand while your phone charges.</string>
+    <string name="about_source">Source code</string>
+    <string name="about_report">Report a problem</string>
+    <string name="about_report_detail">Opens an issue on GitHub</string>
+    <string name="about_licence">Licence</string>
+    <string name="about_made_by">Made by Adrián De León</string>
+    <string name="about_libraries">Open-source libraries</string>
+    <string name="about_data">Data</string>
+    <string name="about_radio_note">Radio streams play from the stations' own servers; Nocturna carries none of their content.</string>
+
+    <!-- Credits -->
+    <string name="credit_androidx">Core, Activity, Lifecycle and SavedState</string>
+    <string name="credit_compose">UI and Material 3</string>
+    <string name="credit_compose_mp">Shared UI: runtime, foundation, UI, Material 3 and resources</string>
+    <string name="credit_media3">ExoPlayer, HLS and media session</string>
+    <string name="credit_datetime">Dates, times and time zones</string>
+    <string name="credit_serialization">JSON for the stored settings and alarms</string>
+    <string name="credit_coroutines">Background work and live updates</string>
+    <string name="credit_atomicfu">Safe changes to the settings</string>
+    <string name="credit_kotlin">JetBrains and Kotlin contributors</string>
+    <string name="credit_open_meteo">Weather and city search</string>
+    <string name="credit_geonames">Place names behind the city search</string>
+
+    <!-- Do Not Disturb at night -->
+    <string name="dnd_not_allowed">Not allowed: Nocturna doesn't have Do Not Disturb access</string>
+    <string name="dnd_not_turned_on">Not turned on: your Do Not Disturb settings would silence alarms</string>
+    <string name="dnd_detail">Turn on Do Not Disturb while the clock is on screen at night</string>
+    <string name="dnd_title">Do Not Disturb at night</string>
+    <string name="dnd_allow_access">Allow Do Not Disturb access</string>
+    <string name="dnd_allow_alarms">Allow alarms in your phone's Do Not Disturb settings and Nocturna will turn it on at night.</string>
+    <string name="dnd_continue">Continue</string>
+    <string name="dnd_hours">From %1$s to %2$s, or from when night mode starts in the evening. Priority only, so alarms still ring.</string>
+    <string name="dnd_explain">To silence notifications at night, Nocturna needs your OK to change Do Not Disturb. On the next screen, find Nocturna and allow it. It only sets priority mode, so alarms still ring, and it puts things back when the clock leaves the screen or in the morning.</string>
+
+    <!-- Weather page -->
+    <string name="weather_hidden">The weather is hidden</string>
+    <string name="weather_hidden_detail">Tap to show it under the clock</string>
+    <string name="weather_place">Place</string>
+    <string name="weather_use_location">Use my location</string>
+    <string name="weather_use_location_detail">Approximate location only</string>
+    <string name="weather_units">Units</string>
+    <string name="weather_temperature">Temperature</string>
+    <string name="weather_attribution">Weather data by Open-Meteo.com (CC BY 4.0). City search based on GeoNames.</string>
+    <string name="weather_city_fallback">Used when your location isn't available</string>
+    <string name="weather_search_city">Search a city</string>
+    <string name="weather_find">Find</string>
+    <string name="weather_fahrenheit">Fahrenheit (°F)</string>
+    <string name="weather_celsius">Celsius (°C)</string>
+    <string name="weather_city">City: %1$s</string>
+    <string name="weather_city_not_set">City: not set</string>
+    <string name="weather_no_match">No match (or no connection)</string>
+
+    <!-- Other time zones -->
+    <string name="zones_title">Other time zones</string>
+    <string name="zones_remove">Remove</string>
+    <string name="zones_add">Add a time zone</string>
+    <string name="zones_add_another">Add another</string>
+    <string name="zones_search">City or time zone</string>
+    <string name="zones_no_match">No city or time zone by that name</string>
+    <string name="zones_hint">Up to %1$d, under the time on the desk clock, with +1 or −1 when it's already another day there. Left out when the screen has no room for them</string>
+
+    <!-- Radio stations page -->
+    <string name="stations_sleep_sounds">Sleep sounds</string>
+    <string name="stations_play">▶  Play</string>
+    <string name="stations_stop">■  Stop</string>
+    <string name="stations_add_title">Add a station</string>
+    <string name="stations_name">Name</string>
+    <string name="stations_url">Stream URL</string>
+    <string name="stations_add">Add</string>
+    <string name="stations_hint">Pick what the clock's Radio button plays: a web station (any MP3, AAC or HLS stream URL works) or one of the sleep sounds below.</string>
+    <string name="stations_sounds_hint">Made on your phone, so they play without the internet. They loop for as long as you like, and the sleep timer fades them out like a station.</string>
+
+    <!-- Alarms page -->
+    <string name="alarms_add">+  Add alarm</string>
+    <string name="alarms_cancel_snooze">Cancel snooze</string>
+    <string name="alarms_none">No alarms yet.</string>
+    <string name="alarms_behaviour">Alarm behaviour</string>
+    <string name="alarms_snooze_length">Snooze length</string>
+    <string name="alarms_gentle">Gentle wake-up</string>
+    <string name="alarms_vibrate">Vibrate</string>
+    <string name="alarms_wave">Wave to snooze</string>
+    <string name="alarms_wave_detail">A wave of the hand over the top of the phone snoozes a ringing alarm</string>
+    <string name="alarms_sums">Sums to stop an alarm</string>
+    <string name="alarms_show_weather">Show weather</string>
+    <string name="alarms_show_weather_detail">Today's weather under the time when an alarm rings</string>
+    <string name="alarms_sunrise">Sunrise before alarms</string>
+    <string name="alarms_sunrise_detail">The clock slowly brightens and warms to a soft white before an alarm rings, from night red through amber at night. Not before a snooze.</string>
+    <string name="alarms_bedtime">Bedtime reminder</string>
+    <string name="alarms_date">Date</string>
+    <string name="alarms_date_none">Rings the next time this time comes round</string>
+    <string name="alarms_date_set">Rings once, on this day</string>
+    <string name="alarms_pick_date">Pick a date</string>
+    <string name="alarms_clear">Clear</string>
+    <string name="alarms_undo_skip">Undo skip</string>
+    <string name="alarms_skip_next">Skip next</string>
+    <string name="alarms_delete">Delete</string>
+    <string name="alarms_sound">Sound</string>
+    <string name="alarms_tone">Alarm tone</string>
+    <string name="alarms_to_stop">To stop it</string>
+    <string name="alarms_skip_days_off">Skip on days off</string>
+    <string name="alarms_skip_days_off_off">Stay quiet on holidays in your calendar</string>
+    <string name="alarms_skip_days_off_on">Quiet on all-day calendar events like holidays and vacations</string>
+    <string name="alarms_skip_days_off_no_access">Needs calendar access; until then this alarm rings on days off too</string>
+    <string name="alarms_days_off">Days off</string>
+    <string name="alarms_default_words">Use the default words</string>
+    <string name="alarms_label">Label</string>
+    <string name="alarms_snoozed_until">Snoozed until %1$s</string>
+    <string name="alarms_deleted">Alarm %1$s deleted</string>
+    <string name="alarms_undo">Undo</string>
+    <string name="alarms_bedtime_detail">A quiet notification the evening before a morning alarm, a quarter of an hour before you need to sleep to get %1$s. Not when the clock is already showing.</string>
+    <string name="alarms_needs_notifications">Needs notifications.</string>
+    <string name="alarms_already_passed">%1$s on %2$s has already passed</string>
+    <string name="alarms_stream_fallback">If the station doesn't play within %1$d s, the alarm tone rings instead.</string>
+    <string name="alarms_skips_day">Skips %1$s · %2$s</string>
+    <string name="alarms_days_off_detail">Alarms with Skip on days off stay quiet on days with an all-day calendar event whose title has one of these words. Separate them with commas; case and accents don't matter.</string>
+
+    <!-- The clock's buttons -->
+    <string name="clock_clock_only">Clock only</string>
+    <string name="clock_focus_on">■  Focus</string>
+    <string name="clock_radio_on">■  Radio</string>
+    <string name="clock_radio_off">▶  Radio</string>
+    <string name="clock_sleep_off">Sleep: off</string>
+    <string name="clock_sleep_minutes">Sleep: %1$dm</string>
+    <string name="clock_dimming_on">Dimming on</string>
+    <string name="brightness_dimming_off">Dimming off</string>
+
+    <!-- Alarm screen -->
+    <string name="alarm_back">Back</string>
+    <string name="alarm_default_label">Alarm</string>
+    <string name="alarm_hold_to_stop">Hold to stop</string>
+    <string name="alarm_dismiss">Dismiss</string>
+    <string name="alarm_keep_listening">Keep listening</string>
+    <string name="alarm_snooze">Snooze %1$dm</string>
+
+    <!-- Dismiss challenges -->
+    <string name="challenge_not_quite">Not quite. Here's a new one.</string>
+    <string name="challenge_delete">Delete</string>
+    <string name="challenge_check">Check answer</string>
+    <string name="challenge_sum_spoken">%1$s equals?</string>
+    <string name="challenge_answer_empty">Your answer, empty</string>
+    <string name="challenge_answer">Your answer, %1$s</string>
+    <string name="challenge_sum_count">Sum %1$d of %2$d</string>
+    <plurals name="challenge_hold_description">
+        <item quantity="one">%1$s: touch and hold for %2$d second</item>
+        <item quantity="other">%1$s: touch and hold for %2$d seconds</item>
+    </plurals>
+    <string name="challenge_keep_holding">Keep holding</string>
+    <string name="challenge_keep_holding_dots">Keep holding…</string>
+
+    <!-- Day mode -->
+    <string name="day_focus_actions">Pause, skip or stop the focus timer</string>
+    <string name="day_resume">Resume</string>
+    <string name="day_pause">Pause</string>
+    <string name="day_skip">Skip</string>
+    <string name="day_stop">Stop</string>
+    <string name="day_open_calendar">Open in your calendar</string>
+    <string name="day_turn_on_events">Turn on Today's events in Settings to see your day here</string>
+    <string name="day_allow_calendar">Allow calendar access in Settings to see your day here</string>
+    <string name="day_nothing_today">Nothing on your calendar today</string>
+    <string name="day_all_day">All day</string>
+    <string name="day_event_placeholder">Event</string>
+    <string name="day_open_today">Open today in your calendar</string>
+    <string name="day_allow_calendar_note">Allow calendar access in Settings to see today's events here</string>
+    <string name="day_nothing_else">Nothing else on your calendar today. Enjoy!</string>
+    <string name="day_week_number">Week %1$d</string>
+    <string name="day_more">+%1$d more</string>
+    <string name="day_more_today">+%1$d more today</string>
+    <string name="day_now_until">Now · until %1$s</string>
+    <string name="day_show_view">Show the %1$s</string>
+</resources>

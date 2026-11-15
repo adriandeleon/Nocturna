@@ -2,6 +2,7 @@ package com.adl.nocturna.alarm
 
 import com.adl.nocturna.text.PlatformLocale
 import com.adl.nocturna.text.formatTime
+import com.adl.nocturna.text.strings
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.math.roundToLong
@@ -69,11 +70,11 @@ fun bedtimeReminderText(
     locale: PlatformLocale,
 ): String {
     val time = formatTime(alarmAt.toLocalDateTime(zone).time, use24h, locale)
-    return "Bedtime: ${sleepHoursLabel(sleepHours)} before your $time alarm"
+    return strings(locale).bedtimeReminder(sleepHoursLabel(sleepHours, locale), time)
 }
 
 /** A sleep length as on the setting: "8 h", "7 h 30 m"; "Off" for 0. */
-fun sleepHoursLabel(sleepHours: Float): String =
-    if (sleepHours <= 0f) "Off" else hoursAndMinutes(sleepMinutes(sleepHours))
+fun sleepHoursLabel(sleepHours: Float, locale: PlatformLocale): String =
+    if (sleepHours <= 0f) strings(locale).off else hoursAndMinutes(sleepMinutes(sleepHours), locale)
 
 private fun sleepMinutes(sleepHours: Float): Long = (sleepHours * 60).roundToLong()

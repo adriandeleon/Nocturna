@@ -2,19 +2,19 @@ package com.adl.nocturna.day
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationVector1D
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.AnimationVector1D
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -37,29 +37,29 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.lerp
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.LocalDensity
@@ -77,6 +77,7 @@ import com.adl.nocturna.clock.LocalClockPlatform
 import com.adl.nocturna.clock.Moment
 import com.adl.nocturna.data.CalendarView
 import com.adl.nocturna.data.Settings
+import com.adl.nocturna.resources.*
 import com.adl.nocturna.text.DateTimePattern
 import com.adl.nocturna.text.bestDateTimePattern
 import com.adl.nocturna.text.capitalizedFirst
@@ -86,18 +87,19 @@ import com.adl.nocturna.text.narrowName
 import com.adl.nocturna.text.shortName
 import com.adl.nocturna.text.weekOfYear
 import com.adl.nocturna.ui.currentLocale
+import kotlin.math.abs
+import kotlin.random.Random
+import kotlin.time.Clock
+import kotlin.time.Instant
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.atTime
 import kotlinx.datetime.number
 import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Clock
-import kotlin.time.Instant
-import kotlin.math.abs
-import kotlin.random.Random
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 // Warm and a touch below white: kinder to OLED pixels lit all day, and it still reads as paper.
 private val Paper = Color(0xFFF8F2E4)
@@ -242,7 +244,7 @@ fun DayLayout(
                             smallestNote = { SmallestNote(now, noteFont, Modifier.widthIn(max = 380.dp)) },
                             // Without the note, the countdown hangs under the desk clock instead.
                             countdown = upcoming?.let { e ->
-                                { CountdownTag(countdownLine(e, now.instant), noteFont, openEvent?.let { open -> { open(e) } }, Modifier.drift(clockDrift, 28.dp, 14.dp)) }
+                                { CountdownTag(countdownLine(e, now.instant, currentLocale()), noteFont, openEvent?.let { open -> { open(e) } }, Modifier.drift(clockDrift, 28.dp, 14.dp)) }
                             },
                             modifier = Modifier.weight(1f).fillMaxHeight(),
                         )
@@ -268,7 +270,7 @@ fun DayLayout(
                             if (!showNote && upcoming != null) {
                                 Spacer(Modifier.height(COUNTDOWN_GAP))
                                 CountdownTag(
-                                    countdownLine(upcoming, now.instant), noteFont, openEvent?.let { open -> { open(upcoming) } },
+                                    countdownLine(upcoming, now.instant, currentLocale()), noteFont, openEvent?.let { open -> { open(upcoming) } },
                                     Modifier.drift(clockDrift, 24.dp, 8.dp),
                                 )
                             }
@@ -438,12 +440,12 @@ private fun FocusLine(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .clip(RoundedCornerShape(50))
-                .clickable(enabled = onFocus != null, onClickLabel = "Pause, skip or stop the focus timer") { open = !open }
+                .clickable(enabled = onFocus != null, onClickLabel = stringResource(Res.string.day_focus_actions)) { open = !open }
                 .padding(horizontal = 10.dp, vertical = 4.dp),
         ) {
             FocusRing(status.progress, if (status.phase == FocusPhase.FOCUS) FocusRingColor else BreakRingColor, Modifier.size(line * 0.9f))
             Spacer(Modifier.width(line * 0.5f))
-            Text(focusLabel(status), style = style.copy(color = Color.White.copy(alpha = if (status.paused) 0.7f else 1f)), maxLines = 1)
+            Text(focusLabel(status, currentLocale()), style = style.copy(color = Color.White.copy(alpha = if (status.paused) 0.7f else 1f)), maxLines = 1)
         }
         if (open && onFocus != null) {
             fun act(change: (Long) -> FocusTimer?) {
@@ -451,9 +453,9 @@ private fun FocusLine(
                 onFocus(change(Clock.System.now().toEpochMilliseconds()))
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 4.dp)) {
-                FocusAction(if (timer.paused) "Resume" else "Pause", style) { act { t -> if (timer.paused) timer.resume(t) else timer.pause(t) } }
-                FocusAction("Skip", style) { act { t -> timer.skip(t, lengths) } }
-                FocusAction("Stop", style) { open = false; onFocus(null) }
+                FocusAction(if (timer.paused) stringResource(Res.string.day_resume) else stringResource(Res.string.day_pause), style) { act { t -> if (timer.paused) timer.resume(t) else timer.pause(t) } }
+                FocusAction(stringResource(Res.string.day_skip), style) { act { t -> timer.skip(t, lengths) } }
+                FocusAction(stringResource(Res.string.day_stop), style) { open = false; onFocus(null) }
             }
         }
     }
@@ -529,7 +531,7 @@ private fun CountdownTag(text: String, fontSize: TextUnit, onClick: (() -> Unit)
             .shadow(6.dp, shape)
             .clip(shape)
             .background(Brush.verticalGradient(DeskClockNavy))
-            .clickable(enabled = onClick != null, onClickLabel = "Open in your calendar") { onClick?.invoke() }
+            .clickable(enabled = onClick != null, onClickLabel = stringResource(Res.string.day_open_calendar)) { onClick?.invoke() }
             .padding(horizontal = 16.dp, vertical = 6.dp),
     )
 }
@@ -658,7 +660,7 @@ private fun DeskPage(
                     Text(month, style = base.copy(color = Color.White, fontSize = font * 1.7f, fontWeight = FontWeight.Bold))
                     Spacer(Modifier.weight(1f))
                     Text(
-                        if (view == CalendarView.WEEK) "Week ${weekOfYear(today, locale)}" else today.year.toString(),
+                        if (view == CalendarView.WEEK) stringResource(Res.string.day_week_number, weekOfYear(today, locale)) else today.year.toString(),
                         style = base.copy(color = Color.White.copy(alpha = 0.85f), fontSize = font * 1.2f),
                     )
                 }
@@ -754,7 +756,7 @@ private fun WeekBody(
                         .weight(1f)
                         .clip(RoundedCornerShape(cell * 0.15f))
                         .background(if (isToday) accent.copy(alpha = 0.12f) else Color.Transparent)
-                        .clickable(enabled = onOpenDay != null, onClickLabel = "Open in your calendar") { onOpenDay?.invoke(d) }
+                        .clickable(enabled = onOpenDay != null, onClickLabel = stringResource(Res.string.day_open_calendar)) { onOpenDay?.invoke(d) }
                         .padding(horizontal = cell * 0.15f),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -809,7 +811,7 @@ private fun WeekEventLine(
         Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(4.dp))
-            .clickable(enabled = onOpenEvent != null, onClickLabel = "Open in your calendar") { onOpenEvent?.invoke(e) },
+            .clickable(enabled = onOpenEvent != null, onClickLabel = stringResource(Res.string.day_open_calendar)) { onOpenEvent?.invoke(e) },
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(Modifier.size(line * 0.55f).clip(CircleShape).background((e.color?.let { Color(it) } ?: accent).copy(alpha = if (faded) 0.4f else 1f)))
@@ -858,7 +860,7 @@ private fun DayBody(
                 .width(cell * 2.5f)
                 .fillMaxHeight()
                 .clip(RoundedCornerShape(cell * 0.2f))
-                .clickable(enabled = onOpenDay != null, onClickLabel = "Open in your calendar") { onOpenDay?.invoke(today) },
+                .clickable(enabled = onOpenDay != null, onClickLabel = stringResource(Res.string.day_open_calendar)) { onOpenDay?.invoke(today) },
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
@@ -877,16 +879,16 @@ private fun DayBody(
         Spacer(Modifier.width(cell * 0.3f))
         Box(Modifier.weight(1f).fillMaxHeight(), contentAlignment = Alignment.CenterStart) {
             when {
-                !showEvents -> Text("Turn on Today's events in Settings to see your day here", style = faint)
-                !access -> Text("Allow calendar access in Settings to see your day here", style = faint)
+                !showEvents -> Text(stringResource(Res.string.day_turn_on_events), style = faint)
+                !access -> Text(stringResource(Res.string.day_allow_calendar), style = faint)
                 dayEvents == null -> Unit // still loading
-                dayEvents.isEmpty() -> Text("Nothing on your calendar today", style = faint)
-                else -> FitColumn(cell * 0.12f, Modifier, more = { n -> Text("+$n more", style = faint) }) {
+                dayEvents.isEmpty() -> Text(stringResource(Res.string.day_nothing_today), style = faint)
+                else -> FitColumn(cell * 0.12f, Modifier, more = { n -> Text(stringResource(Res.string.day_more, n), style = faint) }) {
                     dayEvents.forEach { e ->
                         val ongoing = e.isOngoing(instant)
                         val whenText = when {
-                            e.allDay -> "All day"
-                            ongoing -> "Now · until ${fmt(e.end)}"
+                            e.allDay -> stringResource(Res.string.day_all_day)
+                            ongoing -> stringResource(Res.string.day_now_until, fmt(e.end))
                             else -> "${fmt(e.begin)} – ${fmt(e.end)}"
                         }
                         EventRow(
@@ -906,6 +908,7 @@ private fun DayBody(
 /** "Month · Week · Day" under the page: shows the view, and switches it with a tap. */
 @Composable
 private fun ViewSwitch(view: CalendarView, accent: Color, cell: Dp, base: TextStyle, onView: ((CalendarView) -> Unit)?) {
+    val locale = currentLocale()
     Row(
         Modifier.fillMaxWidth().height(cell * SWITCH),
         horizontalArrangement = Arrangement.spacedBy(cell * 0.15f, Alignment.CenterHorizontally),
@@ -914,7 +917,7 @@ private fun ViewSwitch(view: CalendarView, accent: Color, cell: Dp, base: TextSt
         CalendarView.entries.forEach { v ->
             val selected = v == view
             Text(
-                v.label(),
+                v.label(locale),
                 style = base.copy(
                     fontSize = base.fontSize * 0.62f,
                     color = if (selected) accent else Ink.copy(alpha = 0.45f),
@@ -923,7 +926,7 @@ private fun ViewSwitch(view: CalendarView, accent: Color, cell: Dp, base: TextSt
                 modifier = Modifier
                     .clip(RoundedCornerShape(50))
                     .background(if (selected) accent.copy(alpha = 0.12f) else Color.Transparent)
-                    .clickable(enabled = onView != null, onClickLabel = "Show the ${v.label().lowercase()}") { onView?.invoke(v) }
+                    .clickable(enabled = onView != null, onClickLabel = stringResource(Res.string.day_show_view, v.label(locale).lowercase())) { onView?.invoke(v) }
                     .padding(horizontal = cell * 0.25f, vertical = cell * 0.06f),
             )
         }
@@ -952,7 +955,7 @@ private fun DayCell(
         Modifier
             .size(cell, cell * ROW)
             .clip(RoundedCornerShape(cell * 0.2f))
-            .clickable(enabled = onOpen != null, onClickLabel = "Open in your calendar") { onOpen?.invoke(day) },
+            .clickable(enabled = onOpen != null, onClickLabel = stringResource(Res.string.day_open_calendar)) { onOpen?.invoke(day) },
         contentAlignment = Alignment.Center,
     ) {
         if (isToday) Box(Modifier.size(cell * ROW * 0.95f).shadow(3.dp, CircleShape).clip(CircleShape).background(accent))
@@ -1024,14 +1027,14 @@ private fun StickyNote(
 private fun SmallestNote(now: Moment, fontSize: TextUnit, modifier: Modifier) {
     NotePaper(null, modifier) {
         Greeting(now, fontSize)
-        EventRow("Event", "00:00 – 00:00", NoteInk, fontSize, emphasised = false, onClick = null)
+        EventRow(stringResource(Res.string.day_event_placeholder), "00:00 – 00:00", NoteInk, fontSize, emphasised = false, onClick = null)
     }
 }
 
 @Composable
 private fun Greeting(now: Moment, fontSize: TextUnit) {
     Text(
-        greeting(now.hour),
+        greeting(now.hour, currentLocale()),
         style = TextStyle(color = NoteInk, fontSize = fontSize * 1.6f, fontFamily = FontFamily.Cursive, fontWeight = FontWeight.Bold),
     )
     Spacer(Modifier.height(6.dp))
@@ -1046,7 +1049,7 @@ private fun NotePaper(onClick: (() -> Unit)?, modifier: Modifier, content: @Comp
                 .padding(top = 8.dp)
                 .shadow(6.dp, RoundedCornerShape(2.dp))
                 .background(NoteYellow)
-                .clickable(enabled = onClick != null, onClickLabel = "Open today in your calendar") { onClick?.invoke() }
+                .clickable(enabled = onClick != null, onClickLabel = stringResource(Res.string.day_open_today)) { onClick?.invoke() }
                 .padding(horizontal = 18.dp, vertical = 14.dp),
             content = content,
         )
@@ -1086,13 +1089,13 @@ private fun Agenda(
     fun fmt(millis: Long) = time.format(Instant.fromEpochMilliseconds(millis).toLocalDateTime(now.zone))
 
     when {
-        !access -> Text("Allow calendar access in Settings to see today's events here", style = faint, modifier = modifier)
+        !access -> Text(stringResource(Res.string.day_allow_calendar_note), style = faint, modifier = modifier)
         shown == null -> Unit // still loading
-        shown.isEmpty() && upcoming == null -> Text("Nothing else on your calendar today. Enjoy!", style = faint, modifier = modifier)
-        else -> FitColumn(8.dp, modifier, more = { n -> Text("+$n more today", style = faint) }) {
+        shown.isEmpty() && upcoming == null -> Text(stringResource(Res.string.day_nothing_else), style = faint, modifier = modifier)
+        else -> FitColumn(8.dp, modifier, more = { n -> Text(stringResource(Res.string.day_more_today, n), style = faint) }) {
             if (upcoming != null) {
                 EventRow(
-                    upcoming.title, countdownLabel(upcoming, instant, now.zone, time), upcoming.color?.let { Color(it) } ?: accent,
+                    upcoming.title, countdownLabel(upcoming, instant, now.zone, time, currentLocale()), upcoming.color?.let { Color(it) } ?: accent,
                     fontSize, emphasised = true, onClick = onOpenEvent?.let { open -> { open(upcoming) } },
                 )
             }
@@ -1100,8 +1103,8 @@ private fun Agenda(
                 if (e == upcoming) return@forEach
                 val ongoing = e.isOngoing(instant)
                 val whenText = when {
-                    e.allDay -> "All day"
-                    ongoing -> "Now · until ${fmt(e.end)}"
+                    e.allDay -> stringResource(Res.string.day_all_day)
+                    ongoing -> stringResource(Res.string.day_now_until, fmt(e.end))
                     else -> "${fmt(e.begin)} – ${fmt(e.end)}"
                 }
                 EventRow(e.title, whenText, e.color?.let { Color(it) } ?: accent, fontSize, emphasised = ongoing, onClick = onOpenEvent?.let { open -> { open(e) } })
@@ -1128,7 +1131,7 @@ private fun EventRow(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(6.dp))
-            .clickable(enabled = onClick != null, onClickLabel = "Open in your calendar") { onClick?.invoke() },
+            .clickable(enabled = onClick != null, onClickLabel = stringResource(Res.string.day_open_calendar)) { onClick?.invoke() },
     ) {
         Box(Modifier.size(line * 0.7f).clip(CircleShape).background(dot.copy(alpha = dot.alpha * alpha)))
         Spacer(Modifier.width(line * 0.6f))

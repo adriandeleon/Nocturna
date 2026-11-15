@@ -19,33 +19,33 @@ class AlarmCountdownTest {
     private val alarm = at("2026-11-16T06:30")
 
     @Test fun hoursAndMinutesRoundDownToFive() {
-        assertEquals("in 7 h 20 m", timeToAlarmText(alarm, at("2026-11-15T23:10")))
-        assertEquals("in 7 h 20 m", timeToAlarmText(alarm, at("2026-11-15T23:06")))
-        assertEquals("in 7 h 15 m", timeToAlarmText(alarm, at("2026-11-15T23:14:59")))
-        assertEquals("in 7 h 10 m", timeToAlarmText(alarm, at("2026-11-15T23:15:01")))
+        assertEquals("in 7 h 20 m", timeToAlarmText(alarm, at("2026-11-15T23:10"), testLocale))
+        assertEquals("in 7 h 20 m", timeToAlarmText(alarm, at("2026-11-15T23:06"), testLocale))
+        assertEquals("in 7 h 15 m", timeToAlarmText(alarm, at("2026-11-15T23:14:59"), testLocale))
+        assertEquals("in 7 h 10 m", timeToAlarmText(alarm, at("2026-11-15T23:15:01"), testLocale))
     }
 
-    @Test fun wholeHoursHaveNoMinutes() = assertEquals("in 7 h", timeToAlarmText(alarm, at("2026-11-15T23:30")))
+    @Test fun wholeHoursHaveNoMinutes() = assertEquals("in 7 h", timeToAlarmText(alarm, at("2026-11-15T23:30"), testLocale))
 
     @Test fun underAnHourShowsOnlyMinutes() {
-        assertEquals("in 45 m", timeToAlarmText(alarm, at("2026-11-16T05:45")))
-        assertEquals("in 45 m", timeToAlarmText(alarm, at("2026-11-16T05:41")))
-        assertEquals("in 5 m", timeToAlarmText(alarm, at("2026-11-16T06:25")))
+        assertEquals("in 45 m", timeToAlarmText(alarm, at("2026-11-16T05:45"), testLocale))
+        assertEquals("in 45 m", timeToAlarmText(alarm, at("2026-11-16T05:41"), testLocale))
+        assertEquals("in 5 m", timeToAlarmText(alarm, at("2026-11-16T06:25"), testLocale))
     }
 
     @Test fun lastFiveMinutesDontCountToZero() {
-        assertEquals("in < 5 m", timeToAlarmText(alarm, alarm - 4.minutes - 59.seconds))
-        assertEquals("in < 5 m", timeToAlarmText(alarm, alarm - 1.seconds))
+        assertEquals("in < 5 m", timeToAlarmText(alarm, alarm - 4.minutes - 59.seconds, testLocale))
+        assertEquals("in < 5 m", timeToAlarmText(alarm, alarm - 1.seconds, testLocale))
     }
 
     @Test fun onlyWithinTwelveHours() {
-        assertEquals("in 12 h", timeToAlarmText(alarm, alarm - 12.hours))
-        assertNull(timeToAlarmText(alarm, alarm - 12.hours - 1.seconds))
+        assertEquals("in 12 h", timeToAlarmText(alarm, alarm - 12.hours, testLocale))
+        assertNull(timeToAlarmText(alarm, alarm - 12.hours - 1.seconds, testLocale))
     }
 
     @Test fun nothingOnceItHasRung() {
-        assertNull(timeToAlarmText(alarm, alarm))
-        assertNull(timeToAlarmText(alarm, alarm + 1.minutes))
+        assertNull(timeToAlarmText(alarm, alarm, testLocale))
+        assertNull(timeToAlarmText(alarm, alarm + 1.minutes, testLocale))
     }
 
     @Test fun labelHasTheAlarmTimeInTheClocksZone() {

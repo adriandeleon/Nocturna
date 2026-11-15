@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,73 +24,74 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.adl.nocturna.alarm.alarmCountdownLabel
 import com.adl.nocturna.data.AlarmStore
 import com.adl.nocturna.data.ClockStyle
 import com.adl.nocturna.data.Settings
 import com.adl.nocturna.data.SettingsStore
-import com.adl.nocturna.text.DateTimePattern
-import com.adl.nocturna.text.bestDateTimePattern
-import com.adl.nocturna.text.shortName
 import com.adl.nocturna.day.CalendarLink
 import com.adl.nocturna.day.DayBackground
 import com.adl.nocturna.day.DayLayout
 import com.adl.nocturna.day.FocusTimer
 import com.adl.nocturna.day.HourlyStrip
 import com.adl.nocturna.day.focusTimerFromSaved
-import com.adl.nocturna.day.toSaved
-import androidx.compose.runtime.saveable.Saver
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LifecycleEventEffect
 import com.adl.nocturna.day.isDayModeActive
+import com.adl.nocturna.day.toSaved
 import com.adl.nocturna.day.withDayModeToggled
+import com.adl.nocturna.resources.*
+import com.adl.nocturna.text.DateTimePattern
+import com.adl.nocturna.text.bestDateTimePattern
+import com.adl.nocturna.text.shortName
+import com.adl.nocturna.ui.DeskNavy
 import com.adl.nocturna.ui.Glyph
 import com.adl.nocturna.ui.GlyphIcon
-import com.adl.nocturna.ui.DeskNavy
 import com.adl.nocturna.ui.NightRed
+import com.adl.nocturna.ui.currentLocale
 import com.adl.nocturna.weather.WeatherRepository
 import com.adl.nocturna.weather.pickForecast
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.withFrameMillis
-import kotlinx.coroutines.delay
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
+import kotlin.random.Random
 import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlin.time.TimeSource
-import com.adl.nocturna.ui.currentLocale
-import kotlin.random.Random
+import kotlinx.coroutines.delay
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * The bedside clock: interactive in the app, with a tap-to-show control bar, and display only in the
@@ -457,6 +459,8 @@ private fun Controls(
     else ButtonDefaults.outlinedButtonColors(contentColor = color)
     val border = if (day) BorderStroke(1.dp, Color.White.copy(alpha = 0.35f)) else BorderStroke(1.dp, color.copy(alpha = 0.5f))
 
+    val dimmingDescription = stringResource(if (settings.dimEnabled) Res.string.clock_dimming_on else Res.string.brightness_dimming_off)
+
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         error?.let {
             Text(
@@ -484,23 +488,23 @@ private fun Controls(
                 contentPadding = PaddingValues(0.dp),
                 modifier = Modifier
                     .size(40.dp)
-                    .semantics { contentDescription = if (settings.dimEnabled) "Dimming on" else "Dimming off" },
+                    .semantics { contentDescription = dimmingDescription },
             ) { GlyphIcon(if (settings.dimEnabled) Glyph.MOON else Glyph.SUN, color, 24.dp) }
             OutlinedButton(
                 // On a schedule this overrides it until the next start or end.
                 onClick = { onInteract(); SettingsStore.update { it.withDayModeToggled(Clock.System.now(), TimeZone.currentSystemDefault()) } },
                 colors = buttonColors, border = border,
-            ) { Text(if (day) "Clock only" else "Day mode") }
+            ) { Text(if (day) stringResource(Res.string.clock_clock_only) else stringResource(Res.string.settings_day_mode)) }
             if (day) {
                 OutlinedButton(onClick = { onInteract(); onFocus() }, colors = buttonColors, border = border) {
-                    Text(if (focusOn) "■  Focus" else "Focus")
+                    Text(if (focusOn) stringResource(Res.string.clock_focus_on) else stringResource(Res.string.daypage_focus))
                 }
             }
-            OutlinedButton(onClick = onOpenAlarms, colors = buttonColors, border = border) { Text("Alarms") }
+            OutlinedButton(onClick = onOpenAlarms, colors = buttonColors, border = border) { Text(stringResource(Res.string.settings_alarms)) }
             OutlinedButton(
                 onClick = { onInteract(); radio.toggle(settings.currentStation) },
                 colors = buttonColors, border = border,
-            ) { Text(if (radioOn) "■  Radio" else "▶  Radio") }
+            ) { Text(if (radioOn) stringResource(Res.string.clock_radio_on) else stringResource(Res.string.clock_radio_off)) }
             if (radioOn) {
                 val remaining = sleepAt?.let { ((it - Clock.System.now().toEpochMilliseconds()) / 60_000L).coerceAtLeast(0) + 1 }
                 OutlinedButton(
@@ -511,9 +515,9 @@ private fun Controls(
                         radio.setSleepTimer(SLEEP_STEPS[(idx + 1) % SLEEP_STEPS.size])
                     },
                     colors = buttonColors, border = border,
-                ) { Text(if (remaining == null) "Sleep: off" else "Sleep: ${remaining}m") }
+                ) { Text(if (remaining == null) stringResource(Res.string.clock_sleep_off) else stringResource(Res.string.clock_sleep_minutes, remaining)) }
             }
-            OutlinedButton(onClick = onOpenSettings, colors = buttonColors, border = border) { Text("Settings") }
+            OutlinedButton(onClick = onOpenSettings, colors = buttonColors, border = border) { Text(stringResource(Res.string.settings_title)) }
         }
     }
 }

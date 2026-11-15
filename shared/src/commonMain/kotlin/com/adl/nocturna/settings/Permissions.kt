@@ -1,22 +1,24 @@
 package com.adl.nocturna.settings
 
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import com.adl.nocturna.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Without notifications Android can't show the alarm's Stop screen over the lock screen: the alarm
@@ -33,16 +35,15 @@ fun NotificationsOffWarning(modifier: Modifier = Modifier) {
         ),
     ) {
         Column(Modifier.padding(16.dp)) {
-            Text("Notifications are off", style = MaterialTheme.typography.titleSmall)
+            Text(stringResource(Res.string.notifications_off_title), style = MaterialTheme.typography.titleSmall)
             Text(
-                "Alarms will still sound, but on a locked phone you won't get a screen to stop them. " +
-                    "Turn notifications on for Nocturna.",
+                stringResource(Res.string.notifications_off_detail),
                 style = MaterialTheme.typography.bodySmall,
             )
             TextButton(
                 onClick = { platform.open(SystemPage.NOTIFICATIONS) },
                 colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onErrorContainer),
-            ) { Text("Turn on notifications", textDecoration = TextDecoration.Underline) }
+            ) { Text(stringResource(Res.string.notifications_off_fix), textDecoration = TextDecoration.Underline) }
         }
     }
 }
@@ -64,7 +65,7 @@ fun AttentionCard(issues: List<SettingsIssue>) {
     ) {
         Column(Modifier.padding(vertical = 12.dp)) {
             Text(
-                "Needs your attention",
+                stringResource(Res.string.settings_needs_attention),
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
             )

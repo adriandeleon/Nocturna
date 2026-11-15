@@ -12,37 +12,37 @@ import com.adl.nocturna.text.testLocale
 class SummariesTest {
     private val en = testLocale // British English
 
-    @Test fun digitalClock() = assertEquals("Digital · Thin · 24-hour", clockSummary(Settings()))
+    @Test fun digitalClock() = assertEquals("Digital · Thin · 24-hour", clockSummary(Settings(), testLocale))
 
     @Test fun analogClockWithSeconds() = assertEquals(
         "Analog · 12-hour · seconds",
-        clockSummary(Settings(style = ClockStyle.ANALOG, font = ClockFont.SERIF, use24h = false, showSeconds = true)),
+        clockSummary(Settings(style = ClockStyle.ANALOG, font = ClockFont.SERIF, use24h = false, showSeconds = true), testLocale),
     )
 
     @Test fun infoLineListsWhatIsShown() = assertEquals(
         "Date, weather, battery, next alarm and notifications",
-        infoLineSummary(Settings()),
+        infoLineSummary(Settings(), testLocale),
     )
 
     @Test fun infoLineWithOneItem() = assertEquals(
         "Battery",
-        infoLineSummary(Settings(showDate = false, showWeather = false, showNextAlarm = false, showNotifications = false)),
+        infoLineSummary(Settings(showDate = false, showWeather = false, showNextAlarm = false, showNotifications = false), testLocale),
     )
 
     @Test fun infoLineWithTheMoon() = assertEquals(
         "Battery and moon",
-        infoLineSummary(Settings(showDate = false, showWeather = false, showNextAlarm = false, showNotifications = false, showMoon = true)),
+        infoLineSummary(Settings(showDate = false, showWeather = false, showNextAlarm = false, showNotifications = false, showMoon = true), testLocale),
     )
 
     @Test fun infoLineWithNothing() = assertEquals(
         "Just the time",
-        infoLineSummary(Settings(showDate = false, showWeather = false, showBattery = false, showNextAlarm = false, showNotifications = false)),
+        infoLineSummary(Settings(showDate = false, showWeather = false, showBattery = false, showNextAlarm = false, showNotifications = false), testLocale),
     )
 
     @Test fun brightness() {
-        assertEquals("Follows room light · night mode", brightnessSummary(Settings()))
-        assertEquals("Phone brightness", brightnessSummary(Settings(autoBrightness = false, nightModeEnabled = false)))
-        assertEquals("Dimming off", brightnessSummary(Settings(dimEnabled = false)))
+        assertEquals("Follows room light · night mode", brightnessSummary(Settings(), testLocale))
+        assertEquals("Phone brightness", brightnessSummary(Settings(autoBrightness = false, nightModeEnabled = false), testLocale))
+        assertEquals("Dimming off", brightnessSummary(Settings(dimEnabled = false), testLocale))
     }
 
     @Test fun dayModeOffAndOn() {
@@ -72,14 +72,14 @@ class SummariesTest {
     }
 
     @Test fun weather() {
-        assertEquals("No place set · °C", weatherSummary(Settings()))
-        assertEquals("Monterrey · °F", weatherSummary(Settings(weatherCity = "Monterrey", weatherFahrenheit = true)))
-        assertEquals("Your location · °C", weatherSummary(Settings(weatherCity = "Monterrey", weatherUseDeviceLocation = true)))
+        assertEquals("No place set · °C", weatherSummary(Settings(), testLocale))
+        assertEquals("Monterrey · °F", weatherSummary(Settings(weatherCity = "Monterrey", weatherFahrenheit = true), testLocale))
+        assertEquals("Your location · °C", weatherSummary(Settings(weatherCity = "Monterrey", weatherUseDeviceLocation = true), testLocale))
     }
 
     @Test fun alarms() {
-        assertEquals("No alarms yet", alarmsSummary(emptyList()))
+        assertEquals("No alarms yet", alarmsSummary(emptyList(), testLocale))
         val on = Alarm(id = 1, hour = 7, minute = 0, enabled = true)
-        assertEquals("1 of 2 on", alarmsSummary(listOf(on, on.copy(id = 2, enabled = false))))
+        assertEquals("1 of 2 on", alarmsSummary(listOf(on, on.copy(id = 2, enabled = false)), testLocale))
     }
 }

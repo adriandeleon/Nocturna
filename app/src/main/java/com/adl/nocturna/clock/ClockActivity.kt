@@ -18,14 +18,15 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.adl.nocturna.alarm.AlarmActivity
-import com.adl.nocturna.alarm.AlarmService
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.adl.nocturna.R
+import com.adl.nocturna.alarm.AlarmActivity
+import com.adl.nocturna.alarm.AlarmService
 import com.adl.nocturna.data.Storage
 import com.adl.nocturna.day.OpenCalendar
 import com.adl.nocturna.settings.SettingsActivity
@@ -59,7 +60,7 @@ class ClockActivity : ComponentActivity() {
                         onOpenSettings = { openUnlocked(Intent(this, SettingsActivity::class.java)) },
                         onOpenCalendar = { link ->
                             openUnlocked(OpenCalendar.of(link)) {
-                                Toast.makeText(this, "No calendar app found", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(this, R.string.no_calendar_app, Toast.LENGTH_SHORT).show()
                             }
                         },
                         onOpenAlarms = {

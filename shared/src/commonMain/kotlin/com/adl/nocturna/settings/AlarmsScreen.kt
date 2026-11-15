@@ -49,45 +49,51 @@ import com.adl.nocturna.alarm.DAYS_OFF_LOOK_AHEAD
 import com.adl.nocturna.alarm.DEFAULT_DAY_OFF_KEYWORDS
 import com.adl.nocturna.alarm.DaysOff
 import com.adl.nocturna.alarm.DismissChallenge
+import com.adl.nocturna.alarm.STREAM_TIMEOUT_MS
 import com.adl.nocturna.alarm.SUM_COUNTS
 import com.adl.nocturna.alarm.datePassed
-import com.adl.nocturna.alarm.STREAM_TIMEOUT_MS
 import com.adl.nocturna.alarm.daysOff
 import com.adl.nocturna.alarm.nextDayOffSkip
 import com.adl.nocturna.alarm.nextRing
 import com.adl.nocturna.alarm.parseDayOffKeywords
 import com.adl.nocturna.alarm.skipping
-import com.adl.nocturna.alarm.switched
 import com.adl.nocturna.alarm.sleepHoursLabel
+import com.adl.nocturna.alarm.switched
 import com.adl.nocturna.alarm.toggleSkip
 import com.adl.nocturna.alarm.withDate
 import com.adl.nocturna.alarm.withDays
 import com.adl.nocturna.alarm.withTime
 import com.adl.nocturna.clock.LocalClockPlatform
+import com.adl.nocturna.clock.Moment
 import com.adl.nocturna.data.Alarm
 import com.adl.nocturna.data.AlarmStore
 import com.adl.nocturna.data.Settings
 import com.adl.nocturna.data.SettingsStore
 import com.adl.nocturna.data.Station
-import com.adl.nocturna.clock.Moment
+import com.adl.nocturna.resources.*
+import com.adl.nocturna.sound.displayName
 import com.adl.nocturna.text.DateTimePattern
 import com.adl.nocturna.text.PlatformLocale
 import com.adl.nocturna.text.bestDateTimePattern
 import com.adl.nocturna.text.formatTime
+import com.adl.nocturna.text.strings
 import com.adl.nocturna.ui.currentLocale
+import kotlin.math.roundToInt
+import kotlin.time.Clock
+import kotlin.time.Instant
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.plus
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.atTime
+import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Clock
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlin.time.Instant
-import kotlin.math.roundToInt
+import org.jetbrains.compose.resources.getString
+import org.jetbrains.compose.resources.rememberResourceEnvironment
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun AlarmsScreen(padding: PaddingValues) {
@@ -102,13 +108,14 @@ fun AlarmsScreen(padding: PaddingValues) {
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val locale = currentLocale()
+    val resources = rememberResourceEnvironment()
     var editing by remember { mutableStateOf<Alarm?>(null) }
     var adding by remember { mutableStateOf(false) }
     var dating by remember { mutableStateOf<Alarm?>(null) }
-    fun tell(message: String) {
+    fun tell(message: suspend () -> String) {
         scope.launch {
             snackbar.currentSnackbarData?.dismiss()
-            snackbar.showSnackbar(message)
+            snackbar.showSnackbar(message())
         }
     }
     // Rescheduling also when access is refused: the alarm then rings as usual, and its time may change.
@@ -128,21 +135,21 @@ fun AlarmsScreen(padding: PaddingValues) {
                         if (!notificationsAllowed) askNotifications()
                     },
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-                ) { Text("+  Add alarm") }
+                ) { Text(stringResource(Res.string.alarms_add)) }
             }
             snooze?.let { sn ->
                 item {
                     Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                         val t = Instant.fromEpochMilliseconds(sn.until).toLocalDateTime(TimeZone.currentSystemDefault()).time
-                        Text("Snoozed until ${formatTime(t, s.use24h, locale)}", modifier = Modifier.weight(1f))
-                        TextButton(onClick = { AlarmStore.clearSnooze() }) { Text("Cancel snooze") }
+                        Text(stringResource(Res.string.alarms_snoozed_until, formatTime(t, s.use24h, locale)), modifier = Modifier.weight(1f))
+                        TextButton(onClick = { AlarmStore.clearSnooze() }) { Text(stringResource(Res.string.alarms_cancel_snooze)) }
                     }
                 }
             }
             if (alarms.isEmpty()) {
                 item {
                     Text(
-                        "No alarms yet.",
+                        stringResource(Res.string.alarms_none),
                         modifier = Modifier.padding(24.dp),
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                     )
@@ -159,8 +166,8 @@ fun AlarmsScreen(padding: PaddingValues) {
                         scope.launch {
                             snackbar.currentSnackbarData?.dismiss()
                             val result = snackbar.showSnackbar(
-                                "Alarm ${formatTime(LocalTime(removed.hour, removed.minute), s.use24h, locale)} deleted",
-                                actionLabel = "Undo",
+                                getString(resources, Res.string.alarms_deleted, formatTime(LocalTime(removed.hour, removed.minute), s.use24h, locale)),
+                                actionLabel = getString(resources, Res.string.alarms_undo),
                                 duration = SnackbarDuration.Long,
                             )
                             if (result == SnackbarResult.ActionPerformed) AlarmStore.restore(removed)
@@ -168,51 +175,51 @@ fun AlarmsScreen(padding: PaddingValues) {
                     },
                 )
             }
-            item { SectionHeader("Alarm behaviour") }
+            item { SectionHeader(stringResource(Res.string.alarms_behaviour)) }
             item {
-                SliderRow("Snooze length", s.snoozeMinutes.toFloat(), 1f..30f, { "${it.roundToInt()} min" }, steps = 28) { v ->
+                SliderRow(stringResource(Res.string.alarms_snooze_length), s.snoozeMinutes.toFloat(), 1f..30f, { strings(locale).minutesShort(it.roundToInt()) }, steps = 28) { v ->
                     SettingsStore.update { it.copy(snoozeMinutes = v.roundToInt()) }
                 }
             }
             item {
                 SliderRow(
-                    "Gentle wake-up", s.alarmRampSeconds.toFloat(), 0f..120f,
-                    { if (it.roundToInt() == 0) "off" else "${it.roundToInt()} s to full volume" },
+                    stringResource(Res.string.alarms_gentle), s.alarmRampSeconds.toFloat(), 0f..120f,
+                    { strings(locale).rampLabel(it.roundToInt()) },
                     steps = 11,
                 ) { v -> SettingsStore.update { it.copy(alarmRampSeconds = v.roundToInt()) } }
             }
-            item { SwitchRow("Vibrate", s.alarmVibrate) { v -> SettingsStore.update { it.copy(alarmVibrate = v) } } }
+            item { SwitchRow(stringResource(Res.string.alarms_vibrate), s.alarmVibrate) { v -> SettingsStore.update { it.copy(alarmVibrate = v) } } }
             if (hasProximity) {
                 item {
                     SwitchRow(
-                        "Wave to snooze", s.waveToSnooze,
-                        "A wave of the hand over the top of the phone snoozes a ringing alarm",
+                        stringResource(Res.string.alarms_wave), s.waveToSnooze,
+                        stringResource(Res.string.alarms_wave_detail),
                     ) { v -> SettingsStore.update { it.copy(waveToSnooze = v) } }
                 }
             }
             if (alarms.any { it.challenge == DismissChallenge.SUM }) {
                 item {
-                    ChoiceRow("Sums to stop an alarm", SUM_COUNTS.toList(), s.alarmSums, ::sumsLabel) { v ->
+                    ChoiceRow(stringResource(Res.string.alarms_sums), SUM_COUNTS.toList(), s.alarmSums, { sumsLabel(it, locale) }) { v ->
                         SettingsStore.update { it.copy(alarmSums = v) }
                     }
                 }
             }
             item {
-                SwitchRow("Show weather", s.alarmShowWeather, "Today's weather under the time when an alarm rings") { v ->
+                SwitchRow(stringResource(Res.string.alarms_show_weather), s.alarmShowWeather, stringResource(Res.string.alarms_show_weather_detail)) { v ->
                     SettingsStore.update { it.copy(alarmShowWeather = v) }
                 }
             }
             item {
                 ChoiceRow(
-                    "Sunrise before alarms", Settings.SUNRISE_CHOICES, s.sunriseMinutes,
-                    { if (it == 0) "Off" else "$it min" },
+                    stringResource(Res.string.alarms_sunrise), Settings.SUNRISE_CHOICES, s.sunriseMinutes,
+                    { if (it == 0) strings(locale).off else strings(locale).minutesShort(it) },
                 ) { v -> SettingsStore.update { it.copy(sunriseMinutes = v) } }
             }
             if (s.sunriseMinutes > 0) {
-                item { Hint("The clock slowly brightens and warms to a soft white before an alarm rings, from night red through amber at night. Not before a snooze.") }
+                item { Hint(stringResource(Res.string.alarms_sunrise_detail)) }
             }
             item {
-                ChoiceRow("Bedtime reminder", Settings.BEDTIME_SLEEP_HOURS, s.bedtimeSleepHours, ::sleepHoursLabel) { v ->
+                ChoiceRow(stringResource(Res.string.alarms_bedtime), Settings.BEDTIME_SLEEP_HOURS, s.bedtimeSleepHours, { sleepHoursLabel(it, locale) }) { v ->
                     SettingsStore.update { it.copy(bedtimeSleepHours = v) }
                     platform.rescheduleAlarms()
                     // Asks only where the system has a notifications permission (Android 13 and later).
@@ -222,9 +229,8 @@ fun AlarmsScreen(padding: PaddingValues) {
             if (s.bedtimeSleepHours > 0f) {
                 item {
                     Hint(
-                        "A quiet notification the evening before a morning alarm, a quarter of an hour before you need to " +
-                            "sleep to get ${sleepHoursLabel(s.bedtimeSleepHours)}. Not when the clock is already showing." +
-                            if (notificationsAllowed) "" else " Needs notifications.",
+                        stringResource(Res.string.alarms_bedtime_detail, sleepHoursLabel(s.bedtimeSleepHours, locale)) +
+                            if (notificationsAllowed) "" else " " + stringResource(Res.string.alarms_needs_notifications),
                     )
                 }
             }
@@ -248,7 +254,7 @@ fun AlarmsScreen(padding: PaddingValues) {
             val current = AlarmStore.get(alarm.id)
             val date = current?.ringDate
             if (current != null && date != null && current.withTime(h, m, now, zone) == null) {
-                tell("${formatTime(LocalTime(h, m), s.use24h, locale)} on ${dayLabel(date, locale)} has already passed")
+                tell { getString(resources, Res.string.alarms_already_passed, formatTime(LocalTime(h, m), s.use24h, locale), dayLabel(date, locale)) }
             } else {
                 AlarmStore.update(alarm.id) { it.withTime(h, m, now, zone) ?: it }
             }
@@ -262,7 +268,7 @@ fun AlarmsScreen(padding: PaddingValues) {
             val zone = TimeZone.currentSystemDefault()
             val current = AlarmStore.get(alarm.id) ?: return@DateDialog
             if (current.withDate(date, now, zone) == null) {
-                tell("${formatTime(LocalTime(current.hour, current.minute), s.use24h, locale)} on ${dayLabel(date, locale)} has already passed")
+                tell { getString(resources, Res.string.alarms_already_passed, formatTime(LocalTime(current.hour, current.minute), s.use24h, locale), dayLabel(date, locale)) }
             } else {
                 AlarmStore.update(alarm.id) { it.withDate(date, now, zone) ?: it }
             }
@@ -294,9 +300,9 @@ private fun DateDialog(initial: LocalDate?, onDismiss: () -> Unit, onConfirm: (L
                     onConfirm(Instant.fromEpochMilliseconds(millis).toLocalDateTime(TimeZone.UTC).date)
                 },
                 enabled = state.selectedDateMillis != null,
-            ) { Text("OK") }
+            ) { Text(stringResource(Res.string.ok)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) } },
     ) { DatePicker(state) }
 }
 
@@ -307,16 +313,16 @@ private fun DateRow(alarm: Alarm, locale: PlatformLocale, onPickDate: () -> Unit
     val date = alarm.ringDate
     Row(Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
-            Text("Date", style = MaterialTheme.typography.bodyMedium)
+            Text(stringResource(Res.string.alarms_date), style = MaterialTheme.typography.bodyMedium)
             Text(
-                if (date == null) "Rings the next time this time comes round" else "Rings once, on this day",
+                if (date == null) stringResource(Res.string.alarms_date_none) else stringResource(Res.string.alarms_date_set),
                 style = MaterialTheme.typography.bodySmall,
                 color = muted,
             )
         }
-        TextButton(onClick = onPickDate) { Text(date?.let { dayLabel(it, locale) } ?: "Pick a date") }
+        TextButton(onClick = onPickDate) { Text(date?.let { dayLabel(it, locale) } ?: stringResource(Res.string.alarms_pick_date)) }
         if (date != null) {
-            TextButton(onClick = { AlarmStore.update(alarm.id) { it.copy(date = null) } }) { Text("Clear") }
+            TextButton(onClick = { AlarmStore.update(alarm.id) { it.copy(date = null) } }) { Text(stringResource(Res.string.alarms_clear)) }
         }
     }
 }
@@ -363,7 +369,7 @@ private fun AlarmCard(
                 if (alarm.enabled && alarm.repeats) {
                     val skipping = alarm.skipping(Clock.System.now(), TimeZone.currentSystemDefault(), daysOff) != null
                     TextButton(onClick = { AlarmStore.update(alarm.id) { it.toggleSkip(Clock.System.now(), TimeZone.currentSystemDefault(), daysOff) } }) {
-                        Text(if (skipping) "Undo skip" else "Skip next")
+                        Text(if (skipping) stringResource(Res.string.alarms_undo_skip) else stringResource(Res.string.alarms_skip_next))
                     }
                 }
             }
@@ -371,11 +377,11 @@ private fun AlarmCard(
             Spacer(Modifier.height(8.dp))
             DayToggles(alarm.days, locale) { days -> AlarmStore.update(alarm.id) { it.withDays(days) } }
             if (alarm.repeats) SkipDaysOffRow(alarm, calendarAllowed, onAskCalendar) else DateRow(alarm, locale, onPickDate)
-            SoundPicker(alarm, stations)
-            ChallengePicker(alarm)
+            SoundPicker(alarm, stations, locale)
+            ChallengePicker(alarm, locale)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 LabelField(alarm, Modifier.weight(1f).padding(top = 8.dp))
-                TextButton(onClick = onDelete) { Text("Delete", color = MaterialTheme.colorScheme.error) }
+                TextButton(onClick = onDelete) { Text(stringResource(Res.string.alarms_delete), color = MaterialTheme.colorScheme.error) }
             }
         }
     }
@@ -383,7 +389,7 @@ private fun AlarmCard(
 
 /** Chooses what the alarm plays: the alarm tone or one of the radio stations. */
 @Composable
-private fun SoundPicker(alarm: Alarm, stations: List<Station>) {
+private fun SoundPicker(alarm: Alarm, stations: List<Station>, locale: PlatformLocale) {
     var open by remember { mutableStateOf(false) }
     val muted = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
     fun choose(station: Station?) {
@@ -391,18 +397,18 @@ private fun SoundPicker(alarm: Alarm, stations: List<Station>) {
         AlarmStore.update(alarm.id) { it.copy(station = station) }
     }
     Row(Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text("Sound", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+        Text(stringResource(Res.string.alarms_sound), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
         Box {
-            TextButton(onClick = { open = true }) { Text(alarm.station?.name ?: "Alarm tone") }
+            TextButton(onClick = { open = true }) { Text(alarm.station?.displayName(locale) ?: stringResource(Res.string.alarms_tone)) }
             DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-                DropdownMenuItem(text = { Text("Alarm tone") }, onClick = { choose(null) })
-                stations.forEach { st -> DropdownMenuItem(text = { Text(st.name) }, onClick = { choose(st) }) }
+                DropdownMenuItem(text = { Text(stringResource(Res.string.alarms_tone)) }, onClick = { choose(null) })
+                stations.forEach { st -> DropdownMenuItem(text = { Text(st.displayName(locale)) }, onClick = { choose(st) }) }
             }
         }
     }
     if (alarm.station != null) {
         Text(
-            "If the station doesn't play within ${STREAM_TIMEOUT_MS / 1000} s, the alarm tone rings instead.",
+            stringResource(Res.string.alarms_stream_fallback, STREAM_TIMEOUT_MS / 1000),
             style = MaterialTheme.typography.bodySmall,
             color = muted,
         )
@@ -411,28 +417,25 @@ private fun SoundPicker(alarm: Alarm, stations: List<Station>) {
 
 /** *To stop it*: what it takes to stop the alarm when it rings. Snoozing is always one tap. */
 @Composable
-private fun ChallengePicker(alarm: Alarm) {
+private fun ChallengePicker(alarm: Alarm, locale: PlatformLocale) {
     var open by remember { mutableStateOf(false) }
     fun choose(challenge: DismissChallenge) {
         open = false
         AlarmStore.update(alarm.id) { it.copy(challenge = challenge) }
     }
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Text("To stop it", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+        Text(stringResource(Res.string.alarms_to_stop), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
         Box {
-            TextButton(onClick = { open = true }) { Text(alarm.challenge.label) }
+            TextButton(onClick = { open = true }) { Text(alarm.challenge.label(locale)) }
             DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-                DismissChallenge.entries.forEach { c -> DropdownMenuItem(text = { Text(c.label) }, onClick = { choose(c) }) }
+                DismissChallenge.entries.forEach { c -> DropdownMenuItem(text = { Text(c.label(locale)) }, onClick = { choose(c) }) }
             }
         }
     }
 }
 
-private fun sumsLabel(n: Int) = when (n) {
-    1 -> "1 (easy)"
-    SUM_COUNTS.last -> "$n (hard)"
-    else -> "$n"
-}
+private fun sumsLabel(n: Int, locale: PlatformLocale) =
+    strings(locale).sumsLabel(n, easiest = n == SUM_COUNTS.first, hardest = n == SUM_COUNTS.last)
 
 /** The ring the alarm skips for a day off, and the calendar event that makes it one. */
 @Composable
@@ -441,7 +444,7 @@ private fun DayOffSkipLine(alarm: Alarm, locale: PlatformLocale, daysOff: DaysOf
     val skip = alarm.nextDayOffSkip(now.instant, now.zone, daysOff) ?: return
     val day = dayLabel(skip.date, locale)
     Text(
-        "Skips $day · ${skip.title}",
+        stringResource(Res.string.alarms_skips_day, day, skip.title),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.primary,
     )
@@ -453,12 +456,12 @@ private fun SkipDaysOffRow(alarm: Alarm, calendarAllowed: Boolean, onAskCalendar
     val muted = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
     Row(Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
-            Text("Skip on days off", style = MaterialTheme.typography.bodyMedium)
+            Text(stringResource(Res.string.alarms_skip_days_off), style = MaterialTheme.typography.bodyMedium)
             Text(
                 when {
-                    !alarm.skipDaysOff -> "Stay quiet on holidays in your calendar"
-                    calendarAllowed -> "Quiet on all-day calendar events like holidays and vacations"
-                    else -> "Needs calendar access; until then this alarm rings on days off too"
+                    !alarm.skipDaysOff -> stringResource(Res.string.alarms_skip_days_off_off)
+                    calendarAllowed -> stringResource(Res.string.alarms_skip_days_off_on)
+                    else -> stringResource(Res.string.alarms_skip_days_off_no_access)
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color = if (alarm.skipDaysOff && !calendarAllowed) MaterialTheme.colorScheme.error else muted,
@@ -472,7 +475,7 @@ private fun SkipDaysOffRow(alarm: Alarm, calendarAllowed: Boolean, onAskCalendar
             },
         )
     }
-    if (alarm.skipDaysOff && !calendarAllowed) TextButton(onClick = onAskCalendar) { Text("Allow calendar access") }
+    if (alarm.skipDaysOff && !calendarAllowed) TextButton(onClick = onAskCalendar) { Text(stringResource(Res.string.daypage_allow_calendar)) }
 }
 
 /** The words that make an all-day event a day off, saved once typing pauses. */
@@ -487,10 +490,9 @@ private fun DayOffKeywordsField(saved: String) {
         platform.rescheduleAlarms()
     }
     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
-        Text("Days off", style = MaterialTheme.typography.bodyLarge)
+        Text(stringResource(Res.string.alarms_days_off), style = MaterialTheme.typography.bodyLarge)
         Text(
-            "Alarms with Skip on days off stay quiet on days with an all-day calendar event whose title has one of " +
-                "these words. Separate them with commas; case and accents don't matter.",
+            stringResource(Res.string.alarms_days_off_detail),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
         )
@@ -501,7 +503,7 @@ private fun DayOffKeywordsField(saved: String) {
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
         )
         if (text != DEFAULT_DAY_OFF_KEYWORDS) {
-            TextButton(onClick = { text = DEFAULT_DAY_OFF_KEYWORDS }) { Text("Use the default words") }
+            TextButton(onClick = { text = DEFAULT_DAY_OFF_KEYWORDS }) { Text(stringResource(Res.string.alarms_default_words)) }
         }
     }
 }
@@ -529,27 +531,28 @@ private fun LabelField(alarm: Alarm, modifier: Modifier) {
     OutlinedTextField(
         value = label,
         onValueChange = { label = it },
-        placeholder = { Text("Label") },
+        placeholder = { Text(stringResource(Res.string.alarms_label)) },
         singleLine = true,
         modifier = modifier,
     )
 }
 
 private fun describe(alarm: Alarm, use24h: Boolean, locale: PlatformLocale, daysOff: DaysOff): String {
-    if (!alarm.enabled) return "Off"
+    val t = strings(locale)
+    if (!alarm.enabled) return t.off
     val now = Moment.now()
     val pattern = DateTimePattern(bestDateTimePattern(if (use24h) "EEEdMMMHHmm" else "EEEdMMMhmma", locale), locale)
     alarm.ringDate?.let { date ->
-        return if (alarm.datePassed(now.instant, now.zone)) "${dayLabel(date, locale)} · passed" else dayLabel(date, locale)
+        return if (alarm.datePassed(now.instant, now.zone)) t.datePassed(dayLabel(date, locale)) else dayLabel(date, locale)
     }
-    val next = alarm.nextRing(now.instant, now.zone, daysOff)?.toLocalDateTime(now.zone) ?: return "Once"
-    val skipped = alarm.skipping(now.instant, now.zone, daysOff)?.let { " · skipping " + dayLabel(it, locale) }.orEmpty()
+    val next = alarm.nextRing(now.instant, now.zone, daysOff)?.toLocalDateTime(now.zone) ?: return t.once
+    val skipped = alarm.skipping(now.instant, now.zone, daysOff)?.let { dayLabel(it, locale) }
     val repeat = when (alarm.days) {
-        0 -> "Once"
-        Alarm.ALL_DAYS -> "Every day"
-        0b0011111 -> "Weekdays"
-        0b1100000 -> "Weekends"
-        else -> "Repeats"
+        0 -> t.once
+        Alarm.ALL_DAYS -> t.everyDay
+        0b0011111 -> t.weekdays
+        0b1100000 -> t.weekends
+        else -> t.repeats
     }
-    return "$repeat$skipped · next ${pattern.format(next)}"
+    return t.alarmDescription(repeat, skipped, pattern.format(next))
 }

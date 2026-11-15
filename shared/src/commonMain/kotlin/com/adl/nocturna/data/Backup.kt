@@ -1,5 +1,8 @@
 package com.adl.nocturna.data
 
+import com.adl.nocturna.text.PlatformLocale
+import com.adl.nocturna.text.Strings
+import com.adl.nocturna.text.strings
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -18,18 +21,19 @@ data class Backup(val appVersion: String, val settings: Settings, val alarms: Li
         settings.copy(dayPhotoVersion = current.dayPhotoVersion, dayModeOverrideUntil = 0L)
 
     /** For the import dialog, such as "3 alarms, 6 radio stations". */
-    val summary: String
-        get() = "${count(alarms.size, "alarm")}, ${count(settings.stations.size, "radio station")}"
-
-    private fun count(n: Int, noun: String) = if (n == 1) "1 $noun" else "$n ${noun}s"
+    fun summary(locale: PlatformLocale): String = strings(locale).backupSummary(alarms.size, settings.stations.size)
 }
 
-/** Why a file couldn't be imported; [message] is shown to the user as it is. */
-class BackupException(val problem: Problem, cause: Throwable? = null) : Exception(problem.message, cause) {
-    enum class Problem(val message: String) {
-        NOT_A_BACKUP("This file isn't a Nocturna backup."),
-        NEWER_FORMAT("This backup was made by a newer version of Nocturna. Update the app, then import it again."),
-        DAMAGED("This backup is damaged and can't be imported."),
+/** Why a file couldn't be imported; [Problem.message] says it to the user. */
+class BackupException(val problem: Problem, cause: Throwable? = null) : Exception(problem.name, cause) {
+    enum class Problem(private val words: (Strings) -> String) {
+        NOT_A_BACKUP(Strings::backupNotABackup),
+        NEWER_FORMAT(Strings::backupNewerFormat),
+        DAMAGED(Strings::backupDamaged),
+        ;
+
+        /** What went wrong, for the user: "This file isn't a Nocturna backup." */
+        fun message(locale: PlatformLocale): String = words(strings(locale))
     }
 }
 

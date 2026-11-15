@@ -26,9 +26,11 @@ import com.adl.nocturna.data.SettingsStore
 import com.adl.nocturna.data.WorldZone
 import com.adl.nocturna.day.ZoneChoice
 import com.adl.nocturna.day.searchZones
+import com.adl.nocturna.resources.*
 import kotlinx.datetime.TimeZone
+import org.jetbrains.compose.resources.stringResource
 
-/** Day mode's "Other time zones": the zones the desk clock shows under its time, each removable, and a way to add one. */
+/** Day mode's stringResource(Res.string.zones_title): the zones the desk clock shows under its time, each removable, and a way to add one. */
 @Composable
 fun WorldZonesGroup(zones: List<WorldZone>) {
     var picking by remember { mutableStateOf(false) }
@@ -38,7 +40,7 @@ fun WorldZonesGroup(zones: List<WorldZone>) {
             SettingsStore.update { it.copy(worldZones = (it.worldZones + choice.toWorldZone()).take(Settings.MAX_WORLD_ZONES)) }
         }
     }
-    SettingsGroup("Other time zones") {
+    SettingsGroup(stringResource(Res.string.zones_title)) {
         zones.forEachIndexed { i, zone ->
             Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 4.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
@@ -50,15 +52,14 @@ fun WorldZonesGroup(zones: List<WorldZone>) {
                 }
                 TextButton(onClick = {
                     SettingsStore.update { s -> s.copy(worldZones = s.worldZones.filterIndexed { j, _ -> j != i }) }
-                }) { Text("Remove", color = MaterialTheme.colorScheme.error) }
+                }) { Text(stringResource(Res.string.zones_remove), color = MaterialTheme.colorScheme.error) }
             }
         }
         if (zones.size < Settings.MAX_WORLD_ZONES) {
-            ActionButton(if (zones.isEmpty()) "Add a time zone" else "Add another") { picking = true }
+            ActionButton(if (zones.isEmpty()) stringResource(Res.string.zones_add) else stringResource(Res.string.zones_add_another)) { picking = true }
         }
         Hint(
-            "Up to ${Settings.MAX_WORLD_ZONES}, under the time on the desk clock, with +1 or −1 when it's already " +
-                "another day there. Left out when the screen has no room for them",
+            stringResource(Res.string.zones_hint, Settings.MAX_WORLD_ZONES),
             Modifier.padding(bottom = 6.dp),
         )
     }
@@ -73,12 +74,12 @@ private fun ZonePicker(onDismiss: () -> Unit, onPick: (ZoneChoice) -> Unit) {
     val results = remember(query, known) { searchZones(query, known).filter { it.zoneId in known } }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add a time zone") },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+        title = { Text(stringResource(Res.string.zones_add)) },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) } },
         text = {
             Column {
                 OutlinedTextField(
-                    query, { query = it }, label = { Text("City or time zone") }, singleLine = true,
+                    query, { query = it }, label = { Text(stringResource(Res.string.zones_search)) }, singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 LazyColumn(Modifier.fillMaxWidth().height(360.dp).padding(top = 8.dp)) {
@@ -91,7 +92,7 @@ private fun ZonePicker(onDismiss: () -> Unit, onPick: (ZoneChoice) -> Unit) {
                             )
                         }
                     }
-                    if (results.isEmpty()) item { Hint("No city or time zone by that name") }
+                    if (results.isEmpty()) item { Hint(stringResource(Res.string.zones_no_match)) }
                 }
             }
         },

@@ -1,12 +1,6 @@
 package com.adl.nocturna.data
 
-import kotlinx.datetime.LocalDate
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.jsonObject
+import com.adl.nocturna.text.testLocale
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -14,6 +8,13 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.time.Clock
 import kotlin.time.Instant
+import kotlinx.datetime.LocalDate
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonObject
 
 class BackupTest {
     private val settings = Settings(
@@ -124,9 +125,9 @@ class BackupTest {
     }
 
     @Test fun theSummaryCountsAlarmsAndStations() {
-        assertEquals("2 alarms, 2 radio stations", backup.summary)
-        assertEquals("1 alarm, 1 radio station", Backup("", Settings(stations = settings.stations.take(1)), alarms.take(1)).summary)
-        assertEquals("0 alarms, 0 radio stations", Backup("", Settings(stations = emptyList()), emptyList()).summary)
+        assertEquals("2 alarms, 2 radio stations", backup.summary(testLocale))
+        assertEquals("1 alarm, 1 radio station", Backup("", Settings(stations = settings.stations.take(1)), alarms.take(1)).summary(testLocale))
+        assertEquals("0 alarms, 0 radio stations", Backup("", Settings(stations = emptyList()), emptyList()).summary(testLocale))
     }
 
     @Test fun theFileIsNamedAfterTheDay() =

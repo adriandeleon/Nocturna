@@ -1,10 +1,12 @@
 package com.adl.nocturna.day
 
 import com.adl.nocturna.data.CalendarView
+import com.adl.nocturna.text.testLocale
+import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import kotlin.test.Test
+import kotlin.time.Instant
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
@@ -15,7 +17,6 @@ import kotlinx.datetime.atTime
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import kotlinx.datetime.toInstant
-import kotlin.time.Instant
 
 class CalendarTest {
     private val monterrey = TimeZone.of("America/Monterrey") // UTC-6, no daylight saving
@@ -135,10 +136,10 @@ class CalendarTest {
     }
 
     @Test fun greetingFollowsTheTimeOfDay() {
-        assertEquals("Good morning!", greeting(8))
-        assertEquals("Good afternoon!", greeting(12))
-        assertEquals("Good evening!", greeting(20))
-        assertEquals("Good evening!", greeting(2))
+        assertEquals("Good morning!", greeting(8, testLocale))
+        assertEquals("Good afternoon!", greeting(12, testLocale))
+        assertEquals("Good evening!", greeting(20, testLocale))
+        assertEquals("Good evening!", greeting(2, testLocale))
     }
 
     @Test fun weekStartsOnTheLocalesFirstDay() {

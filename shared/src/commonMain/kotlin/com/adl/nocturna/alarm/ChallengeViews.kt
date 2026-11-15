@@ -46,6 +46,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.adl.nocturna.resources.*
+import com.adl.nocturna.ui.currentLocale
+import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.stringResource
 
 /*
  * The wake-up screen's challenges (see [DismissChallenge]). Both report a problem through `onFailed`
@@ -84,9 +88,12 @@ fun SumChallenge(
             .onFailure(onFailed)
     }
 
+    val sumSpoken = stringResource(Res.string.challenge_sum_spoken, sum.spoken(currentLocale()))
+    val answerDescription = if (typed.isEmpty()) stringResource(Res.string.challenge_answer_empty)
+    else stringResource(Res.string.challenge_answer, typed)
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (progress.needed > 1) {
-            Text("Sum ${progress.solved + 1} of ${progress.needed}", style = MaterialTheme.typography.titleMedium, color = muted)
+            Text(stringResource(Res.string.challenge_sum_count, progress.solved + 1, progress.needed), style = MaterialTheme.typography.titleMedium, color = muted)
         }
         Text(
             "${sum.text} =",
@@ -95,17 +102,17 @@ fun SumChallenge(
             color = accent,
             modifier = Modifier.semantics {
                 heading()
-                contentDescription = "${sum.spoken} equals?"
+                contentDescription = sumSpoken
                 liveRegion = LiveRegionMode.Assertive
             },
         )
         Box(
             Modifier.size(width = 160.dp, height = 64.dp).border(2.dp, muted, RoundedCornerShape(12.dp))
-                .clearAndSetSemantics { contentDescription = if (typed.isEmpty()) "Your answer, empty" else "Your answer, $typed" },
+                .clearAndSetSemantics { contentDescription = answerDescription },
             contentAlignment = Alignment.Center,
         ) { Text(typed, fontSize = 36.sp, color = accent) }
         Text(
-            if (progress.lastWrong) "Not quite. Here's a new one." else " ",
+            if (progress.lastWrong) stringResource(Res.string.challenge_not_quite) else " ",
             style = MaterialTheme.typography.bodyLarge,
             color = muted,
             modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
@@ -117,9 +124,9 @@ fun SumChallenge(
             }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Key("⌫", accent, description = "Delete", enabled = typed.isNotEmpty(), onClick = { typed = typed.dropLast(1) })
+            Key("⌫", accent, description = stringResource(Res.string.challenge_delete), enabled = typed.isNotEmpty(), onClick = { typed = typed.dropLast(1) })
             Key("0", accent, onClick = { if (typed.length < MAX_DIGITS) typed += "0" })
-            Key("OK", accent, description = "Check answer", enabled = typed.isNotEmpty(), onClick = ::submit)
+            Key("OK", accent, description = stringResource(Res.string.challenge_check), enabled = typed.isNotEmpty(), onClick = ::submit)
         }
     }
 }
@@ -154,6 +161,9 @@ fun HoldButton(
     var holding by remember { mutableStateOf(false) }
     var progress by remember { mutableFloatStateOf(0f) }
     val done by rememberUpdatedState(onDone)
+    val holdSeconds = (HOLD_TO_STOP_MILLIS / 1000).toInt()
+    val holdDescription = pluralStringResource(Res.plurals.challenge_hold_description, holdSeconds, label, holdSeconds)
+    val keepHolding = stringResource(Res.string.challenge_keep_holding)
     LaunchedEffect(holding) {
         if (!holding) {
             progress = 0f
@@ -186,13 +196,13 @@ fun HoldButton(
             }
             .semantics {
                 role = Role.Button
-                contentDescription = "$label: touch and hold for ${HOLD_TO_STOP_MILLIS / 1000} seconds"
-                stateDescription = if (holding) "Keep holding" else ""
+                contentDescription = holdDescription
+                stateDescription = if (holding) keepHolding else ""
                 progressBarRangeInfo = ProgressBarRangeInfo(progress, 0f..1f)
             },
         contentAlignment = Alignment.Center,
     ) {
         Box(Modifier.align(Alignment.CenterStart).fillMaxHeight().fillMaxWidth(progress).background(accent))
-        Text(if (holding) "Keep holding…" else label, fontSize = 18.sp, color = if (progress > 0.5f) Color.Black else textColor)
+        Text(if (holding) stringResource(Res.string.challenge_keep_holding_dots) else label, fontSize = 18.sp, color = if (progress > 0.5f) Color.Black else textColor)
     }
 }

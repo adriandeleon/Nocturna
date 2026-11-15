@@ -12,6 +12,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import com.adl.nocturna.resources.*
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 
 /** The Settings pages, by name. */
 object SettingsPages {
@@ -27,22 +30,22 @@ object SettingsPages {
     const val ABOUT = "about"
 
     private val TITLES = mapOf(
-        MAIN to "Settings",
-        CLOCK to "Clock face",
-        INFO_LINE to "Show on the clock",
-        BRIGHTNESS to "Brightness and night mode",
-        DAY_MODE to "Day mode",
-        WEATHER to "Weather",
-        START to "Starting the clock",
-        ALARMS to "Alarms",
-        STATIONS to "Radio stations",
-        ABOUT to "About",
+        MAIN to Res.string.settings_title,
+        CLOCK to Res.string.settings_clock_face,
+        INFO_LINE to Res.string.settings_show_on_clock,
+        BRIGHTNESS to Res.string.settings_brightness,
+        DAY_MODE to Res.string.settings_day_mode,
+        WEATHER to Res.string.settings_weather,
+        START to Res.string.settings_starting,
+        ALARMS to Res.string.settings_alarms,
+        STATIONS to Res.string.settings_radio_stations,
+        ABOUT to Res.string.settings_about_title,
     )
 
     /** Whether [page] is one of the pages above. */
     fun exists(page: String): Boolean = page in TITLES
 
-    fun title(page: String): String = TITLES.getValue(page)
+    fun title(page: String): StringResource = TITLES.getValue(page)
 }
 
 /**
@@ -55,8 +58,8 @@ fun SettingsScreen(page: String, onNavigate: (String) -> Unit, onBack: () -> Uni
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(SettingsPages.title(page)) },
-                navigationIcon = { TextButton(onClick = onBack) { Text("‹ Back") } },
+                title = { Text(stringResource(SettingsPages.title(page))) },
+                navigationIcon = { TextButton(onClick = onBack) { Text(stringResource(Res.string.settings_back)) } },
             )
         },
     ) { padding ->
