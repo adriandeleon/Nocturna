@@ -1,11 +1,13 @@
 package com.adl.nocturna.data
 
+import com.adl.nocturna.sound.SleepSound
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 
 class SettingsJsonTest {
     /** The stored JSON for [s], changed the way an older or a damaged version would have left it. */
@@ -83,4 +85,27 @@ class SettingsJsonTest {
         assertEquals(true, SettingsCodec.decode(stored(remove = listOf("showForecast"))).showForecast)
 
     @Test fun noWeatherPlaceSurvivesRoundTrip() = assertFalse(roundTrip(Settings()).hasWeatherLocation)
+
+    @Test fun sleepSoundSurvivesRoundTripAndIsWhatTheRadioPlays() {
+        val settings = Settings(selectedStation = 2, selectedSound = SleepSound.RAIN.id)
+        val loaded = roundTrip(settings)
+        assertEquals(settings, loaded)
+        assertEquals(SleepSound.RAIN.station, loaded.currentStation)
+        // Sleep sounds are not stored with the stations, which stay the user's own list.
+        assertEquals(Settings().stations, loaded.stations)
+    }
+
+    @Test fun settingsSavedBeforeSleepSoundsKeepTheirStation() {
+        val old = Settings(selectedStation = 3)
+        val loaded = SettingsCodec.decode(stored(old, remove = listOf("selectedSound")))
+        assertEquals(old, loaded)
+        assertNull(loaded.currentSleepSound)
+        assertEquals(old.stations[3], loaded.currentStation)
+    }
+
+    @Test fun unknownSleepSoundFallsBackToTheStation() {
+        val loaded = SettingsCodec.decode(stored(Settings(selectedStation = 1), put = mapOf("selectedSound" to JsonPrimitive("thunder"))))
+        assertNull(loaded.currentSleepSound)
+        assertEquals(Settings().stations[1], loaded.currentStation)
+    }
 }

@@ -58,6 +58,7 @@ object SettingsCodec {
             s.stations.forEach { add(buildJsonObject { put("name", it.name); put("url", it.url) }) }
         })
         put("selectedStation", s.selectedStation)
+        put("selectedSound", s.selectedSound)
         put("stationsVersion", Settings.STATIONS_VERSION)
     }
 
@@ -118,6 +119,7 @@ object SettingsCodec {
             alarmVibrate = j.optBoolean("alarmVibrate", d.alarmVibrate),
             stations = stations,
             selectedStation = selected,
+            selectedSound = j.optString("selectedSound", d.selectedSound),
         )
     }
 

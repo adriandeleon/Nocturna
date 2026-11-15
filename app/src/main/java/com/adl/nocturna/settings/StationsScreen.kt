@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -29,6 +30,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.adl.nocturna.data.SettingsStore
 import com.adl.nocturna.data.Station
 import com.adl.nocturna.radio.Radio
+import com.adl.nocturna.sound.SleepSound
 
 @Composable
 fun StationsScreen(padding: PaddingValues) {
@@ -42,7 +44,8 @@ fun StationsScreen(padding: PaddingValues) {
     LazyColumn(Modifier.fillMaxSize(), contentPadding = padding) {
         item {
             Text(
-                "Pick the station the clock's Radio button plays. Any MP3, AAC or HLS stream URL works.",
+                "Pick what the clock's Radio button plays: a web station (any MP3, AAC or HLS stream URL works) or " +
+                    "one of the sleep sounds below.",
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(16.dp),
             )
@@ -53,7 +56,7 @@ fun StationsScreen(padding: PaddingValues) {
                 Modifier.fillMaxWidth().clickable { select(context, i, station, radioOn) }.padding(horizontal = 8.dp, vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                RadioButton(selected = i == s.selectedStation, onClick = { select(context, i, station, radioOn) })
+                RadioButton(selected = s.currentSleepSound == null && i == s.selectedStation, onClick = { select(context, i, station, radioOn) })
                 Column(Modifier.weight(1f)) {
                     Text(station.name, style = MaterialTheme.typography.bodyLarge)
                     Text(
@@ -74,9 +77,33 @@ fun StationsScreen(padding: PaddingValues) {
                 }) { Text("Remove", color = MaterialTheme.colorScheme.error) }
             }
         }
+        item { SectionHeader("Sleep sounds") }
+        item {
+            Text(
+                "Made on your phone, so they play without the internet. They loop for as long as you like, " +
+                    "and the sleep timer fades them out like a station.",
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+            )
+        }
+        items(SleepSound.entries) { sound ->
+            Row(
+                Modifier.fillMaxWidth().clickable { select(context, sound, radioOn) }.padding(horizontal = 8.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                RadioButton(selected = sound == s.currentSleepSound, onClick = { select(context, sound, radioOn) })
+                Column(Modifier.weight(1f)) {
+                    Text(sound.label, style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        sound.description, style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    )
+                }
+            }
+        }
         item {
             Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                TextButton(onClick = { Radio.play(context, s.currentStation ?: return@TextButton) }, enabled = !radioOn && s.stations.isNotEmpty()) {
+                TextButton(onClick = { Radio.play(context, s.currentStation ?: return@TextButton) }, enabled = !radioOn && s.currentStation != null) {
                     Text("▶  Play")
                 }
                 TextButton(onClick = { Radio.stop(context) }, enabled = radioOn) { Text("■  Stop") }
@@ -106,6 +133,11 @@ fun StationsScreen(padding: PaddingValues) {
 }
 
 private fun select(context: android.content.Context, index: Int, station: Station, radioOn: Boolean) {
-    SettingsStore.update { it.copy(selectedStation = index) }
+    SettingsStore.update { it.copy(selectedStation = index, selectedSound = "") }
     if (radioOn) Radio.play(context, station)
+}
+
+private fun select(context: android.content.Context, sound: SleepSound, radioOn: Boolean) {
+    SettingsStore.update { it.copy(selectedSound = sound.id) }
+    if (radioOn) Radio.play(context, sound.station)
 }

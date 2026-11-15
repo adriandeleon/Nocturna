@@ -53,6 +53,12 @@ one-line summary written for users.
   screen back while an alarm rings.
 - **Web radio:** play any MP3, AAC or HLS stream, with a sleep timer that fades out after 15, 30, 60 or 90
   minutes. Monterrey stations come ready to pick.
+- **Sleep sounds that play offline:** White noise, Pink noise, Brown noise, Rain and Surf (slow waves rolling
+  in) sit under their own *Sleep sounds* heading in Settings › Radio stations. Nocturna makes them on your
+  phone the first time you play one, so they need no internet and add almost nothing to the app's size. They
+  loop without a break or a click and play like a station: from the clock's Radio button, with the sleep timer
+  fading them out, in the info line and in the media notification. Alarms still wake you with a web station
+  or the alarm tone.
 - **Wake up to the radio:** each alarm can play one of your stations instead of the alarm tone. If the
   station doesn't play within 15 seconds, or stops while ringing, the alarm tone takes over. The wake-up
   screen and the alarm notification name the station only while it plays, and *Keep listening* on the
