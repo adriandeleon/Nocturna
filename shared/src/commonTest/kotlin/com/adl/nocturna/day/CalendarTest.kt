@@ -111,6 +111,15 @@ class CalendarTest {
 
     @Test fun noRowsWhenNothingFits() = assertEquals(0, rowsThatFit(listOf(50), gap = 5, max = 40, moreHeight = 8))
 
+    @Test fun noteFitsUnderTheClockWithRoomToSpare() = assertTrue(noteFits(clock = 200, gap = 32, noteMin = 120, max = 400))
+
+    @Test fun noteFitsExactly() = assertTrue(noteFits(clock = 248, gap = 32, noteMin = 120, max = 400))
+
+    @Test fun noteIsLeftOutUnderATallClock() {
+        // A landscape phone: the analog clock and its info line take nearly the whole column.
+        assertFalse(noteFits(clock = 300, gap = 32, noteMin = 120, max = 340))
+    }
+
     @Test fun dotsMarkDaysWithTimedAndAllDayEvents() {
         val days = monthGrid(YearMonth(2026, 11), DayOfWeek.SUNDAY).flatten()
         val events = listOf(
