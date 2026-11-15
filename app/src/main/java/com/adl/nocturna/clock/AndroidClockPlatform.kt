@@ -8,14 +8,13 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.adl.nocturna.data.Station
 import com.adl.nocturna.day.CalendarEvent
 import com.adl.nocturna.day.CalendarEvents
 import com.adl.nocturna.day.DayPhoto
 import com.adl.nocturna.day.MeetingChime
 import com.adl.nocturna.day.rememberCalendarEvents
 import com.adl.nocturna.notify.NotificationIconService
-import com.adl.nocturna.radio.Radio
+import com.adl.nocturna.radio.AndroidRadioControl
 import com.adl.nocturna.weather.DeviceLocation
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -43,16 +42,7 @@ class AndroidClockPlatform(context: Context) : ClockPlatform {
         }
     }
 
-    override val radio: RadioControl = object : RadioControl {
-        override val isOn = Radio.isOn
-        override val title = Radio.title
-        override val error = Radio.error
-        override val sleepAt = Radio.sleepAt
-
-        override fun toggle(station: Station?) = Radio.toggle(app, station)
-
-        override fun setSleepTimer(minutes: Int) = Radio.setSleepTimer(minutes)
-    }
+    override val radio: RadioControl = AndroidRadioControl(app)
 
     override suspend fun deviceLocation(): Pair<Double, Double>? = DeviceLocation.get(app)
 

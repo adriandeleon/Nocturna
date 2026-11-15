@@ -29,6 +29,7 @@ import androidx.core.view.WindowInsetsControllerCompat
 import com.adl.nocturna.data.Storage
 import com.adl.nocturna.day.OpenCalendar
 import com.adl.nocturna.settings.SettingsActivity
+import com.adl.nocturna.settings.SettingsPages
 import com.adl.nocturna.ui.NocturnaTheme
 import com.adl.nocturna.ui.enableDarkEdgeToEdge
 
@@ -64,7 +65,7 @@ class ClockActivity : ComponentActivity() {
                         onOpenAlarms = {
                             openUnlocked(
                                 Intent(this, SettingsActivity::class.java)
-                                    .putExtra(SettingsActivity.EXTRA_SCREEN, SettingsActivity.SCREEN_ALARMS)
+                                    .putExtra(SettingsActivity.EXTRA_SCREEN, SettingsPages.ALARMS)
                             )
                         },
                         onNight = { DndWhileShowing.nightChanged(this, it) },

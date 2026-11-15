@@ -21,6 +21,11 @@ actual fun formatTime(time: LocalTime, use24h: Boolean, locale: PlatformLocale):
 
 actual fun DayOfWeek.shortName(locale: PlatformLocale): String = toJavaDayOfWeek().getDisplayName(TextStyle.SHORT, locale)
 
+actual val PlatformLocale.languageCode: String get() = language
+
+actual fun formatNumber(value: Double, fractionDigits: Int, locale: PlatformLocale): String =
+    String.format(locale, "%.${fractionDigits}f", value)
+
 actual fun DayOfWeek.narrowName(locale: PlatformLocale): String = toJavaDayOfWeek().getDisplayName(TextStyle.NARROW, locale)
 
 actual fun DayOfWeek.fullName(locale: PlatformLocale): String = toJavaDayOfWeek().getDisplayName(TextStyle.FULL, locale)

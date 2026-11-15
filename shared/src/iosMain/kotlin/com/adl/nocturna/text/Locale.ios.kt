@@ -12,6 +12,10 @@ import platform.Foundation.NSCalendar
 import platform.Foundation.NSCalendarIdentifierGregorian
 import platform.Foundation.NSCalendarUnitWeekOfYear
 import platform.Foundation.NSDate
+import platform.Foundation.NSNumber
+import platform.Foundation.NSNumberFormatter
+import platform.Foundation.NSNumberFormatterDecimalStyle
+import platform.Foundation.languageCode
 import platform.Foundation.dateWithTimeIntervalSince1970
 import platform.Foundation.NSDateComponents
 import platform.Foundation.NSDateFormatter
@@ -45,6 +49,19 @@ actual fun DayOfWeek.shortName(locale: PlatformLocale): String {
     // Foundation's list starts on Sunday; ISO numbers run Monday 1 to Sunday 7.
     val names = NSDateFormatter().apply { this.locale = locale }.shortWeekdaySymbols
     return names[isoDayNumber % 7] as String
+}
+
+actual val PlatformLocale.languageCode: String get() = languageCode
+
+actual fun formatNumber(value: Double, fractionDigits: Int, locale: PlatformLocale): String {
+    val formatter = NSNumberFormatter().apply {
+        this.locale = locale
+        numberStyle = NSNumberFormatterDecimalStyle
+        usesGroupingSeparator = false
+        minimumFractionDigits = fractionDigits.toULong()
+        maximumFractionDigits = fractionDigits.toULong()
+    }
+    return formatter.stringFromNumber(NSNumber(value)) ?: value.toString()
 }
 
 actual fun DayOfWeek.narrowName(locale: PlatformLocale): String =

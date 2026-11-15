@@ -103,10 +103,6 @@ object Radio {
         }
     }
 
-    fun toggle(context: Context, station: Station?) {
-        if (onState.value) stop(context) else if (station != null) play(context, station)
-    }
-
     fun setSleepTimer(minutes: Int) {
         sleepAt.value = if (minutes > 0 && onState.value) System.currentTimeMillis() + minutes * 60_000L else null
     }
