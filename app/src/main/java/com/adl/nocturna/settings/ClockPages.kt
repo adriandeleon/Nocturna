@@ -143,6 +143,11 @@ fun BrightnessPage(padding: PaddingValues) {
                     set { it.copy(maxBrightness = v) }
                 }
                 }
+                // Night mode dims the clock even without the room light, so this shows either way.
+                SwitchRow(
+                    "Tap to peek", s.tapToPeek,
+                    "A tap on the dim clock brightens it for a few seconds; tap again for the controls",
+                ) { v -> set { it.copy(tapToPeek = v) } }
             }
             SettingsGroup("Night mode") {
                 SwitchRow("Night mode", s.nightModeEnabled, "Dim red clock when the room is dark") { v ->
