@@ -1,6 +1,5 @@
 package com.adl.nocturna.clock
 
-import android.graphics.Typeface
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -12,6 +11,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -28,16 +28,17 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.em
 import com.adl.nocturna.data.ClockFont
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
+import com.adl.nocturna.text.DateTimePattern
 import com.adl.nocturna.ui.currentLocale
 
 fun ClockFont.family(): FontFamily = when (this) {
     ClockFont.THIN, ClockFont.LIGHT, ClockFont.REGULAR -> FontFamily.SansSerif
-    ClockFont.CONDENSED -> FontFamily(Typeface.create("sans-serif-condensed", Typeface.NORMAL))
+    ClockFont.CONDENSED -> condensedFontFamily()
     ClockFont.MONO -> FontFamily.Monospace
     ClockFont.SERIF -> FontFamily.Serif
 }
+
+internal expect fun condensedFontFamily(): FontFamily
 
 fun ClockFont.weight(): FontWeight = when (this) {
     ClockFont.THIN -> FontWeight.Thin
@@ -50,7 +51,7 @@ private val tight = LineHeightStyle(LineHeightStyle.Alignment.Center, LineHeight
 /** Large digital time with optional small seconds and AM/PM marker. */
 @Composable
 fun DigitalClock(
-    now: ZonedDateTime,
+    now: Moment,
     use24h: Boolean,
     showSeconds: Boolean,
     font: ClockFont,
@@ -59,7 +60,7 @@ fun DigitalClock(
     shadow: Shadow? = null,
 ) {
     val locale = currentLocale()
-    val hm = now.format(DateTimeFormatter.ofPattern(if (use24h) "HH:mm" else "h:mm", locale))
+    val hm = remember(use24h, locale) { DateTimePattern(if (use24h) "HH:mm" else "h:mm", locale) }.format(now.local)
     val style = TextStyle(
         color = color,
         fontSize = fontSize,
@@ -78,10 +79,10 @@ fun DigitalClock(
             val small = style.copy(fontSize = fontSize * 0.26f, letterSpacing = 0.em)
             val gap = with(LocalDensity.current) { (fontSize * 0.06f).toDp() }
             Column(Modifier.alignBy(LastBaseline).padding(start = gap)) {
-                if (!use24h) Text(now.format(DateTimeFormatter.ofPattern("a", locale)), style = small, softWrap = false)
+                if (!use24h) Text(remember(locale) { DateTimePattern("a", locale) }.format(now.local), style = small, softWrap = false)
                 if (!use24h && showSeconds) Spacer(Modifier.height(with(LocalDensity.current) { (fontSize * 0.2f).toDp() }))
                 if (showSeconds) {
-                    Text(now.format(DateTimeFormatter.ofPattern(":ss")), style = small.copy(color = color.copy(alpha = color.alpha * 0.6f)), softWrap = false)
+                    Text(":" + now.local.second.toString().padStart(2, '0'), style = small.copy(color = color.copy(alpha = color.alpha * 0.6f)), softWrap = false)
                 }
             }
         }
@@ -90,7 +91,7 @@ fun DigitalClock(
 
 /** A minimal analog face: hour ticks, three hands. */
 @Composable
-fun AnalogClock(now: ZonedDateTime, showSeconds: Boolean, color: Color, size: Dp) {
+fun AnalogClock(now: Moment, showSeconds: Boolean, color: Color, size: Dp) {
     Canvas(Modifier.size(size)) {
         val r = this.size.minDimension / 2
         val c = center
@@ -100,12 +101,12 @@ fun AnalogClock(now: ZonedDateTime, showSeconds: Boolean, color: Color, size: Dp
             if (!hour && r < 120f) continue
             tick(c, r, i * 6f, if (hour) r * 0.86f else r * 0.93f, color.copy(alpha = if (hour) 1f else 0.4f), if (hour) w * 1.4f else w * 0.6f)
         }
-        val sec = now.second + now.nano / 1e9f
-        val min = now.minute + sec / 60f
+        val sec = now.local.second + now.local.nanosecond / 1e9f
+        val min = now.local.minute + sec / 60f
         val hr = (now.hour % 12) + min / 60f
         hand(c, hr * 30f, r * 0.5f, color, w * 2.6f)
         hand(c, min * 6f, r * 0.78f, color, w * 1.6f)
-        if (showSeconds) hand(c, now.second * 6f, r * 0.86f, color.copy(alpha = 0.7f), w * 0.7f, tail = r * 0.12f)
+        if (showSeconds) hand(c, now.local.second * 6f, r * 0.86f, color.copy(alpha = 0.7f), w * 0.7f, tail = r * 0.12f)
         drawCircle(color, w * 2.6f, c)
     }
 }

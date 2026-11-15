@@ -1,6 +1,7 @@
 package com.adl.nocturna.dream
 
 import android.service.dreams.DreamService
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.ComposeView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
@@ -10,7 +11,9 @@ import androidx.savedstate.SavedStateRegistry
 import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
+import com.adl.nocturna.clock.AndroidClockPlatform
 import com.adl.nocturna.clock.ClockScreen
+import com.adl.nocturna.clock.LocalClockPlatform
 import com.adl.nocturna.clock.setBrightness
 import com.adl.nocturna.ui.NocturnaTheme
 
@@ -42,7 +45,9 @@ class NocturnaDream : DreamService(), LifecycleOwner, SavedStateRegistryOwner {
             setViewTreeSavedStateRegistryOwner(this@NocturnaDream)
             setContent {
                 NocturnaTheme {
-                    ClockScreen(interactive = false, onBrightness = { window?.setBrightness(it) })
+                    CompositionLocalProvider(LocalClockPlatform provides AndroidClockPlatform(this@NocturnaDream)) {
+                        ClockScreen(interactive = false, onBrightness = { window?.setBrightness(it) })
+                    }
                 }
             }
         }

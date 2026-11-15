@@ -1,7 +1,5 @@
 package com.adl.nocturna.day
 
-import android.content.Intent
-import android.text.format.DateFormat
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.fadeIn
@@ -61,7 +59,6 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.SubcomposeLayout
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -72,15 +69,26 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.constrainHeight
 import androidx.compose.ui.unit.constrainWidth
 import androidx.compose.ui.unit.dp
+import com.adl.nocturna.clock.LocalClockPlatform
+import com.adl.nocturna.clock.Moment
 import com.adl.nocturna.data.CalendarView
 import com.adl.nocturna.data.Settings
+import com.adl.nocturna.text.DateTimePattern
+import com.adl.nocturna.text.bestDateTimePattern
+import com.adl.nocturna.text.capitalizedFirst
+import com.adl.nocturna.text.firstDayOfWeek
+import com.adl.nocturna.text.fullName
+import com.adl.nocturna.text.narrowName
+import com.adl.nocturna.text.shortName
+import com.adl.nocturna.text.weekOfYear
 import com.adl.nocturna.ui.currentLocale
-import java.time.DayOfWeek
-import java.time.LocalDate
-import java.time.YearMonth
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
-import java.time.temporal.WeekFields
+import kotlinx.datetime.DayOfWeek
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.YearMonth
+import kotlinx.datetime.atTime
+import kotlinx.datetime.number
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Instant
 import kotlin.math.abs
 import kotlin.random.Random
 import kotlinx.coroutines.delay
@@ -99,16 +107,16 @@ private val NoteInk = Color(0xFF4A3F1F)
  * illustrated scene. Falls back to the scene when the photo can't be read.
  */
 @Composable
-fun DayBackground(now: ZonedDateTime, photoVersion: Long, modifier: Modifier = Modifier) {
-    val context = LocalContext.current
+fun DayBackground(now: Moment, photoVersion: Long, modifier: Modifier = Modifier) {
+    val platform = LocalClockPlatform.current
     val photo by produceState<ImageBitmap?>(null, photoVersion) {
-        value = if (photoVersion == 0L) null else DayPhoto.load(context)
+        value = if (photoVersion == 0L) null else platform.loadDayPhoto()
     }
     Box(modifier) {
         val p = photo
         if (p != null) {
             // A slow pan, so no part of the photo stays on the same pixels all day.
-            val (panX, panY) = photoPan(now.toLocalTime().toSecondOfDay().toFloat())
+            val (panX, panY) = photoPan(now.time.toSecondOfDay().toFloat())
             Image(
                 p,
                 contentDescription = null,
@@ -127,7 +135,7 @@ fun DayBackground(now: ZonedDateTime, photoVersion: Long, modifier: Modifier = M
                 )
             )
         } else {
-            SceneBackground(monthTheme(now.month), now.toLocalTime(), seed = now.year * 12 + now.monthValue, modifier = Modifier.fillMaxSize())
+            SceneBackground(monthTheme(now.local.month), now.time, seed = now.local.year * 12 + now.local.month.number, modifier = Modifier.fillMaxSize())
         }
     }
 }
@@ -140,22 +148,22 @@ fun DayBackground(now: ZonedDateTime, photoVersion: Long, modifier: Modifier = M
 @Composable
 fun DayLayout(
     landscape: Boolean,
-    now: ZonedDateTime,
+    now: Moment,
     settings: Settings,
     modifier: Modifier = Modifier,
     /** Opens the calendar app; null where nothing can be tapped (the screen saver). */
-    onOpen: ((Intent) -> Unit)? = null,
+    onOpen: ((CalendarLink) -> Unit)? = null,
     clock: @Composable () -> Unit,
 ) {
-    val today = now.toLocalDate()
+    val today = now.date
     val locale = currentLocale()
-    val firstDay = WeekFields.of(locale).firstDayOfWeek
-    val weeks = remember(today.year, today.monthValue, firstDay) { monthGrid(YearMonth.from(today), firstDay) }
-    val events by rememberCalendarEvents(settings.showCalendarEvents, weeks.first().first(), weeks.last().last(), now.zone)
+    val firstDay = firstDayOfWeek(locale)
+    val weeks = remember(today.year, today.month, firstDay) { monthGrid(YearMonth(today.year, today.month), firstDay) }
+    val events = LocalClockPlatform.current.calendarEvents(settings.showCalendarEvents, weeks.first().first(), weeks.last().last(), now.zone)
     val dots = remember(events, weeks, now.zone) { events?.let { daysWithEvents(it, weeks.flatten(), now.zone) } ?: emptySet() }
-    val theme = monthTheme(now.month)
-    val openDay: ((LocalDate) -> Unit)? = onOpen?.let { open -> { day -> open(OpenCalendar.day(day, now)) } }
-    val openEvent: ((CalendarEvent) -> Unit)? = onOpen?.let { open -> { event -> open(OpenCalendar.event(event)) } }
+    val theme = monthTheme(now.local.month)
+    val openDay: ((LocalDate) -> Unit)? = onOpen?.let { open -> { day -> open(CalendarLink.Day(dayOpenTime(day, now.instant, now.zone))) } }
+    val openEvent: ((CalendarEvent) -> Unit)? = onOpen?.let { open -> { event -> open(CalendarLink.Event(event)) } }
 
     // The page starts on the view chosen in Settings; a swipe (or the switch under the page)
     // changes it for as long as the clock stays open. The screen saver can't be swiped.
@@ -171,8 +179,8 @@ fun DayLayout(
     val pageDrift = rememberDrift(burnIn, phase = 1)
     val noteDrift = rememberDrift(burnIn, phase = 2)
     // The page is the brightest thing on screen, so its paper slowly dims the longer it stays up.
-    val shownSince = rememberSaveable { now.toInstant().toEpochMilli() }
-    val minutesShown = (now.toInstant().toEpochMilli() - shownSince) / 60_000f
+    val shownSince = rememberSaveable { now.epochMillis }
+    val minutesShown = (now.epochMillis - shownSince) / 60_000f
     val paper = if (burnIn) lerp(Paper, DimPaper, paperDim(minutesShown)) else Paper
     val page: @Composable (Modifier) -> Unit = { m ->
         DeskPage(view, now, weeks, dots, events, settings.showCalendarEvents, settings.use24h, theme, paper, openDay, openEvent, onView, m)
@@ -286,7 +294,7 @@ private fun Modifier.drift(drift: Drift, rangeX: Dp, rangeY: Dp): Modifier = gra
 @Composable
 private fun DeskPage(
     view: CalendarView,
-    now: ZonedDateTime,
+    now: Moment,
     weeks: List<List<LocalDate>>,
     dots: Set<LocalDate>,
     events: List<CalendarEvent>?,
@@ -299,11 +307,10 @@ private fun DeskPage(
     onView: ((CalendarView) -> Unit)?,
     modifier: Modifier,
 ) {
-    val today = now.toLocalDate()
+    val today = now.date
     val locale = currentLocale()
-    val weekFields = WeekFields.of(locale)
-    val month = remember(today.year, today.monthValue, locale) {
-        today.format(DateTimeFormatter.ofPattern("LLLL", locale)).replaceFirstChar { it.titlecase(locale) }
+    val month = remember(today.year, today.month, locale) {
+        DateTimePattern("LLLL", locale).format(today.atTime(0, 0)).capitalizedFirst(locale)
     }
     val currentView by rememberUpdatedState(view)
     val currentOnView by rememberUpdatedState(onView)
@@ -351,7 +358,7 @@ private fun DeskPage(
                     Text(month, style = base.copy(color = Color.White, fontSize = font * 1.7f, fontWeight = FontWeight.Bold))
                     Spacer(Modifier.weight(1f))
                     Text(
-                        if (view == CalendarView.WEEK) "Week ${today.get(weekFields.weekOfWeekBasedYear())}" else today.year.toString(),
+                        if (view == CalendarView.WEEK) "Week ${weekOfYear(today, locale)}" else today.year.toString(),
                         style = base.copy(color = Color.White.copy(alpha = 0.85f), fontSize = font * 1.2f),
                     )
                 }
@@ -371,7 +378,7 @@ private fun DeskPage(
                     when (v) {
                         CalendarView.MONTH -> MonthBody(today, weeks, dots, theme.accent, cell, base, onOpenDay)
                         CalendarView.WEEK ->
-                            WeekBody(now, weekOf(today, weekFields.firstDayOfWeek), events, showEvents, use24h, theme.accent, cell, base, onOpenDay, onOpenEvent)
+                            WeekBody(now, weekOf(today, firstDayOfWeek(locale)), events, showEvents, use24h, theme.accent, cell, base, onOpenDay, onOpenEvent)
                         CalendarView.DAY -> DayBody(now, events, showEvents, use24h, theme.accent, cell, base, onOpenDay, onOpenEvent)
                     }
                 }
@@ -398,7 +405,7 @@ private fun MonthBody(
             weeks.first().forEach { d ->
                 Box(Modifier.size(cell, cell * 0.7f), contentAlignment = Alignment.Center) {
                     Text(
-                        d.dayOfWeek.getDisplayName(java.time.format.TextStyle.NARROW, locale),
+                        d.dayOfWeek.narrowName(locale),
                         style = base.copy(
                             color = if (d.dayOfWeek in WEEKEND) accent else Ink.copy(alpha = 0.5f),
                             fontSize = base.fontSize * 0.8f,
@@ -419,7 +426,7 @@ private fun MonthBody(
 /** This week, one row per day: the date and as many of its events as fit, finished ones faded. */
 @Composable
 private fun WeekBody(
-    now: ZonedDateTime,
+    now: Moment,
     days: List<LocalDate>,
     events: List<CalendarEvent>?,
     showEvents: Boolean,
@@ -431,7 +438,7 @@ private fun WeekBody(
     onOpenEvent: ((CalendarEvent) -> Unit)?,
 ) {
     val locale = currentLocale()
-    val today = now.toLocalDate()
+    val today = now.date
     val time = rememberTimeFormat(use24h)
     val eventFont = base.fontSize * 0.72f
     BoxWithConstraints(Modifier.fillMaxWidth()) {
@@ -453,7 +460,7 @@ private fun WeekBody(
                 ) {
                     Row(Modifier.width(cell * 1.9f), verticalAlignment = Alignment.Bottom) {
                         Text(
-                            d.dayOfWeek.getDisplayName(java.time.format.TextStyle.SHORT, locale),
+                            d.dayOfWeek.shortName(locale),
                             style = base.copy(
                                 fontSize = base.fontSize * 0.62f,
                                 color = if (isToday || d.dayOfWeek in WEEKEND) accent else Ink.copy(alpha = 0.55f),
@@ -463,7 +470,7 @@ private fun WeekBody(
                         )
                         Spacer(Modifier.width(cell * 0.12f))
                         Text(
-                            d.dayOfMonth.toString(),
+                            d.day.toString(),
                             style = base.copy(
                                 fontSize = base.fontSize * 0.95f,
                                 color = if (isToday) accent else Ink,
@@ -489,14 +496,14 @@ private fun WeekBody(
 @Composable
 private fun WeekEventLine(
     e: CalendarEvent,
-    now: ZonedDateTime,
-    time: DateTimeFormatter,
+    now: Moment,
+    time: DateTimePattern,
     fontSize: TextUnit,
     accent: Color,
     more: Int,
     onOpenEvent: ((CalendarEvent) -> Unit)?,
 ) {
-    val faded = !e.allDay && e.end <= now.toInstant().toEpochMilli()
+    val faded = !e.allDay && e.end <= now.epochMillis
     val line = with(LocalDensity.current) { fontSize.toDp() }
     Row(
         Modifier
@@ -507,7 +514,7 @@ private fun WeekEventLine(
     ) {
         Box(Modifier.size(line * 0.55f).clip(CircleShape).background((e.color?.let { Color(it) } ?: accent).copy(alpha = if (faded) 0.4f else 1f)))
         Spacer(Modifier.width(line * 0.4f))
-        val start = if (e.allDay) "" else java.time.Instant.ofEpochMilli(e.begin).atZone(now.zone).format(time) + "  "
+        val start = if (e.allDay) "" else time.format(Instant.fromEpochMilliseconds(e.begin).toLocalDateTime(now.zone)) + "  "
         Text(
             start + e.title,
             style = TextStyle(color = Ink.copy(alpha = if (faded) 0.4f else 0.9f), fontSize = fontSize, fontFeatureSettings = "tnum"),
@@ -525,7 +532,7 @@ private fun WeekEventLine(
 /** Today, like a tear-off calendar: the big date beside the whole day's schedule. */
 @Composable
 private fun DayBody(
-    now: ZonedDateTime,
+    now: Moment,
     events: List<CalendarEvent>?,
     showEvents: Boolean,
     use24h: Boolean,
@@ -535,15 +542,15 @@ private fun DayBody(
     onOpenDay: ((LocalDate) -> Unit)?,
     onOpenEvent: ((CalendarEvent) -> Unit)?,
 ) {
-    val context = LocalContext.current
+    val platform = LocalClockPlatform.current
     val locale = currentLocale()
-    val today = now.toLocalDate()
+    val today = now.date
     val time = rememberTimeFormat(use24h)
-    val access = remember(events) { CalendarEvents.hasPermission(context) }
+    val access = remember(events) { platform.hasCalendarAccess() }
     val dayEvents = remember(events, today) { events?.let { eventsOnDay(it, today, now.zone) } }
     val faint = TextStyle(color = Ink.copy(alpha = 0.55f), fontSize = base.fontSize * 0.7f)
-    val instant = now.toInstant()
-    fun fmt(millis: Long) = java.time.Instant.ofEpochMilli(millis).atZone(now.zone).format(time)
+    val instant = now.instant
+    fun fmt(millis: Long) = time.format(Instant.fromEpochMilliseconds(millis).toLocalDateTime(now.zone))
 
     Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
         Column(
@@ -556,12 +563,12 @@ private fun DayBody(
             verticalArrangement = Arrangement.Center,
         ) {
             Text(
-                today.dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL, locale).replaceFirstChar { it.titlecase(locale) },
+                today.dayOfWeek.fullName(locale).capitalizedFirst(locale),
                 style = base.copy(color = accent, fontSize = base.fontSize * 0.75f, fontWeight = FontWeight.Bold),
                 maxLines = 1,
             )
             Text(
-                today.dayOfMonth.toString(),
+                today.day.toString(),
                 style = base.copy(fontSize = base.fontSize * 4f, fontWeight = FontWeight.Bold, lineHeight = base.fontSize * 4.2f),
                 maxLines = 1,
             )
@@ -587,7 +594,7 @@ private fun DayBody(
                             emphasised = ongoing,
                             onClick = onOpenEvent?.let { open -> { open(e) } },
                             ink = Ink,
-                            faded = !e.allDay && e.end <= instant.toEpochMilli(),
+                            faded = !e.allDay && e.end <= now.epochMillis,
                         )
                     }
                 }
@@ -624,11 +631,9 @@ private fun ViewSwitch(view: CalendarView, accent: Color, cell: Dp, base: TextSt
 }
 
 @Composable
-private fun rememberTimeFormat(use24h: Boolean): DateTimeFormatter {
+private fun rememberTimeFormat(use24h: Boolean): DateTimePattern {
     val locale = currentLocale()
-    return remember(use24h, locale) {
-        DateTimeFormatter.ofPattern(DateFormat.getBestDateTimePattern(locale, if (use24h) "Hm" else "hma"), locale)
-    }
+    return remember(use24h, locale) { DateTimePattern(bestDateTimePattern(if (use24h) "Hm" else "hma", locale), locale) }
 }
 
 @Composable
@@ -652,7 +657,7 @@ private fun DayCell(
     ) {
         if (isToday) Box(Modifier.size(cell * ROW * 0.95f).shadow(3.dp, CircleShape).clip(CircleShape).background(accent))
         Text(
-            day.dayOfMonth.toString(),
+            day.day.toString(),
             style = when {
                 isToday -> base.copy(color = Color.White, fontWeight = FontWeight.Bold)
                 !inMonth -> base.copy(color = Ink.copy(alpha = 0.2f))
@@ -697,7 +702,7 @@ private fun Rings(modifier: Modifier, cell: Dp) {
 /** A yellow sticky note with a hello and the rest of today's events. */
 @Composable
 private fun StickyNote(
-    now: ZonedDateTime,
+    now: Moment,
     events: List<CalendarEvent>?,
     use24h: Boolean,
     theme: MonthTheme,
@@ -713,7 +718,7 @@ private fun StickyNote(
                 .shadow(6.dp, RoundedCornerShape(2.dp))
                 .background(NoteYellow)
                 // Anywhere on the note but an event opens today; an event opens itself.
-                .clickable(enabled = onOpenDay != null, onClickLabel = "Open today in your calendar") { onOpenDay?.invoke(now.toLocalDate()) }
+                .clickable(enabled = onOpenDay != null, onClickLabel = "Open today in your calendar") { onOpenDay?.invoke(now.date) }
                 .padding(horizontal = 18.dp, vertical = 14.dp)
         ) {
             Text(
@@ -736,7 +741,7 @@ private fun StickyNote(
 
 @Composable
 private fun Agenda(
-    now: ZonedDateTime,
+    now: Moment,
     events: List<CalendarEvent>?,
     use24h: Boolean,
     accent: Color,
@@ -744,18 +749,17 @@ private fun Agenda(
     onOpenEvent: ((CalendarEvent) -> Unit)?,
     modifier: Modifier,
 ) {
-    val context = LocalContext.current
-    val locale = currentLocale()
-    val access = remember(events) { CalendarEvents.hasPermission(context) }
+    val platform = LocalClockPlatform.current
+    val access = remember(events) { platform.hasCalendarAccess() }
     val faint = TextStyle(color = NoteInk.copy(alpha = 0.7f), fontSize = fontSize * 0.9f)
-    val instant = now.toInstant()
+    val instant = now.instant
     // Minute resolution is enough to drop finished events; avoids refiltering every second.
-    val minute = now.withSecond(0).withNano(0)
-    val shown = remember(events, minute) { events?.let { eventsForDay(it, now.toLocalDate(), now.zone, minute.toInstant()) } }
-    val time = remember(use24h, locale) {
-        DateTimeFormatter.ofPattern(DateFormat.getBestDateTimePattern(locale, if (use24h) "Hm" else "hma"), locale)
+    val minute = now.epochMillis / 60_000L
+    val shown = remember(events, minute) {
+        events?.let { eventsForDay(it, now.date, now.zone, Instant.fromEpochMilliseconds(minute * 60_000L)) }
     }
-    fun fmt(millis: Long) = java.time.Instant.ofEpochMilli(millis).atZone(now.zone).format(time)
+    val time = rememberTimeFormat(use24h)
+    fun fmt(millis: Long) = time.format(Instant.fromEpochMilliseconds(millis).toLocalDateTime(now.zone))
 
     when {
         !access -> Text("Allow calendar access in Settings to see today's events here", style = faint, modifier = modifier)
