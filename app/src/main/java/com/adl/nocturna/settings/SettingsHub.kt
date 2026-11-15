@@ -74,7 +74,7 @@ fun SettingsHub(padding: PaddingValues, onNavigate: (String) -> Unit) {
         SettingsGroup("More") {
             HubRow(Glyph.PARTLY_DAY, "Weather", weatherSummary(s)) { onNavigate(SettingsActivity.SCREEN_WEATHER) }
             HubRow(Glyph.BOLT, "Starting the clock", startSummary(s)) { onNavigate(SettingsActivity.SCREEN_START) }
-            HubRow(Glyph.INFO, "About Nocturna", versionLabel(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE, BuildConfig.DEBUG)) {
+            HubRow(Glyph.INFO, "About Nocturna", "${versionLabel(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE, BuildConfig.DEBUG)} · Backup") {
                 onNavigate(SettingsActivity.SCREEN_ABOUT)
             }
         }
