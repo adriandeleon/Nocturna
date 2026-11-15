@@ -16,6 +16,9 @@ enum class CalendarView { MONTH, WEEK, DAY }
 
 data class Station(val name: String, val url: String)
 
+/** Another time zone on day mode's desk clock: a short city [label] and an IANA [zoneId], e.g. "Europe/London". */
+data class WorldZone(val label: String, val zoneId: String)
+
 data class Settings(
     // Clock
     val style: ClockStyle = ClockStyle.DIGITAL,
@@ -82,6 +85,8 @@ data class Settings(
     val focusBreakMinutes: Int = 5,
     /** Minutes in the long break after every fourth focus block, one of [FOCUS_LONG_BREAK_MINUTES]. */
     val focusLongBreakMinutes: Int = 15,
+    /** Up to [MAX_WORLD_ZONES] other time zones whose time day mode's desk clock shows under its own. */
+    val worldZones: List<WorldZone> = emptyList(),
     /** The next few hours' weather under day mode's weather line, when the weather shows. */
     val dayHourlyWeather: Boolean = true,
     // Launching
@@ -140,6 +145,8 @@ data class Settings(
         val FOCUS_MINUTES = listOf(15, 20, 25, 30, 45, 50, 60, 90)
         val FOCUS_BREAK_MINUTES = listOf(3, 5, 10, 15)
         val FOCUS_LONG_BREAK_MINUTES = listOf(10, 15, 20, 30)
+        /** How many [worldZones] the desk clock has room for. */
+        const val MAX_WORLD_ZONES = 2
 
         val DEFAULT_STATIONS = MONTERREY_STATIONS + listOf(
             Station("SomaFM Groove Salad", "https://ice1.somafm.com/groovesalad-128-mp3"),

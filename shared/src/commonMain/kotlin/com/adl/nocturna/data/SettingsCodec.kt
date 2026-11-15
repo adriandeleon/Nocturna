@@ -2,6 +2,7 @@ package com.adl.nocturna.data
 
 import com.adl.nocturna.alarm.SUM_COUNTS
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
@@ -51,6 +52,9 @@ object SettingsCodec {
         put("focusMinutes", s.focusMinutes)
         put("focusBreakMinutes", s.focusBreakMinutes)
         put("focusLongBreakMinutes", s.focusLongBreakMinutes)
+        put("worldZones", buildJsonArray {
+            s.worldZones.forEach { add(buildJsonObject { put("label", it.label); put("zone", it.zoneId) }) }
+        })
         put("dayHourlyWeather", s.dayHourlyWeather)
         put("autoStartOnCharge", s.autoStartOnCharge)
         put("dndWhileShowing", s.dndWhileShowing)
@@ -136,6 +140,7 @@ object SettingsCodec {
                 .let { if (it in Settings.FOCUS_BREAK_MINUTES) it else d.focusBreakMinutes },
             focusLongBreakMinutes = j.optInt("focusLongBreakMinutes", d.focusLongBreakMinutes)
                 .let { if (it in Settings.FOCUS_LONG_BREAK_MINUTES) it else d.focusLongBreakMinutes },
+            worldZones = j.optArray("worldZones")?.let(::decodeWorldZones) ?: d.worldZones,
             dayHourlyWeather = j.optBoolean("dayHourlyWeather", d.dayHourlyWeather),
             autoStartOnCharge = j.optBoolean("autoStartOnCharge", d.autoStartOnCharge),
             dndWhileShowing = j.optBoolean("dndWhileShowing", d.dndWhileShowing),
@@ -160,6 +165,14 @@ object SettingsCodec {
     }
 
     private const val MINUTES_PER_DAY = 24 * 60
+
+    /** The zones that have both a label and a zone ID, at most [Settings.MAX_WORLD_ZONES]; damaged ones are skipped. */
+    private fun decodeWorldZones(array: JsonArray): List<WorldZone> = array.mapNotNull { element ->
+        val o = element as? JsonObject ?: return@mapNotNull null
+        val label = o.optString("label").trim()
+        val zone = o.optString("zone").trim()
+        if (label.isEmpty() || zone.isEmpty()) null else WorldZone(label, zone)
+    }.take(Settings.MAX_WORLD_ZONES)
 
     private inline fun <reified E : Enum<E>> enumOr(name: String, fallback: E): E =
         enumValues<E>().firstOrNull { it.name == name } ?: fallback
