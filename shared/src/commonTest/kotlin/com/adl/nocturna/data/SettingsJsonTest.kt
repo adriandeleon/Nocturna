@@ -88,6 +88,17 @@ class SettingsJsonTest {
         assertEquals(DayMode.OFF, loaded.dayMode)
     }
 
+    @Test fun meetingChimeSurvivesRoundTrip() {
+        val settings = Settings(meetingChimeMinutes = 2)
+        assertEquals(settings, roundTrip(settings))
+    }
+
+    @Test fun settingsSavedBeforeTheMeetingChimeLoadWithItOff() =
+        assertEquals(0, SettingsCodec.decode(stored(Settings(meetingChimeMinutes = 5), remove = listOf("meetingChimeMinutes"))).meetingChimeMinutes)
+
+    @Test fun anUnknownMeetingChimeIsOff() =
+        assertEquals(0, SettingsCodec.decode(stored(put = mapOf("meetingChimeMinutes" to JsonPrimitive(7)))).meetingChimeMinutes)
+
     @Test fun forecastSwitchSurvivesRoundTrip() {
         val settings = Settings(showForecast = false)
         assertEquals(settings, roundTrip(settings))

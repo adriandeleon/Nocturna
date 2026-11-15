@@ -64,6 +64,8 @@ data class Settings(
     val dayCalendarView: CalendarView = CalendarView.MONTH,
     /** When the day mode photo was picked (epoch millis); 0 means no photo, use the illustration. */
     val dayPhotoVersion: Long = 0L,
+    /** Minutes before a meeting that day mode plays a soft chime: one of [MEETING_CHIME_MINUTES]; 0 is off. */
+    val meetingChimeMinutes: Int = 0,
     // Launching
     val autoStartOnCharge: Boolean = false,
     // Weather
@@ -102,6 +104,8 @@ data class Settings(
         val DAY_BRIGHTNESS_RANGE = 0.2f..1f
         /** What [sunriseMinutes] may be set to; 0 is off. */
         val SUNRISE_CHOICES = listOf(0, 10, 20, 30)
+        /** What [meetingChimeMinutes] may be set to; 0 is off. */
+        val MEETING_CHIME_MINUTES = listOf(0, 1, 2, 5)
 
         val DEFAULT_STATIONS = MONTERREY_STATIONS + listOf(
             Station("SomaFM Groove Salad", "https://ice1.somafm.com/groovesalad-128-mp3"),

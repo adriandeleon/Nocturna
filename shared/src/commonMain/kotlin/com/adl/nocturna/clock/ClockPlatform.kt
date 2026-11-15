@@ -47,6 +47,9 @@ interface ClockPlatform {
 
     /** The photo the user picked as day mode's background, or null when there is none or it can't be read. */
     suspend fun loadDayPhoto(): ImageBitmap?
+
+    /** One short, quiet chime before a meeting, on the notification sound (never the alarm's). */
+    fun playMeetingChime() {}
 }
 
 val LocalClockPlatform = staticCompositionLocalOf<ClockPlatform> { error("No ClockPlatform provided") }
