@@ -207,4 +207,13 @@ class SettingsJsonTest {
         assertFalse(loaded.dndWhileShowing)
         assertEquals(true, loaded.autoStartOnCharge)
     }
+
+    @Test fun dayHourlyWeatherSurvivesRoundTrip() =
+        assertFalse(roundTrip(Settings(dayHourlyWeather = false)).dayHourlyWeather)
+
+    @Test fun settingsSavedBeforeDayHourlyWeatherShowTheStrip() {
+        val loaded = SettingsCodec.decode(stored(Settings(dayHourlyWeather = false, focusMinutes = 50), remove = listOf("dayHourlyWeather")))
+        assertEquals(true, loaded.dayHourlyWeather)
+        assertEquals(50, loaded.focusMinutes)
+    }
 }

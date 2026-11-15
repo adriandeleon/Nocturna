@@ -22,6 +22,7 @@ class OpenMeteoTest {
     @Test fun forecastUrl() = assertEquals(
         "https://api.open-meteo.com/v1/forecast?latitude=25.6866&longitude=-100.3161" +
             "&current=temperature_2m,weather_code,is_day" +
+            "&hourly=temperature_2m,weather_code,precipitation_probability,is_day" +
             "&daily=weather_code,temperature_2m_max,temperature_2m_min&forecast_days=3&timezone=auto",
         forecastUrl(25.6866, -100.3161),
     )

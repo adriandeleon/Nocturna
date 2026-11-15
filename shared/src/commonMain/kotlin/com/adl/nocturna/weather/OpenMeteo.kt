@@ -7,10 +7,14 @@ import kotlin.math.roundToLong
  * Open-Meteo's two endpoints, free and without a key: the forecast and the city search.
  */
 
-/** Current conditions and three days of forecast, in the place's own time zone, so "today" and "tomorrow" are there. */
+/**
+ * Current conditions, three days of forecast and the hours in them, in the place's own time zone, so
+ * "today" and "tomorrow" are there: one request for the night clock and day mode alike.
+ */
 internal fun forecastUrl(lat: Double, lon: Double): String =
     "https://api.open-meteo.com/v1/forecast?latitude=${fixed4(lat)}&longitude=${fixed4(lon)}" +
         "&current=temperature_2m,weather_code,is_day" +
+        "&hourly=temperature_2m,weather_code,precipitation_probability,is_day" +
         "&daily=weather_code,temperature_2m_max,temperature_2m_min&forecast_days=3&timezone=auto"
 
 /** The best match for [query], with place names in [language] (an ISO 639 code such as "es"). */

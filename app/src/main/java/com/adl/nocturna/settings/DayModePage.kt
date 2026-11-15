@@ -125,6 +125,14 @@ fun DayModePage(padding: PaddingValues) {
                 )
             }
         }
+        // The strip needs the weather on and a place to fetch it for.
+        if (s.showWeather && (s.weatherUseDeviceLocation || s.hasWeatherLocation)) {
+            SettingsGroup("Weather") {
+                SwitchRow("Next hours", s.dayHourlyWeather, "Temperature for the next few hours under the weather, and the chance of rain") { v ->
+                    set { it.copy(dayHourlyWeather = v) }
+                }
+            }
+        }
         SettingsGroup("Focus timer") {
             ChoiceRow("Focus", Settings.FOCUS_MINUTES, s.focusMinutes, { "$it min" }) { v -> set { it.copy(focusMinutes = v) } }
             ChoiceRow("Short break", Settings.FOCUS_BREAK_MINUTES, s.focusBreakMinutes, { "$it min" }) { v ->
