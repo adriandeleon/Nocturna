@@ -30,6 +30,13 @@ one-line summary written for users.
   peek for the controls. The screen saver peeks too, and a second tap closes it. Before an alarm, whichever is
   brighter of the peek and the sunrise wins, and Day mode isn't affected. Turn it off under Settings ›
   Brightness and night mode › *Tap to peek*.
+- **Do Not Disturb at night:** Settings › Starting the clock › *Do Not Disturb at night* (off by default)
+  turns on priority-only Do Not Disturb while the clock or its screen saver is on screen from 22:00 to 07:00,
+  or from when night mode starts in the evening, and turns it off again when the clock leaves the screen or
+  at 07:00. Alarms still ring. It only undoes what it changed: Do Not Disturb that was already on, or that you
+  change yourself, is left alone, and Day mode never touches it. It needs Do Not Disturb access, which the
+  switch asks for; without it nothing changes. If your Do Not Disturb settings would silence alarms, Nocturna
+  doesn't turn it on.
 - **Burn-in protection:** the clock drifts slowly around the screen.
 - **Day mode, a cheerful desk set for while you work:** a desk clock, a spiral-bound calendar page for the
   month in its own colour, with dots on the days that have events, and a sticky note that says hello and lists
@@ -86,6 +93,15 @@ one-line summary written for users.
   first day that isn't off. Change the words under Settings › Alarms › *Days off*; case and accents don't
   matter. It needs calendar access and asks for it; without it, or if the calendar can't be read, alarms ring
   as usual.
+- **How long until your alarm, on the clock:** when the next alarm is within 12 hours, the info line says
+  *⏰ 06:30 · in 7 h 20 m*, or *in 45 m* in the last hour, stepping every 5 minutes so it doesn't flicker.
+  Further off it shows the day and time as before. Switch it off under *Show on the clock › Time until the
+  alarm*.
+- **A bedtime reminder:** pick how much sleep you want (6 to 9 hours, in half hours) under Settings › Alarms
+  › *Bedtime reminder*, and the evening before a morning alarm a quiet notification says *Bedtime: 8 h before
+  your 06:30 alarm*, a quarter of an hour before you need to be asleep. It stays quiet if the clock is already
+  showing, isn't sent late, and follows your alarms as they change, skipped days off included. Off by
+  default; it needs notifications and does nothing without them.
 - **Starts on its own while charging,** as the Android screen saver or with *Open when charging*, which opens
   the clock when you plug in a locked phone.
 - **An About screen in Settings** with the version, links to the source code, bug reports, the licence and

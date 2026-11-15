@@ -92,6 +92,11 @@ fun InfoLinePage(padding: PaddingValues, onNavigate: (String) -> Unit) {
             SwitchRow("Date", s.showDate) { v -> set { it.copy(showDate = v) } }
             SwitchRow("Battery", s.showBattery) { v -> set { it.copy(showBattery = v) } }
             SwitchRow("Next alarm", s.showNextAlarm, "Within the next 24 hours") { v -> set { it.copy(showNextAlarm = v) } }
+            if (s.showNextAlarm) {
+                SwitchRow("Time until the alarm", s.showTimeToAlarm, "\"in 7 h 20 m\" when it's within 12 hours") { v ->
+                    set { it.copy(showTimeToAlarm = v) }
+                }
+            }
         }
         SettingsGroup("Weather") {
             SwitchRow("Weather", s.showWeather) { v -> set { it.copy(showWeather = v) } }

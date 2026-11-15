@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.adl.nocturna.alarm.alarmCountdownLabel
 import com.adl.nocturna.data.AlarmStore
 import com.adl.nocturna.data.ClockStyle
 import com.adl.nocturna.data.Settings
@@ -98,6 +99,8 @@ fun ClockScreen(
     onOpenCalendar: (CalendarLink) -> Unit = {},
     /** The screen saver's way out: a tap that doesn't peek, or a second one during a peek, ends it. */
     onDismiss: (() -> Unit)? = null,
+    /** Told when night mode (the dim red look) goes on or off. */
+    onNight: (Boolean) -> Unit = {},
 ) {
     val platform = LocalClockPlatform.current
     val settings by SettingsStore.settings.collectAsStateWithLifecycle()
@@ -137,6 +140,7 @@ fun ClockScreen(
         night -> currentLux < settings.nightModeLux * 2.5f
         else -> currentLux < settings.nightModeLux
     }
+    LaunchedEffect(night) { onNight(night) }
 
     val room = screenBrightness(
         currentLux, night, day, settings.dimEnabled, settings.autoBrightness,
@@ -323,7 +327,11 @@ private fun InfoBlock(
             val pattern = remember(locale, settings.use24h) {
                 DateTimePattern(bestDateTimePattern(if (settings.use24h) "EEEHHmm" else "EEEhmma", locale), locale)
             }
-            Item(Glyph.ALARM, pattern.format(t), color, style, glyphSize)
+            // Within 12 hours: "6:30 · in 7 h 20 m" instead of the day and time.
+            val countdown = if (settings.showTimeToAlarm) {
+                alarmCountdownLabel(Instant.fromEpochMilliseconds(a), now.instant, now.zone, settings.use24h, locale)
+            } else null
+            Item(Glyph.ALARM, countdown ?: pattern.format(t), color, style, glyphSize)
         }
     }
 

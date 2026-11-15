@@ -24,6 +24,7 @@ object SettingsCodec {
         put("showDate", s.showDate)
         put("showBattery", s.showBattery)
         put("showNextAlarm", s.showNextAlarm)
+        put("showTimeToAlarm", s.showTimeToAlarm)
         put("showWeather", s.showWeather)
         put("showForecast", s.showForecast)
         put("showNotifications", s.showNotifications)
@@ -46,6 +47,7 @@ object SettingsCodec {
         put("dayPhotoVersion", s.dayPhotoVersion)
         put("meetingChimeMinutes", s.meetingChimeMinutes)
         put("autoStartOnCharge", s.autoStartOnCharge)
+        put("dndWhileShowing", s.dndWhileShowing)
         put("weatherUseDeviceLocation", s.weatherUseDeviceLocation)
         put("weatherCity", s.weatherCity)
         // JSON has no NaN: no place is stored as no keys.
@@ -60,6 +62,7 @@ object SettingsCodec {
         put("sunriseMinutes", s.sunriseMinutes)
         put("alarmShowWeather", s.alarmShowWeather)
         put("dayOffKeywords", s.dayOffKeywords)
+        put("bedtimeSleepHours", s.bedtimeSleepHours.toDouble())
         put("stations", buildJsonArray {
             s.stations.forEach { add(buildJsonObject { put("name", it.name); put("url", it.url) }) }
         })
@@ -91,6 +94,7 @@ object SettingsCodec {
             showDate = j.optBoolean("showDate", d.showDate),
             showBattery = j.optBoolean("showBattery", d.showBattery),
             showNextAlarm = j.optBoolean("showNextAlarm", d.showNextAlarm),
+            showTimeToAlarm = j.optBoolean("showTimeToAlarm", d.showTimeToAlarm),
             showWeather = j.optBoolean("showWeather", d.showWeather),
             showForecast = j.optBoolean("showForecast", d.showForecast),
             showNotifications = j.optBoolean("showNotifications", d.showNotifications),
@@ -119,6 +123,7 @@ object SettingsCodec {
             meetingChimeMinutes = j.optInt("meetingChimeMinutes", d.meetingChimeMinutes)
                 .let { if (it in Settings.MEETING_CHIME_MINUTES) it else d.meetingChimeMinutes },
             autoStartOnCharge = j.optBoolean("autoStartOnCharge", d.autoStartOnCharge),
+            dndWhileShowing = j.optBoolean("dndWhileShowing", d.dndWhileShowing),
             weatherUseDeviceLocation = j.optBoolean("weatherUseDeviceLocation", d.weatherUseDeviceLocation),
             weatherCity = j.optString("weatherCity", d.weatherCity),
             weatherLat = j.optDouble("weatherLat", Double.NaN),
@@ -130,6 +135,8 @@ object SettingsCodec {
             sunriseMinutes = j.optInt("sunriseMinutes", d.sunriseMinutes).coerceIn(0, Settings.SUNRISE_CHOICES.max()),
             alarmShowWeather = j.optBoolean("alarmShowWeather", d.alarmShowWeather),
             dayOffKeywords = j.optString("dayOffKeywords", d.dayOffKeywords),
+            bedtimeSleepHours = j.optDouble("bedtimeSleepHours", d.bedtimeSleepHours.toDouble()).toFloat()
+                .let { if (it in Settings.BEDTIME_SLEEP_HOURS) it else d.bedtimeSleepHours },
             stations = stations,
             selectedStation = selected,
             selectedSound = j.optString("selectedSound", d.selectedSound),

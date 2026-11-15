@@ -79,6 +79,10 @@ data class SystemAccess(
     /** May fill the locked screen with a ringing alarm; true where the system doesn't ask. */
     val fullScreen: Boolean,
     val calendar: Boolean,
+    /** May turn Do Not Disturb on and off. */
+    val dndAccess: Boolean,
+    /** The phone's Do Not Disturb rules let alarms through, so Nocturna may turn it on. */
+    val dndAllowsAlarms: Boolean,
 )
 
 /** A file the user picked with [SettingsPlatform.rememberOpenFile]. */
@@ -96,4 +100,4 @@ sealed interface OpenedFile {
 enum class Permission { CALENDAR, LOCATION, NOTIFICATIONS }
 
 /** The system's own settings pages that the Settings pages send the user to. */
-enum class SystemPage { NOTIFICATIONS, NOTIFICATION_ACCESS, OVERLAY, FULL_SCREEN_ALARMS, SCREEN_SAVER }
+enum class SystemPage { NOTIFICATIONS, NOTIFICATION_ACCESS, OVERLAY, FULL_SCREEN_ALARMS, SCREEN_SAVER, DND_ACCESS }

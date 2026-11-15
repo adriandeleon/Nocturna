@@ -68,10 +68,23 @@ class ClockActivity : ComponentActivity() {
                                     .putExtra(SettingsActivity.EXTRA_SCREEN, SettingsPages.ALARMS)
                             )
                         },
+                        onNight = { DndWhileShowing.nightChanged(this, it) },
                     )
                 }
             }
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        ClockVisibility.shown()
+        DndWhileShowing.shown(this)
+    }
+
+    override fun onStop() {
+        ClockVisibility.hidden()
+        DndWhileShowing.hidden(this)
+        super.onStop()
     }
 
     override fun onResume() {

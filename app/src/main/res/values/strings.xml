@@ -11,4 +11,5 @@
     <string name="widget_description">The time, your next alarm, and buttons for the clock and the sleep radio</string>
     <string name="widget_clock">Clock</string>
     <string name="widget_stop_radio">Stop radio</string>
+    <string name="channel_bedtime">Bedtime reminder</string>
 </resources>

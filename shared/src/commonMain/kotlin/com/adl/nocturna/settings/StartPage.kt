@@ -25,6 +25,9 @@ fun StartPage(padding: PaddingValues) {
                 ActionButton("Allow “Display over other apps”") { platform.open(SystemPage.OVERLAY) }
             }
         }
+        SettingsGroup("At night") {
+            DndRow(s.dndWhileShowing)
+        }
         if (!access.fullScreen) {
             SettingsGroup("Alarms") {
                 Hint("Android needs your OK before a ringing alarm can fill the locked screen")

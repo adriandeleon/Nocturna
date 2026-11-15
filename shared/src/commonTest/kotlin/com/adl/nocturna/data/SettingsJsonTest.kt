@@ -163,4 +163,26 @@ class SettingsJsonTest {
 
     @Test fun settingsSavedBeforeDayOffKeywordsGetTheDefaults() =
         assertEquals(DEFAULT_DAY_OFF_KEYWORDS, SettingsCodec.decode(stored(remove = listOf("dayOffKeywords"))).dayOffKeywords)
+
+    @Test fun alarmCountdownAndBedtimeSurviveRoundTrip() {
+        val settings = Settings(showTimeToAlarm = false, bedtimeSleepHours = 7.5f)
+        assertEquals(settings, roundTrip(settings))
+    }
+
+    @Test fun settingsSavedBeforeTheCountdownShowItWithNoBedtimeReminder() {
+        val loaded = SettingsCodec.decode(stored(remove = listOf("showTimeToAlarm", "bedtimeSleepHours")))
+        assertEquals(true, loaded.showTimeToAlarm)
+        assertEquals(0f, loaded.bedtimeSleepHours)
+    }
+
+    @Test fun unknownSleepHoursTurnTheBedtimeReminderOff() =
+        assertEquals(0f, SettingsCodec.decode(stored(put = mapOf("bedtimeSleepHours" to JsonPrimitive(7.25)))).bedtimeSleepHours)
+    @Test fun dndWhileShowingSurvivesRoundTrip() =
+        assertEquals(true, roundTrip(Settings(dndWhileShowing = true)).dndWhileShowing)
+
+    @Test fun settingsSavedBeforeDndWhileShowingLoadWithItOff() {
+        val loaded = SettingsCodec.decode(stored(Settings(dndWhileShowing = true, autoStartOnCharge = true), remove = listOf("dndWhileShowing")))
+        assertFalse(loaded.dndWhileShowing)
+        assertEquals(true, loaded.autoStartOnCharge)
+    }
 }

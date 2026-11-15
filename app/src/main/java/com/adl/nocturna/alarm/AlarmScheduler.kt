@@ -33,6 +33,7 @@ object AlarmScheduler {
             Candidate(it.nextRing(now, zone, daysOff).toEpochMilliseconds(), it.id, false)
         }.toMutableList()
         scheduleDaysOffCheck(context, am, enabled.mapNotNull { it.firstSkippedRing(now, zone, daysOff) }.minOrNull(), now)
+        BedtimeReminder.schedule(context, am, candidates.minOfOrNull { it.at }?.let(Instant::fromEpochMilliseconds), now, zone)
         AlarmStore.snooze.value?.let { if (it.until > System.currentTimeMillis()) candidates += Candidate(it.until, it.alarmId, true) }
 
         val next = candidates.minByOrNull { it.at }

@@ -26,6 +26,7 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import com.adl.nocturna.BuildConfig
 import com.adl.nocturna.alarm.AlarmScheduler
 import com.adl.nocturna.charging.ChargingService
+import com.adl.nocturna.clock.DndWhileShowing
 import com.adl.nocturna.day.CalendarEvents
 import com.adl.nocturna.day.DayPhoto
 import com.adl.nocturna.notify.NotificationIconService
@@ -56,6 +57,8 @@ class AndroidSettingsPlatform(private val activity: Context) : SettingsPlatform 
                 fullScreen = Build.VERSION.SDK_INT < 34 ||
                     app.getSystemService(NotificationManager::class.java).canUseFullScreenIntent(),
                 calendar = CalendarEvents.hasPermission(app),
+                dndAccess = DndWhileShowing.hasAccess(app),
+                dndAllowsAlarms = DndWhileShowing.hasAccess(app) && DndWhileShowing.alarmsAllowed(app),
             )
         }
     }
@@ -89,6 +92,7 @@ class AndroidSettingsPlatform(private val activity: Context) : SettingsPlatform 
                 if (Build.VERSION.SDK_INT < 34) return
                 else Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, "package:${app.packageName}".toUri())
             SystemPage.SCREEN_SAVER -> Intent(Settings.ACTION_DREAM_SETTINGS)
+            SystemPage.DND_ACCESS -> Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)
         }
         runCatching { activity.startActivity(intent) }
     }

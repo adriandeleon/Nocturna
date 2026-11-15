@@ -49,6 +49,7 @@ import com.adl.nocturna.alarm.nextDayOffSkip
 import com.adl.nocturna.alarm.nextRing
 import com.adl.nocturna.alarm.parseDayOffKeywords
 import com.adl.nocturna.alarm.skipping
+import com.adl.nocturna.alarm.sleepHoursLabel
 import com.adl.nocturna.alarm.toggleSkip
 import com.adl.nocturna.clock.LocalClockPlatform
 import com.adl.nocturna.data.Alarm
@@ -91,6 +92,9 @@ fun AlarmsScreen(padding: PaddingValues) {
     // Rescheduling also when access is refused: the alarm then rings as usual, and its time may change.
     val askCalendar = platform.rememberPermissionRequest(Permission.CALENDAR) { platform.rescheduleAlarms() }
     val daysOff = rememberDaysOff(alarms.any { it.enabled && it.repeats && it.skipDaysOff } && access.calendar, s.dayOffKeywords)
+    // The bedtime reminder is set only while notifications are allowed: set it again when they're turned on.
+    val askBedtimeNotifications = platform.rememberPermissionRequest(Permission.NOTIFICATIONS) { platform.rescheduleAlarms() }
+    LaunchedEffect(notificationsAllowed) { if (s.bedtimeSleepHours > 0f) platform.rescheduleAlarms() }
 
     Box(Modifier.fillMaxSize().padding(padding)) {
         LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 32.dp)) {
@@ -168,6 +172,23 @@ fun AlarmsScreen(padding: PaddingValues) {
             }
             if (s.sunriseMinutes > 0) {
                 item { Hint("The clock slowly brightens and warms to a soft white before an alarm rings, from night red through amber at night. Not before a snooze.") }
+            }
+            item {
+                ChoiceRow("Bedtime reminder", Settings.BEDTIME_SLEEP_HOURS, s.bedtimeSleepHours, ::sleepHoursLabel) { v ->
+                    SettingsStore.update { it.copy(bedtimeSleepHours = v) }
+                    platform.rescheduleAlarms()
+                    // Asks only where the system has a notifications permission (Android 13 and later).
+                    if (v > 0f && !notificationsAllowed) askBedtimeNotifications()
+                }
+            }
+            if (s.bedtimeSleepHours > 0f) {
+                item {
+                    Hint(
+                        "A quiet notification the evening before a morning alarm, a quarter of an hour before you need to " +
+                            "sleep to get ${sleepHoursLabel(s.bedtimeSleepHours)}. Not when the clock is already showing." +
+                            if (notificationsAllowed) "" else " Needs notifications.",
+                    )
+                }
             }
             item { DayOffKeywordsField(s.dayOffKeywords) }
         }
