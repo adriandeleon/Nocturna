@@ -40,6 +40,7 @@ object SettingsCodec {
         put("dayModeOverrideUntil", s.dayModeOverrideUntil)
         put("showCalendarEvents", s.showCalendarEvents)
         put("dayCalendarView", s.dayCalendarView.name)
+        put("dayMaxBrightness", s.dayMaxBrightness.toDouble())
         put("dayPhotoVersion", s.dayPhotoVersion)
         put("autoStartOnCharge", s.autoStartOnCharge)
         put("weatherUseDeviceLocation", s.weatherUseDeviceLocation)
@@ -103,6 +104,8 @@ object SettingsCodec {
             dayModeOverrideUntil = j.optLong("dayModeOverrideUntil", d.dayModeOverrideUntil),
             showCalendarEvents = j.optBoolean("showCalendarEvents", d.showCalendarEvents),
             dayCalendarView = enumOr(j.optString("dayCalendarView"), d.dayCalendarView),
+            dayMaxBrightness = j.optDouble("dayMaxBrightness", d.dayMaxBrightness.toDouble()).toFloat()
+                .let { if (it.isNaN()) d.dayMaxBrightness else it.coerceIn(Settings.DAY_BRIGHTNESS_RANGE) },
             dayPhotoVersion = j.optLong("dayPhotoVersion", d.dayPhotoVersion),
             autoStartOnCharge = j.optBoolean("autoStartOnCharge", d.autoStartOnCharge),
             weatherUseDeviceLocation = j.optBoolean("weatherUseDeviceLocation", d.weatherUseDeviceLocation),
