@@ -144,6 +144,11 @@ fun AlarmsScreen(padding: PaddingValues) {
             }
             item { SwitchRow("Vibrate", s.alarmVibrate) { v -> SettingsStore.update { it.copy(alarmVibrate = v) } } }
             item {
+                SwitchRow("Show weather", s.alarmShowWeather, "Today's weather under the time when an alarm rings") { v ->
+                    SettingsStore.update { it.copy(alarmShowWeather = v) }
+                }
+            }
+            item {
                 ChoiceRow(
                     "Sunrise before alarms", Settings.SUNRISE_CHOICES, s.sunriseMinutes,
                     { if (it == 0) "Off" else "$it min" },

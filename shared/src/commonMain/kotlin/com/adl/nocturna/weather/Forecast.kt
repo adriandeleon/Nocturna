@@ -105,7 +105,7 @@ fun parsePlace(body: String): Place? {
     return Place(label, r.getDouble("latitude"), r.getDouble("longitude"))
 }
 
-private fun temperatureText(celsius: Double, fahrenheit: Boolean): String {
+internal fun temperatureText(celsius: Double, fahrenheit: Boolean): String {
     val t = if (fahrenheit) celsius * 9 / 5 + 32 else celsius
     return "${t.roundToInt()}°"
 }

@@ -80,6 +80,8 @@ data class Settings(
     val alarmVibrate: Boolean = true,
     /** Minutes before an alarm over which the clock brightens and warms up; 0 turns it off. */
     val sunriseMinutes: Int = 20,
+    /** Today's weather under the time on the wake-up screen. */
+    val alarmShowWeather: Boolean = true,
     // Radio
     val stations: List<Station> = DEFAULT_STATIONS,
     val selectedStation: Int = 0,

@@ -93,6 +93,10 @@ one-line summary written for users.
   radio* tile shows your station, lights up while it plays, and with one tap plays it with a 30-minute sleep
   timer that fades out; tap again to stop. The dark *Nocturna clock* widget shows the time and your next
   alarm, with *Clock* and *Sleep radio* buttons, and resizes to fit.
+- **Today's weather on the wake-up screen:** when an alarm rings, the current conditions and today's high and
+  low show under the time, in the clock's units. They show at once from what the clock already has, and are
+  refreshed in the background if that is old and the phone is online; the alarm never waits for them. Switch
+  it off under *Alarms › Show weather*.
 
 ### Changed
 
