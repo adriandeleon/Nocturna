@@ -32,6 +32,7 @@ fun infoLineSummary(s: Settings): String {
         if (s.showWeather) add("weather")
         if (s.showBattery) add("battery")
         if (s.showNextAlarm) add("next alarm")
+        if (s.showMoon) add("moon")
         if (s.showNotifications) add("notifications")
     }
     if (shown.isEmpty()) return "Just the time"

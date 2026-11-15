@@ -207,4 +207,13 @@ class SettingsJsonTest {
         assertFalse(loaded.dndWhileShowing)
         assertEquals(true, loaded.autoStartOnCharge)
     }
+
+    @Test fun moonPhaseSwitchSurvivesRoundTrip() =
+        assertEquals(true, roundTrip(Settings(showMoon = true)).showMoon)
+
+    @Test fun settingsSavedBeforeTheMoonPhaseLoadWithItOff() {
+        val loaded = SettingsCodec.decode(stored(Settings(showMoon = true, showBattery = false), remove = listOf("showMoon")))
+        assertFalse(loaded.showMoon)
+        assertFalse(loaded.showBattery)
+    }
 }

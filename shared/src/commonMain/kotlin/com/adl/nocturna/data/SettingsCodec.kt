@@ -25,6 +25,7 @@ object SettingsCodec {
         put("showBattery", s.showBattery)
         put("showNextAlarm", s.showNextAlarm)
         put("showTimeToAlarm", s.showTimeToAlarm)
+        put("showMoon", s.showMoon)
         put("showWeather", s.showWeather)
         put("showForecast", s.showForecast)
         put("showNotifications", s.showNotifications)
@@ -98,6 +99,7 @@ object SettingsCodec {
             showBattery = j.optBoolean("showBattery", d.showBattery),
             showNextAlarm = j.optBoolean("showNextAlarm", d.showNextAlarm),
             showTimeToAlarm = j.optBoolean("showTimeToAlarm", d.showTimeToAlarm),
+            showMoon = j.optBoolean("showMoon", d.showMoon),
             showWeather = j.optBoolean("showWeather", d.showWeather),
             showForecast = j.optBoolean("showForecast", d.showForecast),
             showNotifications = j.optBoolean("showNotifications", d.showNotifications),

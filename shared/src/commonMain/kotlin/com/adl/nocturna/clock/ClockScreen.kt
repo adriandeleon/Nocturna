@@ -252,7 +252,7 @@ fun ClockScreen(
                     ClockStyle.ANALOG -> AnalogClock(now, settings.showSeconds, color, analogSize)
                 }
                 Spacer(Modifier.height(infoFontDp * 0.6f))
-                InfoBlock(settings, now, color, infoSize, infoFontDp, shadow)
+                InfoBlock(settings, now, color, infoSize, infoFontDp, shadow, night = !day)
             }
         }
 
@@ -298,6 +298,8 @@ private fun InfoBlock(
     fontSize: androidx.compose.ui.unit.TextUnit,
     glyphSize: Dp,
     shadow: Shadow? = null,
+    /** The night clock, not Day mode, which draws its own moon. */
+    night: Boolean = true,
 ) {
     val style = TextStyle(color = color.copy(alpha = if (shadow != null) 1f else 0.85f), fontSize = fontSize, shadow = shadow)
     val platform = LocalClockPlatform.current
@@ -360,6 +362,14 @@ private fun InfoBlock(
                 alarmCountdownLabel(Instant.fromEpochMilliseconds(a), now.instant, now.zone, settings.use24h, locale)
             } else null
             Item(Glyph.ALARM, countdown ?: pattern.format(t), color, style, glyphSize)
+        }
+        if (settings.showMoon && night) {
+            val cycle = moonCycle(now.instant)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                GlyphIcon(Glyph.MOON_PHASE, style.color, glyphSize, level = cycle.toFloat())
+                Spacer(Modifier.width(glyphSize * 0.3f))
+                Text(MoonPhase.of(cycle).label(locale), style = style, softWrap = false)
+            }
         }
     }
 

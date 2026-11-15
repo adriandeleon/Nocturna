@@ -97,6 +97,9 @@ fun InfoLinePage(padding: PaddingValues, onNavigate: (String) -> Unit) {
                     set { it.copy(showTimeToAlarm = v) }
                 }
             }
+            SwitchRow("Moon phase", s.showMoon, "\"Waxing gibbous\" at night; Day mode draws its own moon") { v ->
+                set { it.copy(showMoon = v) }
+            }
         }
         SettingsGroup("Weather") {
             SwitchRow("Weather", s.showWeather) { v -> set { it.copy(showWeather = v) } }
