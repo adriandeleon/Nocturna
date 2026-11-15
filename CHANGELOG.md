@@ -78,3 +78,9 @@ one-line summary written for users.
   page, sticky note and scenes. The Android app works exactly as before, and your settings and alarms carry
   over as they are. The About screen now credits Compose Multiplatform (with its Material 3),
   kotlinx-datetime, kotlinx.serialization, kotlinx.coroutines and atomicfu.
+
+### Fixed
+
+- **Day mode's sticky note no longer shrinks to a thin yellow strip** on a phone held sideways. When there
+  isn't room under the clock for its hello and at least one event, the note is left out; your events still
+  show as dots on the month page and in the week and day views.

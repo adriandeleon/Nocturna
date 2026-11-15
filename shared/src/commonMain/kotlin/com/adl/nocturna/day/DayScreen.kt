@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -194,19 +195,22 @@ fun DayLayout(
             Crossfade(sidesSwapped(now.hour, settings.burnInProtection), animationSpec = tween(1500), label = "sides") { swapped ->
                 Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
                     val clockSide = @Composable {
-                        Column(
-                            Modifier.weight(1f).fillMaxHeight(),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(32.dp, Alignment.CenterVertically),
-                        ) {
-                            ClockPanel(clock, Modifier.drift(clockDrift, 28.dp, 14.dp))
-                            if (showNote) {
-                                StickyNote(
-                                    now, events, settings.use24h, theme, noteFont, openDay, openEvent,
-                                    Modifier.widthIn(max = 380.dp).weight(1f, fill = false).drift(noteDrift, 28.dp, 14.dp),
-                                )
-                            }
-                        }
+                        // On a phone the clock takes most of the column's height; the note shows only
+                        // when its greeting and at least one event fit under it.
+                        ClockOverNote(
+                            gap = 32.dp,
+                            clock = { ClockPanel(clock, Modifier.drift(clockDrift, 28.dp, 14.dp)) },
+                            note = if (!showNote) null else {
+                                {
+                                    StickyNote(
+                                        now, events, settings.use24h, theme, noteFont, openDay, openEvent,
+                                        Modifier.widthIn(max = 380.dp).drift(noteDrift, 28.dp, 14.dp),
+                                    )
+                                }
+                            },
+                            smallestNote = { SmallestNote(now, noteFont, Modifier.widthIn(max = 380.dp)) },
+                            modifier = Modifier.weight(1f).fillMaxHeight(),
+                        )
                     }
                     val pageSide = @Composable { page(Modifier.weight(1f).fillMaxHeight().drift(pageDrift, 20.dp, 16.dp)) }
                     if (swapped) pageSide() else clockSide()
@@ -234,6 +238,41 @@ fun DayLayout(
                     if (swapped) clockEnd()
                 }
             }
+        }
+    }
+}
+
+/**
+ * The clock with the sticky note under it, the pair centred in the space. [note] is left out when
+ * [smallestNote] (the note with its greeting and one event) doesn't fit under the clock, and
+ * otherwise gets all the height the clock leaves.
+ */
+@Composable
+private fun ClockOverNote(
+    gap: Dp,
+    clock: @Composable () -> Unit,
+    note: (@Composable () -> Unit)?,
+    smallestNote: @Composable () -> Unit,
+    modifier: Modifier,
+) {
+    SubcomposeLayout(modifier) { constraints ->
+        val loose = constraints.copy(minWidth = 0, minHeight = 0)
+        val gapPx = gap.roundToPx()
+        val clockPlaceables = subcompose("clock", clock).map { it.measure(loose) }
+        val clockHeight = clockPlaceables.maxOfOrNull { it.height } ?: 0
+        val notePlaceables = if (note == null) emptyList() else {
+            val noteMin = subcompose("smallest", smallestNote).maxOfOrNull { it.measure(loose).height } ?: 0
+            if (!noteFits(clockHeight, gapPx, noteMin, constraints.maxHeight)) emptyList()
+            else subcompose("note", note).map { it.measure(loose.copy(maxHeight = constraints.maxHeight - clockHeight - gapPx)) }
+        }
+        val noteHeight = notePlaceables.maxOfOrNull { it.height } ?: 0
+        val total = clockHeight + if (notePlaceables.isEmpty()) 0 else gapPx + noteHeight
+        val width = constraints.maxWidth
+        val height = constraints.maxHeight
+        layout(width, height) {
+            val top = (height - total) / 2
+            clockPlaceables.forEach { it.place((width - it.width) / 2, top) }
+            notePlaceables.forEach { it.place((width - it.width) / 2, top + clockHeight + gapPx) }
         }
     }
 }
@@ -711,23 +750,44 @@ private fun StickyNote(
     onOpenEvent: ((CalendarEvent) -> Unit)?,
     modifier: Modifier,
 ) {
+    // Anywhere on the note but an event opens today; an event opens itself.
+    NotePaper(onOpenDay?.let { open -> { open(now.date) } }, modifier) {
+        Greeting(now, fontSize)
+        Agenda(now, events, use24h, theme.accent, fontSize, onOpenEvent, Modifier.weight(1f, fill = false))
+    }
+}
+
+/** The sticky note at its smallest: its greeting and one event. Only measured, never drawn. */
+@Composable
+private fun SmallestNote(now: Moment, fontSize: TextUnit, modifier: Modifier) {
+    NotePaper(null, modifier) {
+        Greeting(now, fontSize)
+        EventRow("Event", "00:00 – 00:00", NoteInk, fontSize, emphasised = false, onClick = null)
+    }
+}
+
+@Composable
+private fun Greeting(now: Moment, fontSize: TextUnit) {
+    Text(
+        greeting(now.hour),
+        style = TextStyle(color = NoteInk, fontSize = fontSize * 1.6f, fontFamily = FontFamily.Cursive, fontWeight = FontWeight.Bold),
+    )
+    Spacer(Modifier.height(6.dp))
+}
+
+/** The yellow paper of the sticky note, a little crooked, with tape holding it up. */
+@Composable
+private fun NotePaper(onClick: (() -> Unit)?, modifier: Modifier, content: @Composable ColumnScope.() -> Unit) {
     Box(modifier.rotate(-1.5f)) {
         Column(
             Modifier
                 .padding(top = 8.dp)
                 .shadow(6.dp, RoundedCornerShape(2.dp))
                 .background(NoteYellow)
-                // Anywhere on the note but an event opens today; an event opens itself.
-                .clickable(enabled = onOpenDay != null, onClickLabel = "Open today in your calendar") { onOpenDay?.invoke(now.date) }
-                .padding(horizontal = 18.dp, vertical = 14.dp)
-        ) {
-            Text(
-                greeting(now.hour),
-                style = TextStyle(color = NoteInk, fontSize = fontSize * 1.6f, fontFamily = FontFamily.Cursive, fontWeight = FontWeight.Bold),
-            )
-            Spacer(Modifier.height(6.dp))
-            Agenda(now, events, use24h, theme.accent, fontSize, onOpenEvent, Modifier.weight(1f, fill = false))
-        }
+                .clickable(enabled = onClick != null, onClickLabel = "Open today in your calendar") { onClick?.invoke() }
+                .padding(horizontal = 18.dp, vertical = 14.dp),
+            content = content,
+        )
         // A strip of tape holding the note up.
         Box(
             Modifier
