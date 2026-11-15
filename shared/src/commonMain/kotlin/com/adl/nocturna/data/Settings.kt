@@ -41,6 +41,8 @@ data class Settings(
     val nightModeEnabled: Boolean = true,
     /** Ambient light (lux) below which the clock switches to the dim red night look. */
     val nightModeLux: Float = 4f,
+    /** A tap on the dim clock brightens it for a few seconds before a second tap shows the controls. */
+    val tapToPeek: Boolean = true,
     val burnInProtection: Boolean = true,
     // Day mode
     /** Clock beside a month calendar, for a desk during the day; never turns night red. */

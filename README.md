@@ -17,6 +17,7 @@ A bedside clock for Android: a big, dimmable clock for the nightstand while your
 - **Notification icons**: icons of pending notifications under the clock (needs notification access).
 - **Brightness**: follows the room's light sensor between a darkest and brightest level you set.
 - **Night mode**: when the room goes dark the clock turns dim red. Without a light sensor it follows the time (22:00–07:00).
+- **Tap to peek**: tap the dim clock and it brightens for about six seconds, to 40% of your brightest level and a soft warm colour, then fades back; a second tap shows the controls (in the screen saver, closes it). Before an alarm the brighter of the peek and the sunrise wins; Day mode taps go straight to the controls. Turn it off under Settings › Brightness and night mode.
 - **Burn-in protection**: the clock drifts slowly around the screen.
 - **Day mode**: a cheerful desk clock, calendar page and sticky note for a phone on a desk stand while you work. See [Day mode](#day-mode).
 - **Alarms**: repeat days, labels, snooze, a gentle volume ramp, vibration, and a full-screen wake-up screen over the lock screen. An alarm can wake you with a radio station, and falls back to the alarm tone if the station doesn't play. A repeating alarm can skip its next ring.
@@ -74,7 +75,7 @@ the code that doesn't depend on Android, ready for an iOS app later. Both use th
 
 | Package | What's in it |
 |---|---|
-| `clock` | `ClockScreen` and the clock faces (`shared`), which reach the phone through `ClockPlatform`; `ClockActivity`, `AndroidClockPlatform` and its sensor/battery/alarm state (`app`); the brightness curve and the sunrise before alarms |
+| `clock` | `ClockScreen` and the clock faces (`shared`), which reach the phone through `ClockPlatform`; `ClockActivity`, `AndroidClockPlatform` and its sensor/battery/alarm state (`app`); the brightness curve, the sunrise before alarms and tap to peek |
 | `day` | Day mode: the desk calendar page and sticky note and the monthly scenes (`shared`); the background photo and today's events from the calendar provider (`app`); the schedule |
 | `dream` | `NocturnaDream`, the screen saver |
 | `alarm` | Scheduling (`AlarmManager.setAlarmClock`), the ringing service, the wake-up screen, boot receiver; days off read from the calendar (`app`) and the rules for skipping them (`shared`) |
