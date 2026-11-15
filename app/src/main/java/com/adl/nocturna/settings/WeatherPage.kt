@@ -31,6 +31,7 @@ import com.adl.nocturna.data.Settings
 import com.adl.nocturna.data.SettingsStore
 import com.adl.nocturna.weather.WeatherRepository
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 @Composable
 fun WeatherPage(padding: PaddingValues, onNavigate: (String) -> Unit) {
@@ -120,7 +121,7 @@ private fun CitySearch(s: Settings) {
                     busy = true
                     status = null
                     scope.launch {
-                        val place = runCatching { WeatherRepository.geocode(query) }.getOrNull()
+                        val place = runCatching { WeatherRepository.geocode(query, Locale.getDefault().language) }.getOrNull()
                         busy = false
                         if (place == null) {
                             status = "No match (or no connection)"

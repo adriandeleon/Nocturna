@@ -28,6 +28,8 @@ val LIBRARY_CREDITS = listOf(
         "kotlinx.serialization", "JSON for the stored settings and alarms", "Apache License 2.0",
         "https://github.com/Kotlin/kotlinx.serialization",
     ),
+    Credit("kotlinx.coroutines", "Background work and live updates", "Apache License 2.0", "https://github.com/Kotlin/kotlinx.coroutines"),
+    Credit("atomicfu", "Safe changes to the settings", "Apache License 2.0", "https://github.com/Kotlin/kotlinx-atomicfu"),
     Credit("Kotlin standard library", "JetBrains and Kotlin contributors", "Apache License 2.0", "https://kotlinlang.org"),
 )
 

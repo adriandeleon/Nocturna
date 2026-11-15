@@ -1,35 +1,37 @@
 package com.adl.nocturna.data
 
-import android.content.Context
-import android.content.SharedPreferences
-import androidx.core.content.edit
-import com.adl.nocturna.alarm.AlarmScheduler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlin.time.Clock
 
 object AlarmStore {
-    private lateinit var prefs: SharedPreferences
-    private lateinit var appContext: Context
+    private lateinit var store: KeyValueStore
+    private lateinit var clock: Clock
+    private var reschedule: () -> Unit = {}
     private val state = MutableStateFlow<List<Alarm>>(emptyList())
     private val snoozeState = MutableStateFlow<Snooze?>(null)
 
     val alarms: StateFlow<List<Alarm>> = state.asStateFlow()
     val snooze: StateFlow<Snooze?> = snoozeState.asStateFlow()
 
-    /** Loads (or reloads) alarms from device-protected storage, which is readable before the first unlock. */
-    fun init(context: Context) {
-        appContext = context.applicationContext
-        prefs = Storage.prefs(context, "nocturna_alarms")
-        state.value = runCatching { AlarmCodec.decode(prefs.getString("alarms", "[]")!!) }.getOrDefault(emptyList())
-        val until = prefs.getLong("snoozeUntil", 0L)
-        snoozeState.value = if (until > System.currentTimeMillis()) Snooze(prefs.getLong("snoozeId", 0L), until) else null
+    /**
+     * Loads (or reloads) alarms and any pending snooze from [store]. [reschedule] is called after every
+     * change that can move the next ring, so the platform can set its system alarm again.
+     */
+    fun init(store: KeyValueStore, clock: Clock = Clock.System, reschedule: () -> Unit) {
+        this.store = store
+        this.clock = clock
+        this.reschedule = reschedule
+        state.value = runCatching { AlarmCodec.decode(store.getString("alarms") ?: "[]") }.getOrDefault(emptyList())
+        val until = store.getLong("snoozeUntil", 0L)
+        snoozeState.value = if (until > now()) Snooze(store.getLong("snoozeId", 0L), until) else null
     }
 
     fun get(id: Long): Alarm? = state.value.firstOrNull { it.id == id }
 
     fun add(hour: Int, minute: Int): Alarm {
-        val alarm = Alarm(id = System.currentTimeMillis(), hour = hour, minute = minute)
+        val alarm = Alarm(id = now(), hour = hour, minute = minute)
         save(state.value + alarm)
         return alarm
     }
@@ -61,20 +63,22 @@ object AlarmStore {
 
     fun setSnooze(alarmId: Long, until: Long) {
         snoozeState.value = Snooze(alarmId, until)
-        prefs.edit { putLong("snoozeId", alarmId); putLong("snoozeUntil", until) }
-        AlarmScheduler.reschedule(appContext)
+        store.edit { putLong("snoozeId", alarmId); putLong("snoozeUntil", until) }
+        reschedule()
     }
 
     fun clearSnooze(reschedule: Boolean = true) {
         snoozeState.value = null
-        prefs.edit { remove("snoozeId"); remove("snoozeUntil") }
-        if (reschedule) AlarmScheduler.reschedule(appContext)
+        store.edit { remove("snoozeId"); remove("snoozeUntil") }
+        if (reschedule) this.reschedule()
     }
 
     private fun save(list: List<Alarm>) {
         val sorted = list.sortedWith(compareBy({ it.hour }, { it.minute }))
         state.value = sorted
-        prefs.edit { putString("alarms", AlarmCodec.encode(sorted)) }
-        AlarmScheduler.reschedule(appContext)
+        store.edit { putString("alarms", AlarmCodec.encode(sorted)) }
+        reschedule()
     }
+
+    private fun now(): Long = clock.now().toEpochMilliseconds()
 }
