@@ -53,6 +53,7 @@ object SettingsCodec {
         put("worldZones", buildJsonArray {
             s.worldZones.forEach { add(buildJsonObject { put("label", it.label); put("zone", it.zoneId) }) }
         })
+        put("dayHourlyWeather", s.dayHourlyWeather)
         put("autoStartOnCharge", s.autoStartOnCharge)
         put("dndWhileShowing", s.dndWhileShowing)
         put("weatherUseDeviceLocation", s.weatherUseDeviceLocation)
@@ -136,6 +137,7 @@ object SettingsCodec {
             focusLongBreakMinutes = j.optInt("focusLongBreakMinutes", d.focusLongBreakMinutes)
                 .let { if (it in Settings.FOCUS_LONG_BREAK_MINUTES) it else d.focusLongBreakMinutes },
             worldZones = j.optArray("worldZones")?.let(::decodeWorldZones) ?: d.worldZones,
+            dayHourlyWeather = j.optBoolean("dayHourlyWeather", d.dayHourlyWeather),
             autoStartOnCharge = j.optBoolean("autoStartOnCharge", d.autoStartOnCharge),
             dndWhileShowing = j.optBoolean("dndWhileShowing", d.dndWhileShowing),
             weatherUseDeviceLocation = j.optBoolean("weatherUseDeviceLocation", d.weatherUseDeviceLocation),

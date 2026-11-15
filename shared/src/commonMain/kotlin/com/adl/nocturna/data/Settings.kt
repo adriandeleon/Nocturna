@@ -84,6 +84,8 @@ data class Settings(
     val focusLongBreakMinutes: Int = 15,
     /** Up to [MAX_WORLD_ZONES] other time zones whose time day mode's desk clock shows under its own. */
     val worldZones: List<WorldZone> = emptyList(),
+    /** The next few hours' weather under day mode's weather line, when the weather shows. */
+    val dayHourlyWeather: Boolean = true,
     // Launching
     val autoStartOnCharge: Boolean = false,
     /** Priority-only Do Not Disturb while the clock shows at night; needs Do Not Disturb access. */

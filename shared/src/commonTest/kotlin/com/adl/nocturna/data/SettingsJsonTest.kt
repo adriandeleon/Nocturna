@@ -228,4 +228,13 @@ class SettingsJsonTest {
         val loaded = SettingsCodec.decode(stored(put = mapOf("worldZones" to zones)))
         assertEquals(listOf(WorldZone("Lima", "America/Lima"), WorldZone("Seoul", "Asia/Seoul")), loaded.worldZones)
     }
+
+    @Test fun dayHourlyWeatherSurvivesRoundTrip() =
+        assertFalse(roundTrip(Settings(dayHourlyWeather = false)).dayHourlyWeather)
+
+    @Test fun settingsSavedBeforeDayHourlyWeatherShowTheStrip() {
+        val loaded = SettingsCodec.decode(stored(Settings(dayHourlyWeather = false, focusMinutes = 50), remove = listOf("dayHourlyWeather")))
+        assertEquals(true, loaded.dayHourlyWeather)
+        assertEquals(50, loaded.focusMinutes)
+    }
 }
