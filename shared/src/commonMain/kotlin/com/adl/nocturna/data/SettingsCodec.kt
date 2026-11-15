@@ -54,6 +54,7 @@ object SettingsCodec {
         put("snoozeMinutes", s.snoozeMinutes)
         put("alarmRampSeconds", s.alarmRampSeconds)
         put("alarmVibrate", s.alarmVibrate)
+        put("sunriseMinutes", s.sunriseMinutes)
         put("stations", buildJsonArray {
             s.stations.forEach { add(buildJsonObject { put("name", it.name); put("url", it.url) }) }
         })
@@ -117,6 +118,7 @@ object SettingsCodec {
             snoozeMinutes = j.optInt("snoozeMinutes", d.snoozeMinutes),
             alarmRampSeconds = j.optInt("alarmRampSeconds", d.alarmRampSeconds),
             alarmVibrate = j.optBoolean("alarmVibrate", d.alarmVibrate),
+            sunriseMinutes = j.optInt("sunriseMinutes", d.sunriseMinutes).coerceIn(0, Settings.SUNRISE_CHOICES.max()),
             stations = stations,
             selectedStation = selected,
             selectedSound = j.optString("selectedSound", d.selectedSound),

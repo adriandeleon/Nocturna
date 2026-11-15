@@ -65,6 +65,11 @@ one-line summary written for users.
   wake-up screen leaves the station playing after you dismiss the alarm.
 - **Skip the next alarm:** a repeating alarm can skip its next ring, for a day off, without being switched
   off and back on. *Undo skip* brings it back, and changing the alarm's time or days drops the skip.
+- **A sunrise before your alarms:** in the 20 minutes before an alarm the clock slowly brightens, up to the
+  brightest level you allow, and warms from night red through amber to a soft white, so the room is light
+  when the alarm rings. It starts gently and speeds up, like a real dawn, and ends when the alarm rings. It
+  doesn't run before a snooze, before a skipped ring or in Day mode. Pick 10, 20 or 30 minutes, or turn it
+  off, under Settings › Alarms › *Sunrise before alarms*.
 - **Starts on its own while charging,** as the Android screen saver or with *Open when charging*, which opens
   the clock when you plug in a locked phone.
 - **An About screen in Settings** with the version, links to the source code, bug reports, the licence and

@@ -42,6 +42,18 @@ class SettingsJsonTest {
     @Test fun settingsSavedBeforeTheDayBrightnessLimitGetTheDefault() =
         assertEquals(Settings().dayMaxBrightness, SettingsCodec.decode(stored(remove = listOf("dayMaxBrightness"))).dayMaxBrightness)
 
+    @Test fun sunriseSurvivesRoundTrip() {
+        for (minutes in Settings.SUNRISE_CHOICES) assertEquals(minutes, roundTrip(Settings(sunriseMinutes = minutes)).sunriseMinutes)
+    }
+
+    @Test fun settingsSavedBeforeTheSunriseGetTheDefault() =
+        assertEquals(20, SettingsCodec.decode(stored(remove = listOf("sunriseMinutes"))).sunriseMinutes)
+
+    @Test fun outOfRangeSunriseIsClamped() {
+        assertEquals(0, SettingsCodec.decode(stored(put = mapOf("sunriseMinutes" to JsonPrimitive(-5)))).sunriseMinutes)
+        assertEquals(30, SettingsCodec.decode(stored(put = mapOf("sunriseMinutes" to JsonPrimitive(600)))).sunriseMinutes)
+    }
+
     @Test fun outOfRangeDayBrightnessIsClamped() {
         fun saved(v: JsonElement) = SettingsCodec.decode(stored(put = mapOf("dayMaxBrightness" to v))).dayMaxBrightness
         assertEquals(0.2f, saved(JsonPrimitive(0.0)))

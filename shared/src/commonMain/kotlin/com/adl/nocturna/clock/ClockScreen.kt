@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.adl.nocturna.data.AlarmStore
 import com.adl.nocturna.data.ClockStyle
 import com.adl.nocturna.data.Settings
 import com.adl.nocturna.data.SettingsStore
@@ -100,30 +101,41 @@ fun ClockScreen(
     // Follows the schedule on its own: now ticks every second.
     val day = isDayModeActive(settings, now.instant, now.zone)
 
-    // Night mode with hysteresis so it doesn't flicker around the threshold.
+    // Sunrise before alarms: in the minutes before the next alarm (not a snooze) the clock brightens and
+    // warms up. Day mode keeps its own look.
+    val alarms by AlarmStore.alarms.collectAsStateWithLifecycle()
+    val sunrise = if (day) 0f
+    else sunriseProgress(now.instant, nextAlarmRing(alarms, now.instant, now.zone), settings.sunriseMinutes)
+
+    // Night mode with hysteresis so it doesn't flicker around the threshold. A sunrise that starts from night
+    // red keeps to it, since the brightening screen can lift the light sensor's own reading.
     var night by remember { mutableStateOf(false) }
     val currentLux = lux
     night = when {
         !settings.dimEnabled || !settings.nightModeEnabled || day -> false
+        night && sunrise > 0f -> true
         currentLux == null -> now.hour >= 22 || now.hour < 7 // no light sensor: go by the clock
         night -> currentLux < settings.nightModeLux * 2.5f
         else -> currentLux < settings.nightModeLux
     }
 
-    val brightness = screenBrightness(
-        currentLux, night, day, settings.dimEnabled, settings.autoBrightness,
-        settings.minBrightness, settings.maxBrightness, settings.dayMaxBrightness,
+    val brightness = sunriseBrightness(
+        screenBrightness(
+            currentLux, night, day, settings.dimEnabled, settings.autoBrightness,
+            settings.minBrightness, settings.maxBrightness, settings.dayMaxBrightness,
+        ),
+        settings.maxBrightness, sunrise,
     )
     LaunchedEffect(brightness) { onBrightness(brightness) }
 
     // Day mode's clock is white with a soft shadow, to read well over its colourful background.
     val color = when {
         day -> Color.White
-        night -> NightRed
-        else -> Color(settings.color)
+        night -> sunriseColor(NightRed, night = true, sunrise)
+        else -> sunriseColor(Color(settings.color), night = false, sunrise)
     }
     val shadow = if (day) Shadow(Color.Black.copy(alpha = 0.35f), Offset(0f, 3f), 14f) else null
-    val contentAlpha by animateFloatAsState(if (night) 0.55f else 1f, tween(2000), label = "alpha")
+    val contentAlpha by animateFloatAsState(if (night) 0.55f + 0.45f * sunrise else 1f, tween(2000), label = "alpha")
 
     LaunchedEffect(settings.showWeather, settings.weatherUseDeviceLocation, settings.weatherLat, settings.weatherLon) {
         if (!settings.showWeather) return@LaunchedEffect
