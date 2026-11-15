@@ -10,6 +10,8 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -33,6 +35,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.mutableStateOf
@@ -77,6 +81,9 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.WeekFields
 import kotlin.math.abs
+import kotlin.random.Random
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 // Warm and a touch below white: kinder to OLED pixels lit all day, and it still reads as paper.
 private val Paper = Color(0xFFF8F2E4)
@@ -153,6 +160,13 @@ fun DayLayout(
     val onView: ((CalendarView) -> Unit)? = if (onOpen != null) { v -> view = v } else null
     // The day view lists the whole day on the page itself, so the sticky note would only repeat it.
     val showNote = settings.showCalendarEvents && view != CalendarView.DAY
+    // Burn-in protection: besides the whole layout's drift, the clock, the page and the note each
+    // drift on their own, at different moments, so their edges don't keep the same distance all day.
+    // Kept out here so swapping sides doesn't send them back to the middle.
+    val burnIn = settings.burnInProtection
+    val clockDrift = rememberDrift(burnIn, phase = 0)
+    val pageDrift = rememberDrift(burnIn, phase = 1)
+    val noteDrift = rememberDrift(burnIn, phase = 2)
     val page: @Composable (Modifier) -> Unit = { m ->
         DeskPage(view, now, weeks, dots, events, settings.showCalendarEvents, settings.use24h, theme, openDay, openEvent, onView, m)
     }
@@ -168,27 +182,33 @@ fun DayLayout(
                         Column(
                             Modifier.weight(1f).fillMaxHeight(),
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterVertically),
+                            verticalArrangement = Arrangement.spacedBy(32.dp, Alignment.CenterVertically),
                         ) {
-                            ClockPanel(clock)
+                            ClockPanel(clock, Modifier.drift(clockDrift, 28.dp, 14.dp))
                             if (showNote) {
-                                StickyNote(now, events, settings.use24h, theme, noteFont, openDay, openEvent, Modifier.widthIn(max = 380.dp).weight(1f, fill = false))
+                                StickyNote(
+                                    now, events, settings.use24h, theme, noteFont, openDay, openEvent,
+                                    Modifier.widthIn(max = 380.dp).weight(1f, fill = false).drift(noteDrift, 28.dp, 14.dp),
+                                )
                             }
                         }
                     }
-                    val pageSide = @Composable { page(Modifier.weight(1f).fillMaxHeight()) }
+                    val pageSide = @Composable { page(Modifier.weight(1f).fillMaxHeight().drift(pageDrift, 20.dp, 16.dp)) }
                     if (swapped) pageSide() else clockSide()
-                    Spacer(Modifier.width(24.dp))
+                    Spacer(Modifier.width(40.dp))
                     if (swapped) clockSide() else pageSide()
                 }
             }
         } else {
             Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
-                Box(Modifier.padding(vertical = 16.dp)) { ClockPanel(clock) }
-                page(Modifier.fillMaxWidth().weight(1.6f))
+                Box(Modifier.padding(vertical = 16.dp)) { ClockPanel(clock, Modifier.drift(clockDrift, 24.dp, 8.dp)) }
+                page(Modifier.fillMaxWidth().weight(1.6f).drift(pageDrift, 16.dp, 8.dp))
                 if (showNote) {
                     Spacer(Modifier.height(20.dp))
-                    StickyNote(now, events, settings.use24h, theme, noteFont, openDay, openEvent, Modifier.fillMaxWidth(0.9f).weight(1f, fill = false))
+                    StickyNote(
+                        now, events, settings.use24h, theme, noteFont, openDay, openEvent,
+                        Modifier.fillMaxWidth(0.9f).weight(1f, fill = false).drift(noteDrift, 20.dp, 8.dp),
+                    )
                 }
             }
         }
@@ -197,15 +217,51 @@ fun DayLayout(
 
 /** The clock sits in a navy desk clock, solid so clouds or a busy photo never wash out its digits. */
 @Composable
-private fun ClockPanel(clock: @Composable () -> Unit) {
+private fun ClockPanel(clock: @Composable () -> Unit, modifier: Modifier = Modifier) {
     val shape = RoundedCornerShape(28.dp)
     Box(
-        Modifier
+        modifier
             .shadow(10.dp, shape)
             .clip(shape)
             .background(Brush.verticalGradient(listOf(Color(0xFF2B3A55), Color(0xFF1C263A))))
             .padding(horizontal = 28.dp, vertical = 12.dp)
     ) { clock() }
+}
+
+/**
+ * Where one panel of day mode has drifted to, as fractions (-1..1) of its range on each axis. Like the
+ * night clock's drift, it glides to a new random spot every couple of minutes; [phase] staggers the
+ * panels so they move at different moments. Stays in the middle while [enabled] is false.
+ */
+@Stable
+private class Drift(val x: Animatable<Float, AnimationVector1D>, val y: Animatable<Float, AnimationVector1D>)
+
+@Composable
+private fun rememberDrift(enabled: Boolean, phase: Int): Drift {
+    val drift = remember { Drift(Animatable(0f), Animatable(0f)) }
+    LaunchedEffect(enabled) {
+        if (!enabled) {
+            launch { drift.x.animateTo(0f, tween(DRIFT_GLIDE_MS)) }
+            launch { drift.y.animateTo(0f, tween(DRIFT_GLIDE_MS)) }
+            return@LaunchedEffect
+        }
+        delay(DRIFT_EVERY_MS / 3 * phase)
+        while (true) {
+            launch { drift.x.animateTo(Random.nextFloat() * 2 - 1, tween(DRIFT_GLIDE_MS)) }
+            launch { drift.y.animateTo(Random.nextFloat() * 2 - 1, tween(DRIFT_GLIDE_MS)) }
+            delay(DRIFT_EVERY_MS)
+        }
+    }
+    return drift
+}
+
+private const val DRIFT_EVERY_MS = 120_000L
+private const val DRIFT_GLIDE_MS = 20_000
+
+/** Moves this panel [drift] of the way to [rangeX] and [rangeY] off its place; taps follow it. */
+private fun Modifier.drift(drift: Drift, rangeX: Dp, rangeY: Dp): Modifier = graphicsLayer {
+    translationX = drift.x.value * rangeX.toPx()
+    translationY = drift.y.value * rangeY.toPx()
 }
 
 /**

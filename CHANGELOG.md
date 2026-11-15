@@ -30,9 +30,13 @@ one-line summary written for users.
   Settings. Behind them is a sunny scene that changes every month (blossoms in April, sunflowers in August,
   snow in December) and with the time of day, from a peachy dawn to golden afternoons and a starry night, or
   a photo of your own. Turn it on from the clock's controls or in Settings; today's events need calendar
-  access, and without it you get the page alone. Day mode never turns night red. Because it stays up all day,
-  burn-in protection moves it around more, swaps the clock and the page every hour in landscape, and keeps
-  the background slowly moving.
+  access, and without it you get the page alone. Day mode never turns night red.
+- **Nothing in Day mode stays put, to spare OLED screens:** with burn-in protection on, the clock, the calendar
+  page and the sticky note each drift on their own, as the night clock does, while the whole layout drifts
+  too and, in landscape, the clock and the page swap sides every hour. The scene behind them never stops
+  moving: the sun crosses the sky from dawn to dusk and the moon from dusk to dawn, slowly turning, the stars
+  wheel around the sky, the clouds float up and down as they pass, the hills scroll and swell, and the
+  flowers (or December's trees) are replanted somewhere new every hour. Your own photo pans gently.
 - **Day mode on a schedule:** set Day mode to *On a schedule* with the hours and days you work, for example
   weekdays 09:00–18:00, and the clock switches to the calendar and back on its own. Hours can run past
   midnight. The *Day mode* / *Clock only* button on the clock overrides the schedule until its next start or

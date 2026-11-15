@@ -20,7 +20,10 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import java.time.LocalTime
 import java.time.Month
 import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.hypot
 import kotlin.math.sin
+import kotlin.math.sqrt
 import kotlin.random.Random
 
 /** One month's colours: the scene behind the clock and the accent of the calendar page. */
@@ -76,8 +79,8 @@ private val HILLS = listOf(
     floatArrayOf(0.85f, 0.035f, 1.6f, 4.1f),
 )
 
-private fun hillY(hill: FloatArray, x: Float): Float =
-    hill[0] - hill[1] * sin(2 * PI * (hill[2] * x) + hill[3]).toFloat() - hill[1] * 0.4f * sin(2 * PI * (hill[2] * 2.7f * x) + 1f).toFloat()
+private fun hillY(hill: FloatArray, x: Float, rise: Float = 0f): Float =
+    hill[0] + rise - hill[1] * sin(2 * PI * (hill[2] * x) + hill[3]).toFloat() - hill[1] * 0.4f * sin(2 * PI * (hill[2] * 2.7f * x) + 1f).toFloat()
 
 /** The colours of one look of the sky. [shade] tints the hills (dusk, night); transparent leaves them be. */
 private class Sky(val top: Color, val bottom: Color, val sun: Color, val glow: Color, val cloud: Color, val shade: Color)
@@ -100,8 +103,10 @@ private fun mix(a: Sky, b: Sky, t: Float) = Sky(
 
 /**
  * A cheerful, flat illustration for day mode: sky, sun, drifting clouds and rolling hills in [theme]'s
- * colours. [time] turns the sun's rays, moves the clouds along and sets the look of the sky: dawn,
- * midday, golden afternoon or a starry night (see [skyMix]).
+ * colours. [time] sets the look of the sky: dawn, midday, golden afternoon or a starry night (see
+ * [skyMix]), and keeps everything moving so no pixel is lit the same all day (see BurnIn.kt): the sun
+ * and the moon cross the sky, the stars turn, the clouds float along, the hills swell and scroll, and
+ * the flowers are replanted every hour.
  */
 @Composable
 fun SceneBackground(theme: MonthTheme, time: LocalTime, seed: Int, modifier: Modifier = Modifier) {
@@ -114,22 +119,35 @@ fun SceneBackground(theme: MonthTheme, time: LocalTime, seed: Int, modifier: Mod
         val night = skyMix.weight(TimeOfDay.NIGHT)
         drawRect(Brush.verticalGradient(listOf(sky.top, sky.bottom), endY = h * HORIZON))
 
-        // Stars come out with the night and twinkle gently.
+        // Stars come out with the night, twinkle gently and turn slowly around a pole above the
+        // screen, as the real sky does. They're scattered over the whole disc the screen sweeps
+        // through, so new ones turn into view as others turn out of it.
         if (night > 0f) {
             val stars = Random(seed * 7 + 3)
-            repeat(80) {
-                val x = stars.nextFloat() * w
-                val y = stars.nextFloat() * h * 0.6f
+            val pole = Offset(w * 0.5f, -h * 0.4f)
+            val reach = hypot(w * 0.5f, h * HORIZON - pole.y)
+            val turn = Math.toRadians(starTurn(seconds).toDouble())
+            // As many as it takes for about 75 to be on screen at a time.
+            val count = (75 * PI * reach * reach / (w * h * 0.6f)).toInt().coerceAtMost(1500)
+            repeat(count) {
+                val r = reach * sqrt(stars.nextFloat())
+                val a = stars.nextFloat() * 2 * PI + turn
                 val twinkle = 0.55f + 0.45f * sin(seconds * (0.3f + stars.nextFloat()) + stars.nextFloat() * 6f)
-                drawCircle(Color.White, minOf(w, h) * (0.002f + stars.nextFloat() * 0.003f), Offset(x, y), alpha = night * twinkle)
+                val radius = minOf(w, h) * (0.002f + stars.nextFloat() * 0.003f)
+                val star = Offset(pole.x + r * cos(a).toFloat(), pole.y + r * sin(a).toFloat())
+                if (star.x in 0f..w && star.y in 0f..h * 0.6f) drawCircle(Color.White, radius, star, alpha = night * twinkle)
             }
         }
 
-        // The sun (or at night the moon) peeks in from the top corner, out of the clock's way; the
-        // sun's rays turn slowly.
+        // The sun crosses the top of the sky from dawn to dusk, and the moon from dusk to dawn, each
+        // with a small circle of its own on the way; the sun's rays turn and the moon spins slowly.
         val sunR = minOf(w, h) * 0.13f
         val (wx, wy) = sunWobble(seconds)
-        val sun = Offset(sunR * (wx - 0.15f), sunR * (wy - 0.15f))
+        fun body(rise: Float, set: Float): Offset {
+            val (ax, ay) = skyArc(skyTrip(seconds, rise, set))
+            return Offset(ax * w + wx * sunR, (ay + wy) * sunR)
+        }
+        val sun = body(SUNRISE, SUNSET)
         val day = 1f - night
         if (day > 0f) {
             drawCircle(Brush.radialGradient(listOf(sky.glow, Color.Transparent), sun, sunR * 2.6f), sunR * 2.6f, sun, alpha = day)
@@ -143,14 +161,17 @@ fun SceneBackground(theme: MonthTheme, time: LocalTime, seed: Int, modifier: Mod
             drawCircle(lerp(sky.sun, Color.White, 0.3f), sunR * 1.1f, sun, alpha = day)
             drawCircle(sky.sun, sunR, sun, alpha = day)
         }
-        if (night > 0f) moon(sun, sunR * 0.85f, night)
+        if (night > 0f) {
+            val moonAt = body(MOONRISE, MOONSET)
+            rotate(seconds / 20f % 360f, moonAt) { moon(moonAt, sunR * 0.85f, night) }
+        }
 
-        // Clouds cross the screen in about three hours.
+        // Clouds cross the screen in about three hours, floating up and down as they go.
         val cloudW = minOf(w, h) * 0.32f
-        listOf(Triple(0.1f, 0.16f, 1f), Triple(0.55f, 0.3f, 0.75f), Triple(0.8f, 0.1f, 0.6f)).forEach { (start, y, scale) ->
+        listOf(Triple(0.1f, 0.16f, 1f), Triple(0.55f, 0.3f, 0.75f), Triple(0.8f, 0.1f, 0.6f)).forEachIndexed { i, (start, y, scale) ->
             val span = w + cloudW * 2
             val x = ((start * span + seconds * span / 10_800f * scale) % span) - cloudW
-            cloud(x, y * h, cloudW * scale, sky.cloud)
+            cloud(x, (y + cloudBob(seconds, i)) * h, cloudW * scale, sky.cloud)
         }
 
         if (theme.snow) {
@@ -172,8 +193,9 @@ fun SceneBackground(theme: MonthTheme, time: LocalTime, seed: Int, modifier: Mod
                 val steps = 64
                 for (s in 0..steps) {
                     val fx = s / steps.toFloat()
-                    // The hills scroll very slowly, so their edges never sit on the same pixels for long.
-                    lineTo(fx * w, hillY(hill, fx + hillShift(seconds, i)) * h)
+                    // The hills scroll very slowly and swell up and down, so their edges never sit on
+                    // the same pixels for long.
+                    lineTo(fx * w, hillY(hill, fx + hillShift(seconds, i), hillRise(seconds, i)) * h)
                 }
                 lineTo(w, h)
                 close()
@@ -181,25 +203,32 @@ fun SceneBackground(theme: MonthTheme, time: LocalTime, seed: Int, modifier: Mod
             drawPath(path, theme.hills[i])
         }
 
-        val rnd = Random(seed * 31 + 7)
-        if (theme.trees) {
-            // On the near hill, so the page and the note don't hide them; sorted so lower trees draw in front.
-            List(14) { rnd.nextFloat() to rnd.nextFloat() }.sortedBy { it.second }.forEach { (start, depth) ->
-                val fx = travel(start, seconds)
-                val top = nearHillY(fx, seconds)
-                tree(fx * w, (top + 0.02f + depth * (1f - top - 0.04f)) * h, minOf(w, h) * (0.07f + depth * 0.07f))
+        // The flowers and trees ride along with the near hill, and every hour a new field of them
+        // grows in where the last one fades out, so none of them stays on the same spot all day.
+        fun plant(arrangement: Int, alpha: Float) {
+            val rnd = Random(seed * 31 + 7 + arrangement * 977)
+            if (theme.trees) {
+                // On the near hill, so the page and the note don't hide them; sorted so lower trees draw in front.
+                List(14) { rnd.nextFloat() to rnd.nextFloat() }.sortedBy { it.second }.forEach { (start, depth) ->
+                    val fx = travel(start, seconds)
+                    val top = nearHillY(fx, seconds)
+                    tree(fx * w, (top + 0.02f + depth * (1f - top - 0.04f)) * h, minOf(w, h) * (0.07f + depth * 0.07f), alpha)
+                }
+            }
+            if (theme.flowers.isNotEmpty()) {
+                repeat(55) {
+                    val fx = travel(rnd.nextFloat(), seconds)
+                    val top = nearHillY(fx, seconds)
+                    val fy = top + 0.015f + rnd.nextFloat() * (1f - top - 0.03f)
+                    // Nearer (lower) flowers are bigger.
+                    val r = minOf(w, h) * (0.006f + 0.012f * (fy - top) / (1f - top))
+                    flower(Offset(fx * w, fy * h), r, theme.flowers[rnd.nextInt(theme.flowers.size)], alpha)
+                }
             }
         }
-        if (theme.flowers.isNotEmpty()) {
-            repeat(55) {
-                val fx = travel(rnd.nextFloat(), seconds)
-                val top = nearHillY(fx, seconds)
-                val fy = top + 0.015f + rnd.nextFloat() * (1f - top - 0.03f)
-                // Nearer (lower) flowers are bigger.
-                val r = minOf(w, h) * (0.006f + 0.012f * (fy - top) / (1f - top))
-                flower(Offset(fx * w, fy * h), r, theme.flowers[rnd.nextInt(theme.flowers.size)])
-            }
-        }
+        val planted = planting(seconds)
+        if (planted.grown < 1f) plant(planted.before, 1f - planted.grown)
+        plant(planted.now, planted.grown)
         if (sky.shade.alpha > 0f) drawRect(sky.shade, blendMode = BlendMode.SrcAtop)
         drawIntoCanvas { it.restore() }
     }
@@ -217,7 +246,7 @@ private fun DrawScope.moon(center: Offset, r: Float, alpha: Float) {
 private fun travel(start: Float, seconds: Float): Float = ((start - hillShift(seconds, 2)) % 1f + 1f) % 1f
 
 /** The near hill's top at screen position [x], as it has scrolled by [seconds]. */
-private fun nearHillY(x: Float, seconds: Float): Float = hillY(HILLS[2], x + hillShift(seconds, 2))
+private fun nearHillY(x: Float, seconds: Float): Float = hillY(HILLS[2], x + hillShift(seconds, 2), hillRise(seconds, 2))
 
 private fun DrawScope.cloud(x: Float, y: Float, w: Float, color: Color) {
     val white = color.copy(alpha = 0.92f)
@@ -227,16 +256,16 @@ private fun DrawScope.cloud(x: Float, y: Float, w: Float, color: Color) {
     drawRoundRect(white, Offset(x - w * 0.42f, y), Size(w * 0.86f, w * 0.2f), CornerRadius(w * 0.1f))
 }
 
-private fun DrawScope.flower(center: Offset, r: Float, petals: Color) {
+private fun DrawScope.flower(center: Offset, r: Float, petals: Color, alpha: Float) {
     for (i in 0 until 5) {
         val a = 2 * PI * i / 5
-        drawCircle(petals, r * 0.55f, Offset(center.x + r * 0.6f * kotlin.math.cos(a).toFloat(), center.y + r * 0.6f * sin(a).toFloat()))
+        drawCircle(petals, r * 0.55f, Offset(center.x + r * 0.6f * cos(a).toFloat(), center.y + r * 0.6f * sin(a).toFloat()), alpha = alpha)
     }
-    drawCircle(Color(0xFFFFB300), r * 0.4f, center)
+    drawCircle(Color(0xFFFFB300), r * 0.4f, center, alpha = alpha)
 }
 
-private fun DrawScope.tree(x: Float, base: Float, height: Float) {
-    drawRect(Color(0xFF7A5230), Offset(x - height * 0.05f, base - height * 0.15f), Size(height * 0.1f, height * 0.15f))
+private fun DrawScope.tree(x: Float, base: Float, height: Float, alpha: Float) {
+    drawRect(Color(0xFF7A5230), Offset(x - height * 0.05f, base - height * 0.15f), Size(height * 0.1f, height * 0.15f), alpha = alpha)
     for (i in 0 until 3) {
         val top = base - height * (0.35f + 0.25f * i) - height * 0.15f
         val half = height * (0.32f - 0.08f * i)
@@ -246,7 +275,7 @@ private fun DrawScope.tree(x: Float, base: Float, height: Float) {
             lineTo(x + half, top + height * 0.4f)
             close()
         }
-        drawPath(tier, Color(0xFF2E8B57))
+        drawPath(tier, Color(0xFF2E8B57), alpha = alpha)
     }
-    drawCircle(Color.White, height * 0.06f, Offset(x, base - height * 1.0f))
+    drawCircle(Color.White, height * 0.06f, Offset(x, base - height * 1.0f), alpha = alpha)
 }
