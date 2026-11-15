@@ -39,6 +39,7 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -58,6 +59,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.LocalDensity
@@ -89,6 +91,7 @@ import kotlinx.datetime.YearMonth
 import kotlinx.datetime.atTime
 import kotlinx.datetime.number
 import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlin.math.abs
 import kotlin.random.Random
@@ -154,6 +157,10 @@ fun DayLayout(
     modifier: Modifier = Modifier,
     /** Opens the calendar app; null where nothing can be tapped (the screen saver). */
     onOpen: ((CalendarLink) -> Unit)? = null,
+    /** The focus timer, shown in the desk clock while it runs. */
+    focus: FocusTimer? = null,
+    /** Changes or (with null) stops the focus timer; null where it can't be tapped. */
+    onFocus: ((FocusTimer?) -> Unit)? = null,
     clock: @Composable () -> Unit,
 ) {
     val today = now.date
@@ -173,6 +180,8 @@ fun DayLayout(
     }
     val upcoming = next?.takeIf { it.begin > now.epochMillis }
     MeetingChime(upcoming, now, settings.meetingChimeMinutes)
+    val focusLengths = FocusLengths(settings.focusMinutes, settings.focusBreakMinutes, settings.focusLongBreakMinutes)
+    FocusChime(focus, now.epochMillis, focusLengths, onFocus)
 
     // The page starts on the view chosen in Settings; a swipe (or the switch under the page)
     // changes it for as long as the clock stays open. The screen saver can't be swiped.
@@ -197,6 +206,11 @@ fun DayLayout(
 
     BoxWithConstraints(modifier) {
         val noteFont = with(LocalDensity.current) { (minOf(maxWidth, maxHeight) * 0.042f).coerceIn(14.dp, 22.dp).toSp() }
+        // The focus timer sits in the desk clock under its info line, so it drifts with it and never
+        // takes the meeting countdown's place under the clock or on the note.
+        val focusLine: (@Composable () -> Unit)? = focus?.let { timer ->
+            { FocusLine(timer, timer.status(now.epochMillis, focusLengths), focusLengths, noteFont, onFocus) }
+        }
         if (landscape) {
             // Every other hour the clock and the page trade places, so the bright page and the dark
             // clock don't sit on the same pixels all day.
@@ -207,7 +221,7 @@ fun DayLayout(
                         // when its greeting and at least one event fit under it.
                         ClockOverNote(
                             gap = 32.dp,
-                            clock = { ClockPanel(clock, Modifier.drift(clockDrift, 28.dp, 14.dp)) },
+                            clock = { ClockPanel(clock, focusLine, Modifier.drift(clockDrift, 28.dp, 14.dp)) },
                             note = if (!showNote) null else {
                                 {
                                     StickyNote(
@@ -237,7 +251,7 @@ fun DayLayout(
                 Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
                     val clockEnd = @Composable {
                         Column(Modifier.padding(vertical = 16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                            ClockPanel(clock, Modifier.drift(clockDrift, 24.dp, 8.dp))
+                            ClockPanel(clock, focusLine, Modifier.drift(clockDrift, 24.dp, 8.dp))
                             // Without the note (the day view), the countdown hangs under the desk clock.
                             if (!showNote && upcoming != null) {
                                 Spacer(Modifier.height(COUNTDOWN_GAP))
@@ -313,9 +327,12 @@ private fun ClockOverNote(
     }
 }
 
-/** The clock sits in a navy desk clock, solid so clouds or a busy photo never wash out its digits. */
+/**
+ * The clock sits in a navy desk clock, solid so clouds or a busy photo never wash out its digits.
+ * [below] (the focus timer) goes under the clock, inside the panel.
+ */
 @Composable
-private fun ClockPanel(clock: @Composable () -> Unit, modifier: Modifier = Modifier) {
+private fun ClockPanel(clock: @Composable () -> Unit, below: (@Composable () -> Unit)?, modifier: Modifier = Modifier) {
     val shape = RoundedCornerShape(28.dp)
     Box(
         modifier
@@ -323,7 +340,113 @@ private fun ClockPanel(clock: @Composable () -> Unit, modifier: Modifier = Modif
             .clip(shape)
             .background(Brush.verticalGradient(DeskClockNavy))
             .padding(horizontal = 28.dp, vertical = 12.dp)
-    ) { clock() }
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            clock()
+            below?.invoke()
+        }
+    }
+}
+
+/** A focus block's ring and a break's, so the two read apart at a glance. */
+private val FocusRingColor = Color.White
+private val BreakRingColor = Color(0xFF9BE3B0)
+
+/**
+ * The focus timer in the desk clock, e.g. "Focus · 18:42 left" beside a thin ring of the time gone.
+ * A tap shows Pause, Skip and Stop under it for a few seconds; [onFocus] gets the changed timer.
+ */
+@Composable
+private fun FocusLine(
+    timer: FocusTimer,
+    status: FocusStatus,
+    lengths: FocusLengths,
+    fontSize: TextUnit,
+    onFocus: ((FocusTimer?) -> Unit)?,
+) {
+    var open by remember { mutableStateOf(false) }
+    var touched by remember { mutableIntStateOf(0) }
+    LaunchedEffect(open, touched) {
+        if (open) {
+            delay(FOCUS_ACTIONS_MS)
+            open = false
+        }
+    }
+    val line = with(LocalDensity.current) { fontSize.toDp() }
+    val style = TextStyle(color = Color.White, fontSize = fontSize * 0.85f, fontWeight = FontWeight.Medium, fontFeatureSettings = "tnum")
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(top = 6.dp)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .clip(RoundedCornerShape(50))
+                .clickable(enabled = onFocus != null, onClickLabel = "Pause, skip or stop the focus timer") { open = !open }
+                .padding(horizontal = 10.dp, vertical = 4.dp),
+        ) {
+            FocusRing(status.progress, if (status.phase == FocusPhase.FOCUS) FocusRingColor else BreakRingColor, Modifier.size(line * 0.9f))
+            Spacer(Modifier.width(line * 0.5f))
+            Text(focusLabel(status), style = style.copy(color = Color.White.copy(alpha = if (status.paused) 0.7f else 1f)), maxLines = 1)
+        }
+        if (open && onFocus != null) {
+            fun act(change: (Long) -> FocusTimer?) {
+                touched++
+                onFocus(change(Clock.System.now().toEpochMilliseconds()))
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 4.dp)) {
+                FocusAction(if (timer.paused) "Resume" else "Pause", style) { act { t -> if (timer.paused) timer.resume(t) else timer.pause(t) } }
+                FocusAction("Skip", style) { act { t -> timer.skip(t, lengths) } }
+                FocusAction("Stop", style) { open = false; onFocus(null) }
+            }
+        }
+    }
+}
+
+/** How long Pause, Skip and Stop stay up after the last tap. */
+private const val FOCUS_ACTIONS_MS = 8_000L
+
+@Composable
+private fun FocusAction(text: String, style: TextStyle, onClick: () -> Unit) {
+    Text(
+        text,
+        style = style,
+        maxLines = 1,
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .background(Color.White.copy(alpha = 0.14f))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 6.dp),
+    )
+}
+
+/** A thin ring, filled clockwise from the top by [progress] (0 to 1). */
+@Composable
+private fun FocusRing(progress: Float, color: Color, modifier: Modifier) {
+    Canvas(modifier) {
+        val stroke = size.minDimension * 0.16f
+        val inset = stroke / 2
+        val arcSize = Size(size.width - stroke, size.height - stroke)
+        drawArc(color.copy(alpha = 0.25f), 0f, 360f, false, Offset(inset, inset), arcSize, style = Stroke(stroke))
+        drawArc(color, -90f, 360f * progress, false, Offset(inset, inset), arcSize, style = Stroke(stroke, cap = StrokeCap.Round))
+    }
+}
+
+/**
+ * Plays the soft chime as the focus timer moves between focus and a break, once per switch, and
+ * marks it heard in the timer so a rotation doesn't chime again. A skip doesn't chime.
+ */
+@Composable
+private fun FocusChime(focus: FocusTimer?, now: Long, lengths: FocusLengths, onFocus: ((FocusTimer?) -> Unit)?) {
+    val platform = LocalClockPlatform.current
+    val timer by rememberUpdatedState(focus)
+    val change by rememberUpdatedState(onFocus)
+    val due = focus?.chimeDue(now, lengths)
+    LaunchedEffect(due) {
+        val t = timer
+        val c = change
+        if (due != null && t != null && c != null) {
+            c(t.copy(chimed = due))
+            platform.playFocusChime()
+        }
+    }
 }
 
 private val DeskClockNavy = listOf(Color(0xFF2B3A55), Color(0xFF1C263A))

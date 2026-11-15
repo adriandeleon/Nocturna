@@ -117,6 +117,28 @@ class SettingsJsonTest {
     @Test fun anUnknownMeetingChimeIsOff() =
         assertEquals(0, SettingsCodec.decode(stored(put = mapOf("meetingChimeMinutes" to JsonPrimitive(7)))).meetingChimeMinutes)
 
+    @Test fun focusLengthsSurviveRoundTrip() {
+        val settings = Settings(focusMinutes = 50, focusBreakMinutes = 10, focusLongBreakMinutes = 30)
+        assertEquals(settings, roundTrip(settings))
+    }
+
+    @Test fun settingsSavedBeforeTheFocusTimerLoadWithItsDefaults() {
+        val old = Settings(focusMinutes = 50, focusBreakMinutes = 10, focusLongBreakMinutes = 30)
+        val loaded = SettingsCodec.decode(stored(old, remove = listOf("focusMinutes", "focusBreakMinutes", "focusLongBreakMinutes")))
+        assertEquals(25, loaded.focusMinutes)
+        assertEquals(5, loaded.focusBreakMinutes)
+        assertEquals(15, loaded.focusLongBreakMinutes)
+    }
+
+    @Test fun unknownFocusLengthsFallBackToTheDefaults() {
+        val loaded = SettingsCodec.decode(
+            stored(put = mapOf("focusMinutes" to JsonPrimitive(0), "focusBreakMinutes" to JsonPrimitive(-5), "focusLongBreakMinutes" to JsonPrimitive(999))),
+        )
+        assertEquals(Settings().focusMinutes, loaded.focusMinutes)
+        assertEquals(Settings().focusBreakMinutes, loaded.focusBreakMinutes)
+        assertEquals(Settings().focusLongBreakMinutes, loaded.focusLongBreakMinutes)
+    }
+
     @Test fun forecastSwitchSurvivesRoundTrip() {
         val settings = Settings(showForecast = false)
         assertEquals(settings, roundTrip(settings))
