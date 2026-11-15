@@ -1,9 +1,5 @@
 package com.adl.nocturna.settings
 
-import android.Manifest
-import android.content.pm.PackageManager
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -23,21 +19,21 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.adl.nocturna.data.Settings
 import com.adl.nocturna.data.SettingsStore
 import com.adl.nocturna.weather.WeatherRepository
+import androidx.compose.ui.platform.LocalUriHandler
+import com.adl.nocturna.text.languageCode
+import com.adl.nocturna.ui.currentLocale
 import kotlinx.coroutines.launch
-import java.util.Locale
 
 @Composable
 fun WeatherPage(padding: PaddingValues, onNavigate: (String) -> Unit) {
-    val context = LocalContext.current
+    val platform = LocalSettingsPlatform.current
     val s by SettingsStore.settings.collectAsStateWithLifecycle()
-    val locationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+    val askLocation = platform.rememberPermissionRequest(Permission.LOCATION) { granted ->
         SettingsStore.update { it.copy(weatherUseDeviceLocation = granted) }
         WeatherRepository.invalidate()
     }
@@ -45,13 +41,13 @@ fun WeatherPage(padding: PaddingValues, onNavigate: (String) -> Unit) {
     SettingsPage(padding) {
         if (!s.showWeather) {
             SettingsGroup {
-                NavRow("The weather is hidden", "Tap to show it under the clock") { onNavigate(SettingsActivity.SCREEN_INFO_LINE) }
+                NavRow("The weather is hidden", "Tap to show it under the clock") { onNavigate(SettingsPages.INFO_LINE) }
             }
         }
         SettingsGroup("Place") {
             SwitchRow("Use my location", s.weatherUseDeviceLocation, "Approximate location only") { v ->
-                if (v && ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                    locationPermission.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
+                if (v && !platform.isGranted(Permission.LOCATION)) {
+                    askLocation()
                 } else {
                     SettingsStore.update { it.copy(weatherUseDeviceLocation = v) }
                     WeatherRepository.invalidate()
@@ -71,7 +67,7 @@ fun WeatherPage(padding: PaddingValues, onNavigate: (String) -> Unit) {
 /** Open-Meteo's data (and the GeoNames data behind its city search) is CC BY 4.0, which asks for credit. */
 @Composable
 private fun WeatherAttribution() {
-    val context = LocalContext.current
+    val uriHandler = LocalUriHandler.current
     Text(
         "Weather data by Open-Meteo.com (CC BY 4.0). City search based on GeoNames.",
         style = MaterialTheme.typography.bodySmall,
@@ -79,7 +75,7 @@ private fun WeatherAttribution() {
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 12.dp)
-            .clickable { context.openUrl("https://open-meteo.com/") }
+            .clickable { runCatching { uriHandler.openUri("https://open-meteo.com/") } }
             .padding(horizontal = 32.dp, vertical = 8.dp),
     )
 }
@@ -87,6 +83,7 @@ private fun WeatherAttribution() {
 @Composable
 private fun CitySearch(s: Settings) {
     val scope = rememberCoroutineScope()
+    val language = currentLocale().languageCode
     var query by remember { mutableStateOf("") }
     var status by remember { mutableStateOf<String?>(null) }
     var busy by remember { mutableStateOf(false) }
@@ -121,7 +118,7 @@ private fun CitySearch(s: Settings) {
                     busy = true
                     status = null
                     scope.launch {
-                        val place = runCatching { WeatherRepository.geocode(query, Locale.getDefault().language) }.getOrNull()
+                        val place = runCatching { WeatherRepository.geocode(query, language) }.getOrNull()
                         busy = false
                         if (place == null) {
                             status = "No match (or no connection)"

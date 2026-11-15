@@ -47,4 +47,12 @@ class LocaleTest {
         assertEquals("18:05", DateTimePattern("HH:mm", testLocale).format(at))
         assertEquals("6:05 pm", DateTimePattern("h:mm a", testLocale).format(at).lowercase())
     }
+
+    @Test fun numbersWithDecimals() {
+        assertEquals("2.5", formatNumber(2.5, 1, testLocale))
+        assertEquals("0.0", formatNumber(0.04, 1, testLocale))
+        assertEquals("1234.6", formatNumber(1234.56, 1, testLocale))
+    }
+
+    @Test fun languageCode() = assertEquals("en", testLocale.languageCode)
 }

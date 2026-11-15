@@ -1,9 +1,5 @@
 package com.adl.nocturna.settings
 
-import android.Manifest
-import android.os.Build
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -41,22 +37,20 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.adl.nocturna.alarm.AlarmScheduler
-import com.adl.nocturna.alarm.AlarmService
 import com.adl.nocturna.alarm.DAYS_OFF_LOOK_AHEAD
 import com.adl.nocturna.alarm.DEFAULT_DAY_OFF_KEYWORDS
 import com.adl.nocturna.alarm.DaysOff
+import com.adl.nocturna.alarm.STREAM_TIMEOUT_MS
 import com.adl.nocturna.alarm.daysOff
 import com.adl.nocturna.alarm.nextDayOffSkip
 import com.adl.nocturna.alarm.nextRing
 import com.adl.nocturna.alarm.parseDayOffKeywords
 import com.adl.nocturna.alarm.skipping
 import com.adl.nocturna.alarm.toggleSkip
-import com.adl.nocturna.day.rememberCalendarEvents
+import com.adl.nocturna.clock.LocalClockPlatform
 import com.adl.nocturna.data.Alarm
 import com.adl.nocturna.data.AlarmStore
 import com.adl.nocturna.data.Settings
@@ -64,9 +58,12 @@ import com.adl.nocturna.data.SettingsStore
 import com.adl.nocturna.data.Station
 import com.adl.nocturna.clock.Moment
 import com.adl.nocturna.text.DateTimePattern
+import com.adl.nocturna.text.PlatformLocale
 import com.adl.nocturna.text.bestDateTimePattern
+import com.adl.nocturna.text.formatTime
 import com.adl.nocturna.ui.currentLocale
 import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import kotlinx.datetime.atTime
@@ -74,10 +71,7 @@ import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.time.Instant
-import java.time.LocalTime
-import java.time.ZoneId
-import java.util.Locale
+import kotlin.time.Instant
 import kotlin.math.roundToInt
 
 @Composable
@@ -85,17 +79,17 @@ fun AlarmsScreen(padding: PaddingValues) {
     val alarms by AlarmStore.alarms.collectAsStateWithLifecycle()
     val snooze by AlarmStore.snooze.collectAsStateWithLifecycle()
     val s by SettingsStore.settings.collectAsStateWithLifecycle()
-    val notificationsAllowed = rememberNotificationsAllowed()
-    val askNotifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
+    val platform = LocalSettingsPlatform.current
+    val access = platform.access()
+    val notificationsAllowed = access.notifications
+    val askNotifications = platform.rememberPermissionRequest(Permission.NOTIFICATIONS) { }
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val locale = currentLocale()
     var editing by remember { mutableStateOf<Alarm?>(null) }
     var adding by remember { mutableStateOf(false) }
-    val context = LocalContext.current
-    val access = rememberSystemAccess()
     // Rescheduling also when access is refused: the alarm then rings as usual, and its time may change.
-    val askCalendar = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { AlarmScheduler.reschedule(context) }
+    val askCalendar = platform.rememberPermissionRequest(Permission.CALENDAR) { platform.rescheduleAlarms() }
     val daysOff = rememberDaysOff(alarms.any { it.enabled && it.repeats && it.skipDaysOff } && access.calendar, s.dayOffKeywords)
 
     Box(Modifier.fillMaxSize().padding(padding)) {
@@ -105,9 +99,7 @@ fun AlarmsScreen(padding: PaddingValues) {
                 Button(
                     onClick = {
                         adding = true
-                        if (!notificationsAllowed && Build.VERSION.SDK_INT >= 33) {
-                            askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
-                        }
+                        if (!notificationsAllowed) askNotifications()
                     },
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                 ) { Text("+  Add alarm") }
@@ -115,7 +107,7 @@ fun AlarmsScreen(padding: PaddingValues) {
             snooze?.let { sn ->
                 item {
                     Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                        val t = Instant.ofEpochMilli(sn.until).atZone(ZoneId.systemDefault()).toLocalTime()
+                        val t = Instant.fromEpochMilliseconds(sn.until).toLocalDateTime(TimeZone.currentSystemDefault()).time
                         Text("Snoozed until ${formatTime(t, s.use24h, locale)}", modifier = Modifier.weight(1f))
                         TextButton(onClick = { AlarmStore.clearSnooze() }) { Text("Cancel snooze") }
                     }
@@ -133,14 +125,14 @@ fun AlarmsScreen(padding: PaddingValues) {
             items(alarms, key = { it.id }) { alarm ->
                 AlarmCard(
                     alarm, s.use24h, locale, s.stations, daysOff, access.calendar,
-                    onAskCalendar = { askCalendar.launch(Manifest.permission.READ_CALENDAR) },
+                    onAskCalendar = askCalendar,
                     onEditTime = { editing = alarm },
                     onDelete = {
                         val removed = AlarmStore.delete(alarm.id) ?: return@AlarmCard
                         scope.launch {
                             snackbar.currentSnackbarData?.dismiss()
                             val result = snackbar.showSnackbar(
-                                "Alarm ${formatTime(LocalTime.of(removed.hour, removed.minute), s.use24h, locale)} deleted",
+                                "Alarm ${formatTime(LocalTime(removed.hour, removed.minute), s.use24h, locale)} deleted",
                                 actionLabel = "Undo",
                                 duration = SnackbarDuration.Long,
                             )
@@ -184,8 +176,8 @@ fun AlarmsScreen(padding: PaddingValues) {
     }
 
     if (adding) {
-        val next = LocalTime.now().plusHours(1)
-        TimeDialog(next.hour, 0, s.use24h, onDismiss = { adding = false }) { h, m ->
+        val nextHour = (Moment.now().hour + 1) % 24
+        TimeDialog(nextHour, 0, s.use24h, onDismiss = { adding = false }) { h, m ->
             AlarmStore.add(h, m)
             adding = false
         }
@@ -202,7 +194,7 @@ fun AlarmsScreen(padding: PaddingValues) {
 private fun AlarmCard(
     alarm: Alarm,
     use24h: Boolean,
-    locale: Locale,
+    locale: PlatformLocale,
     stations: List<Station>,
     daysOff: DaysOff,
     calendarAllowed: Boolean,
@@ -215,7 +207,7 @@ private fun AlarmCard(
         Column(Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    formatTime(LocalTime.of(alarm.hour, alarm.minute), use24h, locale),
+                    formatTime(LocalTime(alarm.hour, alarm.minute), use24h, locale),
                     fontSize = 44.sp,
                     color = if (alarm.enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
                     modifier = Modifier.weight(1f).clickable(onClick = onEditTime),
@@ -270,7 +262,7 @@ private fun SoundPicker(alarm: Alarm, stations: List<Station>) {
     }
     if (alarm.station != null) {
         Text(
-            "If the station doesn't play within ${AlarmService.STREAM_TIMEOUT_MS / 1000} s, the alarm tone rings instead.",
+            "If the station doesn't play within ${STREAM_TIMEOUT_MS / 1000} s, the alarm tone rings instead.",
             style = MaterialTheme.typography.bodySmall,
             color = muted,
         )
@@ -279,7 +271,7 @@ private fun SoundPicker(alarm: Alarm, stations: List<Station>) {
 
 /** The ring the alarm skips for a day off, and the calendar event that makes it one. */
 @Composable
-private fun DayOffSkipLine(alarm: Alarm, locale: Locale, daysOff: DaysOff) {
+private fun DayOffSkipLine(alarm: Alarm, locale: PlatformLocale, daysOff: DaysOff) {
     val now = Moment.now()
     val skip = alarm.nextDayOffSkip(now.instant, now.zone, daysOff) ?: return
     val day = DateTimePattern(bestDateTimePattern("EEEdMMM", locale), locale).format(skip.date.atTime(0, 0))
@@ -321,13 +313,13 @@ private fun SkipDaysOffRow(alarm: Alarm, calendarAllowed: Boolean, onAskCalendar
 /** The words that make an all-day event a day off, saved once typing pauses. */
 @Composable
 private fun DayOffKeywordsField(saved: String) {
-    val context = LocalContext.current
+    val platform = LocalSettingsPlatform.current
     var text by remember { mutableStateOf(saved) }
     LaunchedEffect(text) {
         if (text == saved) return@LaunchedEffect
         delay(600)
         SettingsStore.update { it.copy(dayOffKeywords = text) }
-        AlarmScheduler.reschedule(context)
+        platform.rescheduleAlarms()
     }
     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
         Text("Days off", style = MaterialTheme.typography.bodyLarge)
@@ -355,7 +347,7 @@ private fun rememberDaysOff(enabled: Boolean, keywordText: String): DaysOff {
     val now = Moment.now()
     val today = now.instant.toLocalDateTime(now.zone).date
     val last = today.plus(DAYS_OFF_LOOK_AHEAD, DateTimeUnit.DAY)
-    val events by rememberCalendarEvents(enabled, today, last, now.zone)
+    val events = LocalClockPlatform.current.calendarEvents(enabled, today, last, now.zone)
     val keywords = remember(keywordText) { parseDayOffKeywords(keywordText) }
     return remember(events, keywords, today) { events?.let { daysOff(it, keywords, today, last) } ?: emptyMap() }
 }
@@ -378,7 +370,7 @@ private fun LabelField(alarm: Alarm, modifier: Modifier) {
     )
 }
 
-private fun describe(alarm: Alarm, use24h: Boolean, locale: Locale, daysOff: DaysOff): String {
+private fun describe(alarm: Alarm, use24h: Boolean, locale: PlatformLocale, daysOff: DaysOff): String {
     if (!alarm.enabled) return "Off"
     val now = Moment.now()
     val next = alarm.nextRing(now.instant, now.zone, daysOff).toLocalDateTime(now.zone)

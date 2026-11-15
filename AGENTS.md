@@ -76,7 +76,13 @@ The debug build installs as `com.adl.nocturna.debug`, beside a release build.
   `LocalClockPlatform` (`AndroidClockPlatform` in the app): sensors, battery, next alarm, notification icons,
   radio, location, calendar events and the Day mode photo. Taps that open the calendar come out as a
   `CalendarLink`, which the app turns into an intent (`OpenCalendar.of`). Anything new the clock needs from
-  the phone goes on that interface, not into the shared code. The Settings screens are still in the app.
+  the phone goes on that interface, not into the shared code.
+- Settings (`SettingsScreen` and its pages) lives in `:shared` too. Besides `ClockPlatform`, it uses
+  `SettingsPlatform` (`AndroidSettingsPlatform`): system access, permission requests, the system's settings
+  pages, the photo picker, backup files, rescheduling alarms, opening on charge and the version. The app
+  keeps the current page, the back gesture and the Material You theme (`SettingsTheme`) in `SettingsActivity`. Links open with Compose's `LocalUriHandler`. The alarm's wake-up screen is
+  `AlarmScreen`, hosted by `AlarmActivity`. What stays in `:app` is Android plumbing: activities, services,
+  receivers, the platform implementations and storage.
 - Text that depends on the language (`formatTime`, day names, `DateTimePattern`, `bestDateTimePattern`, week
   numbers) takes a `PlatformLocale`: `java.util.Locale` on Android, `NSLocale` on iOS, and `currentLocale()`
   in composables. Tests use `testLocale`, British English, never the machine's. `bestDateTimePattern` uses
