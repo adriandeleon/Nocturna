@@ -69,19 +69,22 @@ import com.adl.nocturna.ui.DeskNavy
 import com.adl.nocturna.ui.NightRed
 import com.adl.nocturna.weather.WeatherRepository
 import com.adl.nocturna.weather.pickForecast
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.withFrameMillis
 import kotlinx.coroutines.delay
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import kotlin.time.Instant
+import kotlin.time.TimeSource
 import com.adl.nocturna.ui.currentLocale
 import kotlin.random.Random
 
 /**
  * The bedside clock: interactive in the app, with a tap-to-show control bar, and display only in the
  * screen saver. In day mode it sits beside a calendar ([DayLayout]). It reads the phone through
- * [LocalClockPlatform].
+ * [LocalClockPlatform]. A tap on the dim clock peeks first (see [clockTap]).
  *
  * @param onBrightness receives the window brightness to apply (0..1), or -1 for "system default".
  */
@@ -93,6 +96,8 @@ fun ClockScreen(
     onOpenAlarms: () -> Unit = {},
     /** Opens day mode's calendar in the phone's calendar app; only used when [interactive]. */
     onOpenCalendar: (CalendarLink) -> Unit = {},
+    /** The screen saver's way out: a tap that doesn't peek, or a second one during a peek, ends it. */
+    onDismiss: (() -> Unit)? = null,
 ) {
     val platform = LocalClockPlatform.current
     val settings by SettingsStore.settings.collectAsStateWithLifecycle()
@@ -107,36 +112,53 @@ fun ClockScreen(
     val sunrise = if (day) 0f
     else sunriseProgress(now.instant, nextAlarmRing(alarms, now.instant, now.zone), settings.sunriseMinutes)
 
-    // Night mode with hysteresis so it doesn't flicker around the threshold. A sunrise that starts from night
-    // red keeps to it, since the brightening screen can lift the light sensor's own reading.
+    // Tap to peek: a tap on the dim clock brightens it for a few seconds, then it fades back.
+    var peekMark by remember { mutableStateOf<TimeSource.Monotonic.ValueTimeMark?>(null) }
+    var peekShown by remember { mutableFloatStateOf(0f) }
+    LaunchedEffect(peekMark) {
+        val mark = peekMark ?: return@LaunchedEffect
+        peekShown = 1f
+        delay(PEEK_HOLD)
+        do {
+            peekShown = withFrameMillis { peekLevel(mark.elapsedNow()) }
+        } while (peekShown > 0f)
+        peekMark = null
+    }
+    val peek = if (day || !settings.tapToPeek) 0f else peekShown
+
+    // Night mode with hysteresis so it doesn't flicker around the threshold. A sunrise or a peek that starts
+    // from night red keeps to it, since the brightening screen can lift the light sensor's own reading.
     var night by remember { mutableStateOf(false) }
     val currentLux = lux
     night = when {
         !settings.dimEnabled || !settings.nightModeEnabled || day -> false
-        night && sunrise > 0f -> true
+        night && (sunrise > 0f || peek > 0f) -> true
         currentLux == null -> now.hour >= 22 || now.hour < 7 // no light sensor: go by the clock
         night -> currentLux < settings.nightModeLux * 2.5f
         else -> currentLux < settings.nightModeLux
     }
 
-    val brightness = sunriseBrightness(
-        screenBrightness(
-            currentLux, night, day, settings.dimEnabled, settings.autoBrightness,
-            settings.minBrightness, settings.maxBrightness, settings.dayMaxBrightness,
-        ),
-        settings.maxBrightness, sunrise,
+    val room = screenBrightness(
+        currentLux, night, day, settings.dimEnabled, settings.autoBrightness,
+        settings.minBrightness, settings.maxBrightness, settings.dayMaxBrightness,
     )
+    val withSunrise = sunriseBrightness(room, settings.maxBrightness, sunrise)
+    val brightness = peekBrightness(room, withSunrise, settings.maxBrightness, peek)
     LaunchedEffect(brightness) { onBrightness(brightness) }
+    val peekAllowed = canPeek(settings.tapToPeek, day, room, withSunrise, settings.minBrightness, settings.maxBrightness)
 
     val wallpaperColor = platform.wallpaperColor()
     // Day mode's clock is white with a soft shadow, to read well over its colourful background.
     val color = when {
         day -> Color.White
-        night -> sunriseColor(NightRed, night = true, sunrise)
+        // A peek warms night red part way along the sunrise; a clock in its own colour keeps it.
+        night -> sunriseColor(NightRed, night = true, peekProgress(sunrise, peek))
         else -> sunriseColor(Color(clockColor(settings, wallpaperColor)), night = false, sunrise)
     }
     val shadow = if (day) Shadow(Color.Black.copy(alpha = 0.35f), Offset(0f, 3f), 14f) else null
-    val contentAlpha by animateFloatAsState(if (night) 0.55f + 0.45f * sunrise else 1f, tween(2000), label = "alpha")
+    val nightAlpha by animateFloatAsState(if (night) 0.55f + 0.45f * sunrise else 1f, tween(2000), label = "alpha")
+    // A peek lifts the opacity at once, not over the night fade's two seconds.
+    val contentAlpha = if (night) maxOf(nightAlpha, 0.55f + 0.45f * peekProgress(sunrise, peek)) else nightAlpha
 
     LaunchedEffect(settings.showWeather, settings.weatherUseDeviceLocation, settings.weatherLat, settings.weatherLon) {
         if (!settings.showWeather) return@LaunchedEffect
@@ -155,15 +177,24 @@ fun ClockScreen(
         }
     }
 
+    val onTap: () -> Unit = {
+        when (clockTap(controlsVisible, peeking = peek > 0f, canPeek = peekAllowed)) {
+            ClockTap.PEEK -> peekMark = TimeSource.Monotonic.markNow()
+            ClockTap.SHOW_CONTROLS -> if (interactive) controlsVisible = true else onDismiss?.invoke()
+            ClockTap.HIDE_CONTROLS -> controlsVisible = false
+        }
+    }
+
     BoxWithConstraints(
         Modifier
             .fillMaxSize()
             .background(Color.Black)
             .then(
-                if (interactive) Modifier.clickable(
+                if (interactive || onDismiss != null) Modifier.clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
-                ) { controlsVisible = !controlsVisible } else Modifier
+                    onClick = onTap,
+                ) else Modifier
             )
     ) {
         val landscape = maxWidth > maxHeight

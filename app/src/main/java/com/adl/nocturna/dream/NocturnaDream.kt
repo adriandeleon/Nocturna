@@ -15,11 +15,13 @@ import com.adl.nocturna.clock.AndroidClockPlatform
 import com.adl.nocturna.clock.ClockScreen
 import com.adl.nocturna.clock.LocalClockPlatform
 import com.adl.nocturna.clock.setBrightness
+import com.adl.nocturna.data.SettingsStore
 import com.adl.nocturna.ui.NocturnaTheme
 
 /**
  * The Android screen saver ("Daydream"). Pick it under Settings > Display > Screen saver and set it
- * to start while charging. It shows the same clock as the app, without the controls.
+ * to start while charging. It shows the same clock as the app, without the controls. With tap to peek on,
+ * a tap on the dim clock brightens it for a moment, and a tap that doesn't peek ends the screen saver.
  */
 class NocturnaDream : DreamService(), LifecycleOwner, SavedStateRegistryOwner {
     private val lifecycleRegistry = LifecycleRegistry(this)
@@ -36,7 +38,9 @@ class NocturnaDream : DreamService(), LifecycleOwner, SavedStateRegistryOwner {
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-        isInteractive = false
+        // Tap to peek needs the taps; without it, any touch ends the screen saver, as Android does it.
+        val tapToPeek = SettingsStore.current.tapToPeek
+        isInteractive = tapToPeek
         isFullscreen = true
         isScreenBright = true // we manage brightness ourselves
 
@@ -46,7 +50,11 @@ class NocturnaDream : DreamService(), LifecycleOwner, SavedStateRegistryOwner {
             setContent {
                 NocturnaTheme {
                     CompositionLocalProvider(LocalClockPlatform provides AndroidClockPlatform(this@NocturnaDream)) {
-                        ClockScreen(interactive = false, onBrightness = { window?.setBrightness(it) })
+                        ClockScreen(
+                            interactive = false,
+                            onBrightness = { window?.setBrightness(it) },
+                            onDismiss = if (tapToPeek) ({ finish() }) else null,
+                        )
                     }
                 }
             }

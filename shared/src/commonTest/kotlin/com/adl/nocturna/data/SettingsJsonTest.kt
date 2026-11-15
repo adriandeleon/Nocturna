@@ -9,6 +9,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class SettingsJsonTest {
     /** The stored JSON for [s], changed the way an older or a damaged version would have left it. */
@@ -53,6 +54,11 @@ class SettingsJsonTest {
 
     @Test fun settingsSavedBeforeTheDayBrightnessLimitGetTheDefault() =
         assertEquals(Settings().dayMaxBrightness, SettingsCodec.decode(stored(remove = listOf("dayMaxBrightness"))).dayMaxBrightness)
+
+    @Test fun tapToPeekSurvivesRoundTrip() = assertFalse(roundTrip(Settings(tapToPeek = false)).tapToPeek)
+
+    @Test fun settingsSavedBeforeTapToPeekHaveItOn() =
+        assertTrue(SettingsCodec.decode(stored(Settings(tapToPeek = false), remove = listOf("tapToPeek"))).tapToPeek)
 
     @Test fun sunriseSurvivesRoundTrip() {
         for (minutes in Settings.SUNRISE_CHOICES) assertEquals(minutes, roundTrip(Settings(sunriseMinutes = minutes)).sunriseMinutes)

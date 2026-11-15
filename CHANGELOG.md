@@ -25,6 +25,11 @@ one-line summary written for users.
   dimming off.
 - **Night mode:** when the room goes dark the clock turns dim red; without a light sensor it follows the time
   (22:00–07:00).
+- **Tap to peek at the dim clock:** in the dark, a tap on the dim red clock brightens it for about six seconds,
+  to a comfortable 40% of your brightest level and a soft warm colour, then it fades back; tap again during the
+  peek for the controls. The screen saver peeks too, and a second tap closes it. Before an alarm, whichever is
+  brighter of the peek and the sunrise wins, and Day mode isn't affected. Turn it off under Settings ›
+  Brightness and night mode › *Tap to peek*.
 - **Burn-in protection:** the clock drifts slowly around the screen.
 - **Day mode, a cheerful desk set for while you work:** a desk clock, a spiral-bound calendar page for the
   month in its own colour, with dots on the days that have events, and a sticky note that says hello and lists

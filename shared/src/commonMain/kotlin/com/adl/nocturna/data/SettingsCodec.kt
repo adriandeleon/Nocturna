@@ -33,6 +33,7 @@ object SettingsCodec {
         put("maxBrightness", s.maxBrightness.toDouble())
         put("nightModeEnabled", s.nightModeEnabled)
         put("nightModeLux", s.nightModeLux.toDouble())
+        put("tapToPeek", s.tapToPeek)
         put("burnInProtection", s.burnInProtection)
         put("dayMode", s.dayMode.name)
         put("dayModeStart", s.dayModeStart)
@@ -99,6 +100,7 @@ object SettingsCodec {
             maxBrightness = j.optDouble("maxBrightness", d.maxBrightness.toDouble()).toFloat(),
             nightModeEnabled = j.optBoolean("nightModeEnabled", d.nightModeEnabled),
             nightModeLux = j.optDouble("nightModeLux", d.nightModeLux.toDouble()).toFloat(),
+            tapToPeek = j.optBoolean("tapToPeek", d.tapToPeek),
             burnInProtection = j.optBoolean("burnInProtection", d.burnInProtection),
             dayMode = when {
                 // Versions before the schedule stored a plain switch.
