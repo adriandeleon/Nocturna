@@ -1,6 +1,7 @@
 package com.adl.nocturna.data
 
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.Test
 
@@ -28,4 +29,14 @@ class AlarmJsonTest {
             Station("https://example.com/s", "https://example.com/s"),
             AlarmCodec.decode("""[{"id":1,"hour":7,"minute":0,"station":{"url":"https://example.com/s"}}]""").single().station,
         )
+
+    @Test fun skipOnDaysOffSurvivesRoundTrip() {
+        val alarms = listOf(Alarm(1, 6, 40, days = 0b0011111, skipDaysOff = true))
+        assertEquals(alarms, AlarmCodec.decode(AlarmCodec.encode(alarms)))
+    }
+
+    @Test fun alarmsSavedBeforeSkipOnDaysOffLoadWithItOff() {
+        val old = """[{"id":1,"hour":7,"minute":0,"days":31,"enabled":true,"label":"","skipDate":"2026-11-16"}]"""
+        assertFalse(AlarmCodec.decode(old).single().skipDaysOff)
+    }
 }

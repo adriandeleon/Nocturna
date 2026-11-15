@@ -41,10 +41,22 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.adl.nocturna.alarm.AlarmScheduler
 import com.adl.nocturna.alarm.AlarmService
+import com.adl.nocturna.alarm.DAYS_OFF_LOOK_AHEAD
+import com.adl.nocturna.alarm.DEFAULT_DAY_OFF_KEYWORDS
+import com.adl.nocturna.alarm.DaysOff
+import com.adl.nocturna.alarm.daysOff
+import com.adl.nocturna.alarm.nextDayOffSkip
+import com.adl.nocturna.alarm.nextRing
+import com.adl.nocturna.alarm.parseDayOffKeywords
+import com.adl.nocturna.alarm.skipping
+import com.adl.nocturna.alarm.toggleSkip
+import com.adl.nocturna.day.rememberCalendarEvents
 import com.adl.nocturna.data.Alarm
 import com.adl.nocturna.data.AlarmStore
 import com.adl.nocturna.data.Settings
@@ -54,7 +66,9 @@ import com.adl.nocturna.clock.Moment
 import com.adl.nocturna.text.DateTimePattern
 import com.adl.nocturna.text.bestDateTimePattern
 import com.adl.nocturna.ui.currentLocale
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.plus
 import kotlinx.datetime.atTime
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
@@ -78,6 +92,11 @@ fun AlarmsScreen(padding: PaddingValues) {
     val locale = currentLocale()
     var editing by remember { mutableStateOf<Alarm?>(null) }
     var adding by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val access = rememberSystemAccess()
+    // Rescheduling also when access is refused: the alarm then rings as usual, and its time may change.
+    val askCalendar = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { AlarmScheduler.reschedule(context) }
+    val daysOff = rememberDaysOff(alarms.any { it.enabled && it.repeats && it.skipDaysOff } && access.calendar, s.dayOffKeywords)
 
     Box(Modifier.fillMaxSize().padding(padding)) {
         LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 32.dp)) {
@@ -113,7 +132,8 @@ fun AlarmsScreen(padding: PaddingValues) {
             }
             items(alarms, key = { it.id }) { alarm ->
                 AlarmCard(
-                    alarm, s.use24h, locale, s.stations,
+                    alarm, s.use24h, locale, s.stations, daysOff, access.calendar,
+                    onAskCalendar = { askCalendar.launch(Manifest.permission.READ_CALENDAR) },
                     onEditTime = { editing = alarm },
                     onDelete = {
                         val removed = AlarmStore.delete(alarm.id) ?: return@AlarmCard
@@ -157,6 +177,7 @@ fun AlarmsScreen(padding: PaddingValues) {
             if (s.sunriseMinutes > 0) {
                 item { Hint("The clock slowly brightens and warms to a soft white before an alarm rings, from night red through amber at night. Not before a snooze.") }
             }
+            item { DayOffKeywordsField(s.dayOffKeywords) }
         }
 
         SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).padding(16.dp))
@@ -183,6 +204,9 @@ private fun AlarmCard(
     use24h: Boolean,
     locale: Locale,
     stations: List<Station>,
+    daysOff: DaysOff,
+    calendarAllowed: Boolean,
+    onAskCalendar: () -> Unit,
     onEditTime: () -> Unit,
     onDelete: () -> Unit,
 ) {
@@ -200,20 +224,22 @@ private fun AlarmCard(
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    describe(alarm, use24h, locale),
+                    describe(alarm, use24h, locale, daysOff),
                     style = MaterialTheme.typography.bodySmall,
                     color = muted,
                     modifier = Modifier.weight(1f),
                 )
                 if (alarm.enabled && alarm.repeats) {
-                    val skipping = alarm.skipping(Clock.System.now(), TimeZone.currentSystemDefault()) != null
-                    TextButton(onClick = { AlarmStore.update(alarm.id) { it.toggleSkip(Clock.System.now(), TimeZone.currentSystemDefault()) } }) {
+                    val skipping = alarm.skipping(Clock.System.now(), TimeZone.currentSystemDefault(), daysOff) != null
+                    TextButton(onClick = { AlarmStore.update(alarm.id) { it.toggleSkip(Clock.System.now(), TimeZone.currentSystemDefault(), daysOff) } }) {
                         Text(if (skipping) "Undo skip" else "Skip next")
                     }
                 }
             }
+            if (alarm.enabled) DayOffSkipLine(alarm, locale, daysOff)
             Spacer(Modifier.height(8.dp))
             DayToggles(alarm.days, locale) { days -> AlarmStore.update(alarm.id) { it.copy(days = days) } }
+            if (alarm.repeats) SkipDaysOffRow(alarm, calendarAllowed, onAskCalendar)
             SoundPicker(alarm, stations)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 LabelField(alarm, Modifier.weight(1f).padding(top = 8.dp))
@@ -251,6 +277,89 @@ private fun SoundPicker(alarm: Alarm, stations: List<Station>) {
     }
 }
 
+/** The ring the alarm skips for a day off, and the calendar event that makes it one. */
+@Composable
+private fun DayOffSkipLine(alarm: Alarm, locale: Locale, daysOff: DaysOff) {
+    val now = Moment.now()
+    val skip = alarm.nextDayOffSkip(now.instant, now.zone, daysOff) ?: return
+    val day = DateTimePattern(bestDateTimePattern("EEEdMMM", locale), locale).format(skip.date.atTime(0, 0))
+    Text(
+        "Skips $day · ${skip.title}",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.primary,
+    )
+}
+
+/** *Skip on days off*, which needs calendar access and says so while it doesn't have it. */
+@Composable
+private fun SkipDaysOffRow(alarm: Alarm, calendarAllowed: Boolean, onAskCalendar: () -> Unit) {
+    val muted = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+    Row(Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Text("Skip on days off", style = MaterialTheme.typography.bodyMedium)
+            Text(
+                when {
+                    !alarm.skipDaysOff -> "Stay quiet on holidays in your calendar"
+                    calendarAllowed -> "Quiet on all-day calendar events like holidays and vacations"
+                    else -> "Needs calendar access; until then this alarm rings on days off too"
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = if (alarm.skipDaysOff && !calendarAllowed) MaterialTheme.colorScheme.error else muted,
+            )
+        }
+        Switch(
+            checked = alarm.skipDaysOff,
+            onCheckedChange = { on ->
+                AlarmStore.update(alarm.id) { it.copy(skipDaysOff = on) }
+                if (on && !calendarAllowed) onAskCalendar()
+            },
+        )
+    }
+    if (alarm.skipDaysOff && !calendarAllowed) TextButton(onClick = onAskCalendar) { Text("Allow calendar access") }
+}
+
+/** The words that make an all-day event a day off, saved once typing pauses. */
+@Composable
+private fun DayOffKeywordsField(saved: String) {
+    val context = LocalContext.current
+    var text by remember { mutableStateOf(saved) }
+    LaunchedEffect(text) {
+        if (text == saved) return@LaunchedEffect
+        delay(600)
+        SettingsStore.update { it.copy(dayOffKeywords = text) }
+        AlarmScheduler.reschedule(context)
+    }
+    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+        Text("Days off", style = MaterialTheme.typography.bodyLarge)
+        Text(
+            "Alarms with Skip on days off stay quiet on days with an all-day calendar event whose title has one of " +
+                "these words. Separate them with commas; case and accents don't matter.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+        )
+        OutlinedTextField(
+            value = text,
+            onValueChange = { text = it },
+            placeholder = { Text(DEFAULT_DAY_OFF_KEYWORDS) },
+            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+        )
+        if (text != DEFAULT_DAY_OFF_KEYWORDS) {
+            TextButton(onClick = { text = DEFAULT_DAY_OFF_KEYWORDS }) { Text("Use the default words") }
+        }
+    }
+}
+
+/** Days off in the phone's calendars for the next [DAYS_OFF_LOOK_AHEAD] days, kept current; empty when [enabled] is off. */
+@Composable
+private fun rememberDaysOff(enabled: Boolean, keywordText: String): DaysOff {
+    val now = Moment.now()
+    val today = now.instant.toLocalDateTime(now.zone).date
+    val last = today.plus(DAYS_OFF_LOOK_AHEAD, DateTimeUnit.DAY)
+    val events by rememberCalendarEvents(enabled, today, last, now.zone)
+    val keywords = remember(keywordText) { parseDayOffKeywords(keywordText) }
+    return remember(events, keywords, today) { events?.let { daysOff(it, keywords, today, last) } ?: emptyMap() }
+}
+
 /** Edits the label locally and saves once typing pauses, instead of on every keystroke. */
 @Composable
 private fun LabelField(alarm: Alarm, modifier: Modifier) {
@@ -269,12 +378,12 @@ private fun LabelField(alarm: Alarm, modifier: Modifier) {
     )
 }
 
-private fun describe(alarm: Alarm, use24h: Boolean, locale: Locale): String {
+private fun describe(alarm: Alarm, use24h: Boolean, locale: Locale, daysOff: DaysOff): String {
     if (!alarm.enabled) return "Off"
     val now = Moment.now()
-    val next = alarm.nextTrigger(now.instant, now.zone).toLocalDateTime(now.zone)
+    val next = alarm.nextRing(now.instant, now.zone, daysOff).toLocalDateTime(now.zone)
     val pattern = DateTimePattern(bestDateTimePattern(if (use24h) "EEEdMMMHHmm" else "EEEdMMMhmma", locale), locale)
-    val skipped = alarm.skipping(now.instant, now.zone)?.let {
+    val skipped = alarm.skipping(now.instant, now.zone, daysOff)?.let {
         " · skipping " + DateTimePattern(bestDateTimePattern("EEEdMMM", locale), locale).format(it.atTime(0, 0))
     }.orEmpty()
     val repeat = when (alarm.days) {

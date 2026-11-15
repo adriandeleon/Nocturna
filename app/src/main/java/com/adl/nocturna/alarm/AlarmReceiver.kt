@@ -7,6 +7,9 @@ import com.adl.nocturna.charging.ChargingService
 import com.adl.nocturna.data.AlarmStore
 import com.adl.nocturna.data.SettingsStore
 import com.adl.nocturna.data.Storage
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
 
 /** Fired by the system at the scheduled alarm time. */
 class AlarmReceiver : BroadcastReceiver() {
@@ -16,12 +19,24 @@ class AlarmReceiver : BroadcastReceiver() {
 
         if (wasSnooze) {
             AlarmStore.clearSnooze(reschedule = false)
+        } else if (isDayOff(context, id)) {
+            // The calendar gained a day off since this ring was scheduled: stay quiet, set the next one.
+            AlarmScheduler.reschedule(context)
+            return
         } else {
             // A one-shot alarm switches itself off once it has rung (update() also reschedules).
             AlarmStore.update(id) { if (it.repeats) it else it.copy(enabled = false) }
         }
         AlarmScheduler.reschedule(context)
         AlarmService.start(context, id)
+    }
+
+    private fun isDayOff(context: Context, id: Long): Boolean {
+        val alarm = AlarmStore.get(id) ?: return false
+        if (!alarm.skipDaysOff || !alarm.repeats) return false
+        val zone = TimeZone.currentSystemDefault()
+        val today = Clock.System.now().toLocalDateTime(zone).date
+        return today in DaysOffCalendar.read(context, today, today, zone)
     }
 }
 
