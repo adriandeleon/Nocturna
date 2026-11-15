@@ -22,6 +22,7 @@ A bedside clock for Android: a big, dimmable clock for the nightstand while your
 - **Sunrise before alarms**: in the 10, 20 or 30 minutes before an alarm (not a snooze) the clock brightens to your brightest level and warms from night red through amber to a soft white.
 - **Sleep sounds**: white, pink and brown noise, rain and surf, made on the phone so they play offline; they loop seamlessly and play from the Radio button like a station, sleep timer included.
 - **Web radio**: any MP3/AAC/HLS stream, with a sleep timer that fades out (15/30/60/90 min).
+- **Backup**: export settings, radio stations and alarms to one JSON file and import them on this or another phone (Settings › About › Backup). The Day mode photo isn't included. No storage permission: you pick the file.
 - **Starts on its own**:
   - as the Android screen saver (Settings › Display › Screen saver › Nocturna, "while charging"), or
   - with **Open when charging**, which opens the clock when you plug in a locked phone. This needs the "Display over other apps" permission; without it the app shows a full-screen notification instead.
@@ -77,7 +78,7 @@ the code that doesn't depend on Android, ready for an iOS app later. Both use th
 | `notify` | Notification listener that mirrors notification icons |
 | `charging` | Foreground service that opens the clock when the charger is connected |
 | `settings` | The Settings hub and its pages: clock face, info line, brightness, day mode, weather, starting, alarms, stations, About |
-| `data` | Settings and alarms and their stores, kept as JSON in device-protected SharedPreferences on Android |
+| `data` | Settings and alarms and their stores, kept as JSON in device-protected SharedPreferences on Android; the backup file format (`shared`) |
 | `text`, `ui` | Dates and names in the phone's language, the theme and the icons (`shared`) |
 
 ## License

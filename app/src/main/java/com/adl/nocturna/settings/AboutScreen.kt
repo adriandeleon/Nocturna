@@ -40,6 +40,8 @@ fun AboutScreen(padding: PaddingValues) {
         item { NavRow("Licence", "MIT · $COPYRIGHT") { context.openUrl("$REPOSITORY_URL/blob/main/LICENSE") } }
         item { NavRow("Made by Adrián De León", HOMEPAGE_URL.removePrefix("https://www.")) { context.openUrl(HOMEPAGE_URL) } }
 
+        item { BackupRows() }
+
         item { SectionHeader("Open-source libraries") }
         items(LIBRARY_CREDITS) { CreditRow(it) }
 

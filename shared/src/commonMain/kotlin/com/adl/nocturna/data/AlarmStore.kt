@@ -61,6 +61,12 @@ object AlarmStore {
         if (get(alarm.id) == null) save(state.value + alarm)
     }
 
+    /** Puts [alarms] in place of all the alarms, as importing a backup does; a pending snooze is cancelled. */
+    fun replaceAll(alarms: List<Alarm>) {
+        clearSnooze(reschedule = false)
+        save(alarms)
+    }
+
     fun setSnooze(alarmId: Long, until: Long) {
         snoozeState.value = Snooze(alarmId, until)
         store.edit { putLong("snoozeId", alarmId); putLong("snoozeUntil", until) }

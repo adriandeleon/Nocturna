@@ -79,6 +79,10 @@ one-line summary written for users.
   line saying how it is set, and each opening its own page. *Clock face* shows a live preview of the clock as you
   change it, and anything Android hasn't allowed yet, such as notification or calendar access, is gathered in a
   *Needs your attention* card at the top with the button that fixes it.
+- **Back up your settings, radio stations and alarms to a file,** and bring them back on this phone or a new
+  one: *Settings › About › Backup › Export…* saves a file such as `nocturna-backup-2026-11-15.json` wherever you
+  pick, and *Import…* shows what a backup holds before it replaces your settings, stations and alarms. The Day
+  mode photo isn't included, and a file that isn't a Nocturna backup changes nothing.
 
 ### Changed
 
