@@ -1,5 +1,6 @@
 package com.adl.nocturna.data
 
+import com.adl.nocturna.alarm.SUM_COUNTS
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonArray
@@ -64,6 +65,7 @@ object SettingsCodec {
         put("snoozeMinutes", s.snoozeMinutes)
         put("alarmRampSeconds", s.alarmRampSeconds)
         put("alarmVibrate", s.alarmVibrate)
+        put("alarmSums", s.alarmSums)
         put("sunriseMinutes", s.sunriseMinutes)
         put("alarmShowWeather", s.alarmShowWeather)
         put("dayOffKeywords", s.dayOffKeywords)
@@ -145,6 +147,7 @@ object SettingsCodec {
             snoozeMinutes = j.optInt("snoozeMinutes", d.snoozeMinutes),
             alarmRampSeconds = j.optInt("alarmRampSeconds", d.alarmRampSeconds),
             alarmVibrate = j.optBoolean("alarmVibrate", d.alarmVibrate),
+            alarmSums = j.optInt("alarmSums", d.alarmSums).coerceIn(SUM_COUNTS),
             sunriseMinutes = j.optInt("sunriseMinutes", d.sunriseMinutes).coerceIn(0, Settings.SUNRISE_CHOICES.max()),
             alarmShowWeather = j.optBoolean("alarmShowWeather", d.alarmShowWeather),
             dayOffKeywords = j.optString("dayOffKeywords", d.dayOffKeywords),

@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Bundle
+import android.util.Log
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.addCallback
@@ -26,7 +27,8 @@ import kotlin.time.Clock
  * Full-screen "wake up" screen ([AlarmScreen]) with big Snooze and Dismiss buttons. Shows over the lock
  * screen. While a radio alarm plays, "Keep listening" dismisses the alarm and carries on with the station
  * in the normal radio player. The weather under the time is refreshed in the background when it is old;
- * the ringing itself is [AlarmService]'s and never waits for it.
+ * the ringing itself is [AlarmService]'s and never waits for it. If the alarm's [DismissChallenge] fails,
+ * [AlarmService] falls back to a tap, so the alarm can always be stopped.
  */
 class AlarmActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -50,6 +52,12 @@ class AlarmActivity : ComponentActivity() {
                     onKeepListening = { station ->
                         AlarmService.send(this@AlarmActivity, AlarmService.ACTION_DISMISS)
                         Radio.play(this@AlarmActivity, station)
+                    },
+                    challenge = ringing?.challenge ?: DismissChallenge.TAP,
+                    seed = ringing?.startedAt ?: 0L,
+                    onChallengeFailed = { e ->
+                        Log.w("AlarmActivity", "Dismiss challenge failed; falling back to a tap", e)
+                        AlarmService.send(this@AlarmActivity, AlarmService.ACTION_CHALLENGE_FAILED)
                     },
                 )
             }

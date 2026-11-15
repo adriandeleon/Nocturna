@@ -65,9 +65,10 @@ private fun Alarm.skipsOn(daysOff: DaysOff) = skipDaysOff && repeats && daysOff.
 /**
  * The next time this alarm rings strictly after [now]: [Alarm.nextTrigger], which already leaves out a
  * *Skip next* date, moved past any [daysOff] when [Alarm.skipDaysOff] is on. A ring more than
- * [DAYS_OFF_LOOK_AHEAD] days away is never skipped, so this always ends.
+ * [DAYS_OFF_LOOK_AHEAD] days away is never skipped, so this always ends. Days off don't move an alarm with a
+ * date ([datedRing]); null when that date's time has passed.
  */
-fun Alarm.nextRing(now: Instant, zone: TimeZone, daysOff: DaysOff): Instant =
+fun Alarm.nextRing(now: Instant, zone: TimeZone, daysOff: DaysOff): Instant? =
     nextRingAndSkips(now, zone, daysOff).first
 
 /** The first ring this alarm skips because of [daysOff] before its [nextRing], or null for none. */
@@ -77,13 +78,15 @@ fun Alarm.nextDayOffSkip(now: Instant, zone: TimeZone, daysOff: DaysOff): DayOff
 /** When the first ring skipped because of [daysOff] would have rung, or null for none. */
 fun Alarm.firstSkippedRing(now: Instant, zone: TimeZone, daysOff: DaysOff): Instant? {
     if (!skipsOn(daysOff)) return null
-    val t = nextTrigger(now, zone)
-    return t.takeIf { it.toLocalDateTime(zone).date in daysOff && it < nextRing(now, zone, daysOff) }
+    val t = nextTrigger(now, zone) ?: return null
+    val ring = nextRing(now, zone, daysOff) ?: return null
+    return t.takeIf { it.toLocalDateTime(zone).date in daysOff && it < ring }
 }
 
-private fun Alarm.nextRingAndSkips(now: Instant, zone: TimeZone, daysOff: DaysOff): Pair<Instant, List<DayOffSkip>> {
-    var t = nextTrigger(now, zone)
-    if (!skipsOn(daysOff)) return t to emptyList()
+private fun Alarm.nextRingAndSkips(now: Instant, zone: TimeZone, daysOff: DaysOff): Pair<Instant?, List<DayOffSkip>> {
+    val first = nextTrigger(now, zone)
+    if (first == null || !skipsOn(daysOff)) return first to emptyList()
+    var t: Instant = first
     val limit = now.toLocalDateTime(zone).date.plus(DAYS_OFF_LOOK_AHEAD, DateTimeUnit.DAY)
     val skips = mutableListOf<DayOffSkip>()
     while (true) {
@@ -91,7 +94,7 @@ private fun Alarm.nextRingAndSkips(now: Instant, zone: TimeZone, daysOff: DaysOf
         val title = daysOff[date]
         if (title == null || date > limit) return t to skips
         skips += DayOffSkip(date, title)
-        t = nextTrigger(t, zone)
+        t = nextTrigger(t, zone) ?: return null to skips
     }
 }
 
@@ -100,14 +103,17 @@ private fun Alarm.nextRingAndSkips(now: Instant, zone: TimeZone, daysOff: DaysOf
  * ring that isn't a day off, so the button never offers to skip a ring that won't happen anyway.
  */
 fun Alarm.skipping(now: Instant, zone: TimeZone, daysOff: DaysOff): LocalDate? =
-    skipDate?.takeIf { repeats && copy(skipDate = null).nextRing(now, zone, daysOff).toLocalDateTime(zone).date <= it }
+    skipDate?.takeIf { skip -> repeats && copy(skipDate = null).nextRingDate(now, zone, daysOff).let { it != null && it <= skip } }
 
 /** *Skip next* counting [daysOff]: skips the next ring that isn't a day off, or brings back a skipped one. */
 fun Alarm.toggleSkip(now: Instant, zone: TimeZone, daysOff: DaysOff): Alarm = when {
     !repeats -> this
     skipping(now, zone, daysOff) != null -> copy(skipDate = null)
-    else -> copy(skipDate = copy(skipDate = null).nextRing(now, zone, daysOff).toLocalDateTime(zone).date)
+    else -> copy(skipDate = copy(skipDate = null).nextRingDate(now, zone, daysOff))
 }
+
+private fun Alarm.nextRingDate(now: Instant, zone: TimeZone, daysOff: DaysOff): LocalDate? =
+    nextRing(now, zone, daysOff)?.toLocalDateTime(zone)?.date
 
 private fun containsWord(text: String, word: String): Boolean {
     var from = 0

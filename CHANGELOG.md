@@ -85,6 +85,17 @@ one-line summary written for users.
   wake-up screen leaves the station playing after you dismiss the alarm.
 - **Skip the next alarm:** a repeating alarm can skip its next ring, for a day off, without being switched
   off and back on. *Undo skip* brings it back, and changing the alarm's time or days drops the skip.
+- **One-time alarms on a date:** an alarm without repeat days can be set for a day of your choice, such as a
+  flight on Friday, with *Date* on its card; the list shows the day (*Fri 21 Nov*). It rings once, at its time
+  on that day, and then switches itself off. Without a date a one-time alarm rings the next time its time comes,
+  as before. A date and repeat days don't go together: picking days takes the date off. Past dates can't be
+  picked, days off don't silence it, and switching it back on after its day takes the date off.
+- **Alarms that make sure you're awake:** each alarm has *To stop it*: *Just tap* (as before), *Solve a sum*
+  or *Hold the button 3 s*. *Solve a sum* asks for one to three additions such as 37 + 48, typed on a numeric
+  keypad (*Sums to stop an alarm* under Settings › Alarms); a wrong answer just brings a new sum, never a wait,
+  and TalkBack reads each sum aloud. Snooze is always one tap, and with a challenge the notification's button
+  opens the wake-up screen instead of dismissing. If the challenge can't be shown, the alarm falls back to a
+  tap, so it can always be stopped.
 - **A sunrise before your alarms:** in the 20 minutes before an alarm the clock slowly brightens, up to the
   brightest level you allow, and warms from night red through amber to a soft white, so the room is light
   when the alarm rings. It starts gently and speeds up, like a real dawn, and ends when the alarm rings. It
