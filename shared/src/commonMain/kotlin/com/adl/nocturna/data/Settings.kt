@@ -80,6 +80,8 @@ data class Settings(
     val focusBreakMinutes: Int = 5,
     /** Minutes in the long break after every fourth focus block, one of [FOCUS_LONG_BREAK_MINUTES]. */
     val focusLongBreakMinutes: Int = 15,
+    /** The next few hours' weather under day mode's weather line, when the weather shows. */
+    val dayHourlyWeather: Boolean = true,
     // Launching
     val autoStartOnCharge: Boolean = false,
     /** Priority-only Do Not Disturb while the clock shows at night; needs Do Not Disturb access. */
