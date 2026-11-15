@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -131,12 +132,30 @@ fun <T> ChoiceRow(title: String, options: List<T>, selected: T, label: (T) -> St
 }
 
 @Composable
-fun ColorRow(colors: List<Int>, selected: Int, onSelect: (Int) -> Unit) {
+fun ColorRow(
+    colors: List<Int>,
+    selected: Int?,
+    wallpaper: Int? = null,
+    wallpaperSelected: Boolean = false,
+    onSelectWallpaper: () -> Unit = {},
+    onSelect: (Int) -> Unit,
+) {
     FlowRow(
         Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        // Material You: offered only where the phone has a wallpaper palette (Android 12 and later).
+        if (wallpaper != null) {
+            Box(Modifier.height(40.dp), contentAlignment = Alignment.CenterStart) {
+                FilterChip(
+                    selected = wallpaperSelected,
+                    onClick = onSelectWallpaper,
+                    label = { Text("From wallpaper") },
+                    leadingIcon = { Box(Modifier.size(18.dp).clip(CircleShape).background(Color(wallpaper))) },
+                )
+            }
+        }
         colors.forEach { c ->
             Box(
                 Modifier

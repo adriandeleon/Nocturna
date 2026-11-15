@@ -20,6 +20,7 @@ object SettingsCodec {
         put("showSeconds", s.showSeconds)
         put("font", s.font.name)
         put("color", s.color)
+        put("colorFromWallpaper", s.colorFromWallpaper)
         put("showDate", s.showDate)
         put("showBattery", s.showBattery)
         put("showNextAlarm", s.showNextAlarm)
@@ -84,6 +85,7 @@ object SettingsCodec {
             showSeconds = j.optBoolean("showSeconds", d.showSeconds),
             font = enumOr(j.optString("font"), d.font),
             color = j.optInt("color", d.color),
+            colorFromWallpaper = j.optBoolean("colorFromWallpaper", d.colorFromWallpaper),
             showDate = j.optBoolean("showDate", d.showDate),
             showBattery = j.optBoolean("showBattery", d.showBattery),
             showNextAlarm = j.optBoolean("showNextAlarm", d.showNextAlarm),

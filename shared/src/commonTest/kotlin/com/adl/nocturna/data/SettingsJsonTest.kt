@@ -31,6 +31,17 @@ class SettingsJsonTest {
         assertEquals(settings, roundTrip(settings))
     }
 
+    @Test fun wallpaperColourSurvivesRoundTrip() {
+        val settings = Settings(color = 0xFFFFD27A.toInt(), colorFromWallpaper = true)
+        assertEquals(settings, roundTrip(settings))
+    }
+
+    @Test fun settingsSavedBeforeTheWallpaperColourKeepTheirSwatch() {
+        val loaded = SettingsCodec.decode(stored(Settings(color = 0xFFFFD27A.toInt()), remove = listOf("colorFromWallpaper")))
+        assertFalse(loaded.colorFromWallpaper)
+        assertEquals(0xFFFFD27A.toInt(), loaded.color)
+    }
+
     @Test fun settingsSavedBeforeDayModeLoadWithItOff() {
         val loaded = SettingsCodec.decode(stored(remove = listOf("dayMode", "showCalendarEvents", "dayCalendarView", "dayPhotoVersion")))
         assertEquals(DayMode.OFF, loaded.dayMode)

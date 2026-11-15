@@ -128,11 +128,12 @@ fun ClockScreen(
     )
     LaunchedEffect(brightness) { onBrightness(brightness) }
 
+    val wallpaperColor = platform.wallpaperColor()
     // Day mode's clock is white with a soft shadow, to read well over its colourful background.
     val color = when {
         day -> Color.White
         night -> sunriseColor(NightRed, night = true, sunrise)
-        else -> sunriseColor(Color(settings.color), night = false, sunrise)
+        else -> sunriseColor(Color(clockColor(settings, wallpaperColor)), night = false, sunrise)
     }
     val shadow = if (day) Shadow(Color.Black.copy(alpha = 0.35f), Offset(0f, 3f), 14f) else null
     val contentAlpha by animateFloatAsState(if (night) 0.55f + 0.45f * sunrise else 1f, tween(2000), label = "alpha")

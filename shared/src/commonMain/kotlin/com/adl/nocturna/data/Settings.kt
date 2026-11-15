@@ -21,6 +21,8 @@ data class Settings(
     val showSeconds: Boolean = false,
     val font: ClockFont = ClockFont.THIN,
     val color: Int = 0xFF8FD3FF.toInt(),
+    /** Material You: the clock takes a light accent from the wallpaper instead of [color], where the phone has one. */
+    val colorFromWallpaper: Boolean = false,
     // Info line
     val showDate: Boolean = true,
     val showBattery: Boolean = true,

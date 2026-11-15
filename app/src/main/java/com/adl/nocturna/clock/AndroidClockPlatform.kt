@@ -65,4 +65,7 @@ class AndroidClockPlatform(context: Context) : ClockPlatform {
     override suspend fun loadDayPhoto(): ImageBitmap? = DayPhoto.load(app)
 
     override fun playMeetingChime() = MeetingChime.play(app)
+
+    @Composable
+    override fun wallpaperColor(): Int? = rememberWallpaperColor()
 }
