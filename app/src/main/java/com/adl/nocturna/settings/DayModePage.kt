@@ -114,6 +114,16 @@ fun DayModePage(padding: PaddingValues) {
                 set { it.copy(dayCalendarView = v) }
             }
             Hint("On the clock, swipe the calendar page to switch between month, week and day", Modifier.padding(bottom = 6.dp))
+            if (s.showCalendarEvents) {
+                ChoiceRow("Chime before meetings", Settings.MEETING_CHIME_MINUTES, s.meetingChimeMinutes, { if (it == 0) "Off" else "$it min" }) { v ->
+                    set { it.copy(meetingChimeMinutes = v) }
+                }
+                Hint(
+                    "The note counts down to meetings in the next hour. The chime is one soft tone at the notification " +
+                        "volume, only while day mode is showing, and not on silent or Do Not Disturb",
+                    Modifier.padding(bottom = 6.dp),
+                )
+            }
         }
         SettingsGroup("Screen care") {
             if (s.dimEnabled && s.autoBrightness) {

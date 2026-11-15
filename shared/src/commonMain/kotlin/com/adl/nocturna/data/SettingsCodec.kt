@@ -42,6 +42,7 @@ object SettingsCodec {
         put("dayCalendarView", s.dayCalendarView.name)
         put("dayMaxBrightness", s.dayMaxBrightness.toDouble())
         put("dayPhotoVersion", s.dayPhotoVersion)
+        put("meetingChimeMinutes", s.meetingChimeMinutes)
         put("autoStartOnCharge", s.autoStartOnCharge)
         put("weatherUseDeviceLocation", s.weatherUseDeviceLocation)
         put("weatherCity", s.weatherCity)
@@ -109,6 +110,8 @@ object SettingsCodec {
             dayMaxBrightness = j.optDouble("dayMaxBrightness", d.dayMaxBrightness.toDouble()).toFloat()
                 .let { if (it.isNaN()) d.dayMaxBrightness else it.coerceIn(Settings.DAY_BRIGHTNESS_RANGE) },
             dayPhotoVersion = j.optLong("dayPhotoVersion", d.dayPhotoVersion),
+            meetingChimeMinutes = j.optInt("meetingChimeMinutes", d.meetingChimeMinutes)
+                .let { if (it in Settings.MEETING_CHIME_MINUTES) it else d.meetingChimeMinutes },
             autoStartOnCharge = j.optBoolean("autoStartOnCharge", d.autoStartOnCharge),
             weatherUseDeviceLocation = j.optBoolean("weatherUseDeviceLocation", d.weatherUseDeviceLocation),
             weatherCity = j.optString("weatherCity", d.weatherCity),

@@ -12,6 +12,7 @@ import com.adl.nocturna.data.Station
 import com.adl.nocturna.day.CalendarEvent
 import com.adl.nocturna.day.CalendarEvents
 import com.adl.nocturna.day.DayPhoto
+import com.adl.nocturna.day.MeetingChime
 import com.adl.nocturna.day.rememberCalendarEvents
 import com.adl.nocturna.notify.NotificationIconService
 import com.adl.nocturna.radio.Radio
@@ -62,4 +63,6 @@ class AndroidClockPlatform(context: Context) : ClockPlatform {
     override fun hasCalendarAccess(): Boolean = CalendarEvents.hasPermission(app)
 
     override suspend fun loadDayPhoto(): ImageBitmap? = DayPhoto.load(app)
+
+    override fun playMeetingChime() = MeetingChime.play(app)
 }

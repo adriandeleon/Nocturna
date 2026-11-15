@@ -83,6 +83,12 @@ one-line summary written for users.
   one: *Settings › About › Backup › Export…* saves a file such as `nocturna-backup-2026-11-15.json` wherever you
   pick, and *Import…* shows what a backup holds before it replaces your settings, stations and alarms. The Day
   mode photo isn't included, and a file that isn't a Nocturna backup changes nothing.
+- **A countdown to your next meeting in Day mode:** in the hour before a timed event, the sticky note puts it
+  at the top, *In 12 min · 10:00*, counting down to *Now · until …* once it starts. Tap it to open the event.
+  When the note isn't showing (the day view, or no room under the clock), *Standup in 12 min* hangs in a small
+  tag under the desk clock instead. For a soft chime 1, 2 or 5 minutes before, set *Chime before meetings* in
+  Settings › Day mode: one quiet tone at the notification volume, once per meeting, only while Day mode is
+  showing and never on silent or Do Not Disturb.
 
 ### Changed
 

@@ -165,6 +165,14 @@ fun DayLayout(
     val theme = monthTheme(now.local.month)
     val openDay: ((LocalDate) -> Unit)? = onOpen?.let { open -> { day -> open(CalendarLink.Day(dayOpenTime(day, now.instant, now.zone))) } }
     val openEvent: ((CalendarEvent) -> Unit)? = onOpen?.let { open -> { event -> open(CalendarLink.Event(event)) } }
+    // The next meeting within the hour: picked once a minute, dropped the second it starts.
+    val minute = now.epochMillis / 60_000L
+    val next = remember(events, minute, settings.showCalendarEvents) {
+        if (!settings.showCalendarEvents) null
+        else events?.let { upcomingMeeting(it, Instant.fromEpochMilliseconds(minute * 60_000L)) }
+    }
+    val upcoming = next?.takeIf { it.begin > now.epochMillis }
+    MeetingChime(upcoming, now, settings.meetingChimeMinutes)
 
     // The page starts on the view chosen in Settings; a swipe (or the switch under the page)
     // changes it for as long as the clock stays open. The screen saver can't be swiped.
@@ -203,12 +211,16 @@ fun DayLayout(
                             note = if (!showNote) null else {
                                 {
                                     StickyNote(
-                                        now, events, settings.use24h, theme, noteFont, openDay, openEvent,
+                                        now, events, upcoming, settings.use24h, theme, noteFont, openDay, openEvent,
                                         Modifier.widthIn(max = 380.dp).drift(noteDrift, 28.dp, 14.dp),
                                     )
                                 }
                             },
                             smallestNote = { SmallestNote(now, noteFont, Modifier.widthIn(max = 380.dp)) },
+                            // Without the note, the countdown hangs under the desk clock instead.
+                            countdown = upcoming?.let { e ->
+                                { CountdownTag(countdownLine(e, now.instant), noteFont, openEvent?.let { open -> { open(e) } }, Modifier.drift(clockDrift, 28.dp, 14.dp)) }
+                            },
                             modifier = Modifier.weight(1f).fillMaxHeight(),
                         )
                     }
@@ -224,14 +236,24 @@ fun DayLayout(
             Crossfade(sidesSwapped(now.hour, settings.burnInProtection), animationSpec = tween(1500), label = "ends") { swapped ->
                 Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
                     val clockEnd = @Composable {
-                        Box(Modifier.padding(vertical = 16.dp)) { ClockPanel(clock, Modifier.drift(clockDrift, 24.dp, 8.dp)) }
+                        Column(Modifier.padding(vertical = 16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                            ClockPanel(clock, Modifier.drift(clockDrift, 24.dp, 8.dp))
+                            // Without the note (the day view), the countdown hangs under the desk clock.
+                            if (!showNote && upcoming != null) {
+                                Spacer(Modifier.height(COUNTDOWN_GAP))
+                                CountdownTag(
+                                    countdownLine(upcoming, now.instant), noteFont, openEvent?.let { open -> { open(upcoming) } },
+                                    Modifier.drift(clockDrift, 24.dp, 8.dp),
+                                )
+                            }
+                        }
                     }
                     if (!swapped) clockEnd()
                     page(Modifier.fillMaxWidth().weight(1.6f).drift(pageDrift, 16.dp, 8.dp))
                     if (showNote) {
                         Spacer(Modifier.height(20.dp))
                         StickyNote(
-                            now, events, settings.use24h, theme, noteFont, openDay, openEvent,
+                            now, events, upcoming, settings.use24h, theme, noteFont, openDay, openEvent,
                             Modifier.fillMaxWidth(0.9f).weight(1f, fill = false).drift(noteDrift, 20.dp, 8.dp),
                         )
                     }
@@ -245,7 +267,8 @@ fun DayLayout(
 /**
  * The clock with the sticky note under it, the pair centred in the space. [note] is left out when
  * [smallestNote] (the note with its greeting and one event) doesn't fit under the clock, and
- * otherwise gets all the height the clock leaves.
+ * otherwise gets all the height the clock leaves. When the note is left out, [countdown] (if any)
+ * goes under the clock instead, no wider than it, and only if it fits too.
  */
 @Composable
 private fun ClockOverNote(
@@ -253,6 +276,7 @@ private fun ClockOverNote(
     clock: @Composable () -> Unit,
     note: (@Composable () -> Unit)?,
     smallestNote: @Composable () -> Unit,
+    countdown: (@Composable () -> Unit)?,
     modifier: Modifier,
 ) {
     SubcomposeLayout(modifier) { constraints ->
@@ -266,13 +290,25 @@ private fun ClockOverNote(
             else subcompose("note", note).map { it.measure(loose.copy(maxHeight = constraints.maxHeight - clockHeight - gapPx)) }
         }
         val noteHeight = notePlaceables.maxOfOrNull { it.height } ?: 0
-        val total = clockHeight + if (notePlaceables.isEmpty()) 0 else gapPx + noteHeight
+        val clockWidth = clockPlaceables.maxOfOrNull { it.width } ?: 0
+        val tagGapPx = COUNTDOWN_GAP.roundToPx()
+        val tagPlaceables = if (notePlaceables.isNotEmpty() || countdown == null) emptyList() else {
+            val tag = subcompose("countdown", countdown).map { it.measure(loose.copy(maxWidth = clockWidth)) }
+            if (clockHeight + tagGapPx + (tag.maxOfOrNull { it.height } ?: 0) <= constraints.maxHeight) tag else emptyList()
+        }
+        val tagHeight = tagPlaceables.maxOfOrNull { it.height } ?: 0
+        val total = clockHeight + when {
+            notePlaceables.isNotEmpty() -> gapPx + noteHeight
+            tagPlaceables.isNotEmpty() -> tagGapPx + tagHeight
+            else -> 0
+        }
         val width = constraints.maxWidth
         val height = constraints.maxHeight
         layout(width, height) {
             val top = (height - total) / 2
             clockPlaceables.forEach { it.place((width - it.width) / 2, top) }
             notePlaceables.forEach { it.place((width - it.width) / 2, top + clockHeight + gapPx) }
+            tagPlaceables.forEach { it.place((width - it.width) / 2, top + clockHeight + tagGapPx) }
         }
     }
 }
@@ -285,9 +321,52 @@ private fun ClockPanel(clock: @Composable () -> Unit, modifier: Modifier = Modif
         modifier
             .shadow(10.dp, shape)
             .clip(shape)
-            .background(Brush.verticalGradient(listOf(Color(0xFF2B3A55), Color(0xFF1C263A))))
+            .background(Brush.verticalGradient(DeskClockNavy))
             .padding(horizontal = 28.dp, vertical = 12.dp)
     ) { clock() }
+}
+
+private val DeskClockNavy = listOf(Color(0xFF2B3A55), Color(0xFF1C263A))
+
+/** Space between the desk clock and the countdown hung under it. */
+private val COUNTDOWN_GAP = 10.dp
+
+/**
+ * The next meeting's countdown, e.g. "Standup in 12 min", in a small navy tag under the desk clock:
+ * where it goes when the sticky note isn't showing. A tap opens the event.
+ */
+@Composable
+private fun CountdownTag(text: String, fontSize: TextUnit, onClick: (() -> Unit)?, modifier: Modifier) {
+    val shape = RoundedCornerShape(50)
+    Text(
+        text,
+        style = TextStyle(color = Color.White, fontSize = fontSize * 0.85f, fontWeight = FontWeight.Medium, fontFeatureSettings = "tnum"),
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        modifier = modifier
+            .shadow(6.dp, shape)
+            .clip(shape)
+            .background(Brush.verticalGradient(DeskClockNavy))
+            .clickable(enabled = onClick != null, onClickLabel = "Open in your calendar") { onClick?.invoke() }
+            .padding(horizontal = 16.dp, vertical = 6.dp),
+    )
+}
+
+/**
+ * Plays the soft chime [minutesBefore] minutes before [event], once per event, while day mode is up.
+ * Remembered across rotation, so turning the phone in that minute doesn't chime again.
+ */
+@Composable
+private fun MeetingChime(event: CalendarEvent?, now: Moment, minutesBefore: Int) {
+    val platform = LocalClockPlatform.current
+    var chimed by rememberSaveable { mutableStateOf<String?>(null) }
+    val due = event?.takeIf { shouldChime(it, now.instant, minutesBefore, chimed) }?.let(::chimeKey)
+    LaunchedEffect(due) {
+        if (due != null) {
+            chimed = due
+            platform.playMeetingChime()
+        }
+    }
 }
 
 /**
@@ -743,6 +822,7 @@ private fun Rings(modifier: Modifier, cell: Dp) {
 private fun StickyNote(
     now: Moment,
     events: List<CalendarEvent>?,
+    upcoming: CalendarEvent?,
     use24h: Boolean,
     theme: MonthTheme,
     fontSize: TextUnit,
@@ -753,7 +833,7 @@ private fun StickyNote(
     // Anywhere on the note but an event opens today; an event opens itself.
     NotePaper(onOpenDay?.let { open -> { open(now.date) } }, modifier) {
         Greeting(now, fontSize)
-        Agenda(now, events, use24h, theme.accent, fontSize, onOpenEvent, Modifier.weight(1f, fill = false))
+        Agenda(now, events, upcoming, use24h, theme.accent, fontSize, onOpenEvent, Modifier.weight(1f, fill = false))
     }
 }
 
@@ -803,6 +883,8 @@ private fun NotePaper(onClick: (() -> Unit)?, modifier: Modifier, content: @Comp
 private fun Agenda(
     now: Moment,
     events: List<CalendarEvent>?,
+    /** The next meeting within the hour: first on the note, counting down, and not repeated below. */
+    upcoming: CalendarEvent?,
     use24h: Boolean,
     accent: Color,
     fontSize: TextUnit,
@@ -824,9 +906,16 @@ private fun Agenda(
     when {
         !access -> Text("Allow calendar access in Settings to see today's events here", style = faint, modifier = modifier)
         shown == null -> Unit // still loading
-        shown.isEmpty() -> Text("Nothing else on your calendar today. Enjoy!", style = faint, modifier = modifier)
+        shown.isEmpty() && upcoming == null -> Text("Nothing else on your calendar today. Enjoy!", style = faint, modifier = modifier)
         else -> FitColumn(8.dp, modifier, more = { n -> Text("+$n more today", style = faint) }) {
+            if (upcoming != null) {
+                EventRow(
+                    upcoming.title, countdownLabel(upcoming, instant, now.zone, time), upcoming.color?.let { Color(it) } ?: accent,
+                    fontSize, emphasised = true, onClick = onOpenEvent?.let { open -> { open(upcoming) } },
+                )
+            }
             shown.forEach { e ->
+                if (e == upcoming) return@forEach
                 val ongoing = e.isOngoing(instant)
                 val whenText = when {
                     e.allDay -> "All day"
