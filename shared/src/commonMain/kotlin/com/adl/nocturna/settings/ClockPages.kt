@@ -157,6 +157,12 @@ fun BrightnessPage(padding: PaddingValues) {
                     "Tap to peek", s.tapToPeek,
                     "A tap on the dim clock brightens it for a few seconds; tap again for the controls",
                 ) { v -> set { it.copy(tapToPeek = v) } }
+                if (s.tapToPeek && LocalClockPlatform.current.proximity != null) {
+                    SwitchRow(
+                        "Wave to peek", s.waveToPeek,
+                        "A wave of the hand over the top of the phone peeks too, at night",
+                    ) { v -> set { it.copy(waveToPeek = v) } }
+                }
             }
             SettingsGroup("Night mode") {
                 SwitchRow("Night mode", s.nightModeEnabled, "Dim red clock when the room is dark") { v ->

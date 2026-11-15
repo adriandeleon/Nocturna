@@ -23,7 +23,8 @@ import com.adl.nocturna.ui.NocturnaTheme
 /**
  * The Android screen saver ("Daydream"). Pick it under Settings > Display > Screen saver and set it
  * to start while charging. It shows the same clock as the app, without the controls. With tap to peek on,
- * a tap on the dim clock brightens it for a moment, and a tap that doesn't peek ends the screen saver.
+ * a tap on the dim clock brightens it for a moment, and a tap that doesn't peek ends the screen saver. With
+ * wave to peek on too, a wave over the proximity sensor peeks as well; it never ends the screen saver.
  */
 class NocturnaDream : DreamService(), LifecycleOwner, SavedStateRegistryOwner {
     private val lifecycleRegistry = LifecycleRegistry(this)
@@ -46,12 +47,14 @@ class NocturnaDream : DreamService(), LifecycleOwner, SavedStateRegistryOwner {
         isFullscreen = true
         isScreenBright = true // we manage brightness ourselves
 
+        // One platform for the dream's life, so a recomposition never turns wave to peek's sensor off and on again.
+        val platform = AndroidClockPlatform(this)
         val view = ComposeView(this).apply {
             setViewTreeLifecycleOwner(this@NocturnaDream)
             setViewTreeSavedStateRegistryOwner(this@NocturnaDream)
             setContent {
                 NocturnaTheme {
-                    CompositionLocalProvider(LocalClockPlatform provides AndroidClockPlatform(this@NocturnaDream)) {
+                    CompositionLocalProvider(LocalClockPlatform provides platform) {
                         ClockScreen(
                             interactive = false,
                             onBrightness = { window?.setBrightness(it) },

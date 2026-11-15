@@ -51,6 +51,8 @@ data class Settings(
     val nightModeLux: Float = 4f,
     /** A tap on the dim clock brightens it for a few seconds before a second tap shows the controls. */
     val tapToPeek: Boolean = true,
+    /** With [tapToPeek], a wave of the hand over the top of the phone peeks too; needs a proximity sensor. */
+    val waveToPeek: Boolean = false,
     val burnInProtection: Boolean = true,
     // Day mode
     /** Clock beside a month calendar, for a desk during the day; never turns night red. */
@@ -103,6 +105,8 @@ data class Settings(
     val snoozeMinutes: Int = 9,
     val alarmRampSeconds: Int = 45,
     val alarmVibrate: Boolean = true,
+    /** A wave of the hand over the top of the phone snoozes a ringing alarm; needs a proximity sensor. */
+    val waveToSnooze: Boolean = false,
     /** How many sums an alarm set to *Solve a sum* asks for, in [SUM_COUNTS]: the difficulty. */
     val alarmSums: Int = 1,
     /** Minutes before an alarm over which the clock brightens and warms up; 0 turns it off. */

@@ -94,7 +94,7 @@ import kotlin.random.Random
 /**
  * The bedside clock: interactive in the app, with a tap-to-show control bar, and display only in the
  * screen saver. In day mode it sits beside a calendar ([DayLayout]). It reads the phone through
- * [LocalClockPlatform]. A tap on the dim clock peeks first (see [clockTap]).
+ * [LocalClockPlatform]. A tap on the dim clock peeks first (see [clockTap]), and so can a wave ([clockWave]).
  *
  * @param onBrightness receives the window brightness to apply (0..1), or -1 for "system default".
  */
@@ -210,6 +210,10 @@ fun ClockScreen(
             ClockTap.SHOW_CONTROLS -> if (interactive) controlsVisible = true else onDismiss?.invoke()
             ClockTap.HIDE_CONTROLS -> controlsVisible = false
         }
+    }
+    // Wave to peek: the night clock only, and only with tap to peek on. The sensor is off otherwise.
+    WaveEffect(platform.proximity, enabled = settings.waveToPeek && settings.tapToPeek && !day) {
+        if (clockWave(controlsVisible, peeking = peek > 0f, canPeek = peekAllowed)) peekMark = TimeSource.Monotonic.markNow()
     }
 
     BoxWithConstraints(

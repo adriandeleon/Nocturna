@@ -95,6 +95,7 @@ fun AlarmsScreen(padding: PaddingValues) {
     val snooze by AlarmStore.snooze.collectAsStateWithLifecycle()
     val s by SettingsStore.settings.collectAsStateWithLifecycle()
     val platform = LocalSettingsPlatform.current
+    val hasProximity = LocalClockPlatform.current.proximity != null
     val access = platform.access()
     val notificationsAllowed = access.notifications
     val askNotifications = platform.rememberPermissionRequest(Permission.NOTIFICATIONS) { }
@@ -181,6 +182,14 @@ fun AlarmsScreen(padding: PaddingValues) {
                 ) { v -> SettingsStore.update { it.copy(alarmRampSeconds = v.roundToInt()) } }
             }
             item { SwitchRow("Vibrate", s.alarmVibrate) { v -> SettingsStore.update { it.copy(alarmVibrate = v) } } }
+            if (hasProximity) {
+                item {
+                    SwitchRow(
+                        "Wave to snooze", s.waveToSnooze,
+                        "A wave of the hand over the top of the phone snoozes a ringing alarm",
+                    ) { v -> SettingsStore.update { it.copy(waveToSnooze = v) } }
+                }
+            }
             if (alarms.any { it.challenge == DismissChallenge.SUM }) {
                 item {
                     ChoiceRow("Sums to stop an alarm", SUM_COUNTS.toList(), s.alarmSums, ::sumsLabel) { v ->

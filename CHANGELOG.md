@@ -96,6 +96,14 @@ one-line summary written for users.
   and TalkBack reads each sum aloud. Snooze is always one tap, and with a challenge the notification's button
   opens the wake-up screen instead of dismissing. If the challenge can't be shown, the alarm falls back to a
   tap, so it can always be stopped.
+- **Wave to snooze, and wave to peek:** with Settings › Alarms › *Wave to snooze* on, a wave of the hand over
+  the top of the phone snoozes a ringing alarm, just like the Snooze button; it never stops the alarm, so a
+  dismiss challenge still stands. With Settings › Brightness and night mode › *Wave to peek* on (next to *Tap to
+  peek*), a wave peeks at the dim night clock, in the app and the screen saver, the same as a tap; Day mode
+  isn't affected. A wave is the hand passing over and away within about a second and a half, so a phone lying
+  face down, in a pocket or under a pillow doesn't count, and one wave is one snooze or peek. Both are off by
+  default and only show on phones with a proximity sensor, which is on only while the wake-up screen or the
+  night clock is showing.
 - **A sunrise before your alarms:** in the 20 minutes before an alarm the clock slowly brightens, up to the
   brightest level you allow, and warms from night red through amber to a soft white, so the room is light
   when the alarm rings. It starts gently and speeds up, like a real dawn, and ends when the alarm rings. It

@@ -38,6 +38,7 @@ object SettingsCodec {
         put("nightModeEnabled", s.nightModeEnabled)
         put("nightModeLux", s.nightModeLux.toDouble())
         put("tapToPeek", s.tapToPeek)
+        put("waveToPeek", s.waveToPeek)
         put("burnInProtection", s.burnInProtection)
         put("dayMode", s.dayMode.name)
         put("dayModeStart", s.dayModeStart)
@@ -69,6 +70,7 @@ object SettingsCodec {
         put("snoozeMinutes", s.snoozeMinutes)
         put("alarmRampSeconds", s.alarmRampSeconds)
         put("alarmVibrate", s.alarmVibrate)
+        put("waveToSnooze", s.waveToSnooze)
         put("alarmSums", s.alarmSums)
         put("sunriseMinutes", s.sunriseMinutes)
         put("alarmShowWeather", s.alarmShowWeather)
@@ -117,6 +119,7 @@ object SettingsCodec {
             nightModeEnabled = j.optBoolean("nightModeEnabled", d.nightModeEnabled),
             nightModeLux = j.optDouble("nightModeLux", d.nightModeLux.toDouble()).toFloat(),
             tapToPeek = j.optBoolean("tapToPeek", d.tapToPeek),
+            waveToPeek = j.optBoolean("waveToPeek", d.waveToPeek),
             burnInProtection = j.optBoolean("burnInProtection", d.burnInProtection),
             dayMode = when {
                 // Versions before the schedule stored a plain switch.
@@ -152,6 +155,7 @@ object SettingsCodec {
             snoozeMinutes = j.optInt("snoozeMinutes", d.snoozeMinutes),
             alarmRampSeconds = j.optInt("alarmRampSeconds", d.alarmRampSeconds),
             alarmVibrate = j.optBoolean("alarmVibrate", d.alarmVibrate),
+            waveToSnooze = j.optBoolean("waveToSnooze", d.waveToSnooze),
             alarmSums = j.optInt("alarmSums", d.alarmSums).coerceIn(SUM_COUNTS),
             sunriseMinutes = j.optInt("sunriseMinutes", d.sunriseMinutes).coerceIn(0, Settings.SUNRISE_CHOICES.max()),
             alarmShowWeather = j.optBoolean("alarmShowWeather", d.alarmShowWeather),
