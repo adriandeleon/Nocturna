@@ -18,15 +18,18 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.unit.Dp
+import com.adl.nocturna.clock.moonShape
 import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
 
-enum class Glyph { SUN, MOON, CLOUD, PARTLY_DAY, PARTLY_NIGHT, RAIN, SNOW, STORM, FOG, BATTERY, BOLT, ALARM, CLOCK, LIST, RADIO, INFO }
+enum class Glyph { SUN, MOON, CLOUD, PARTLY_DAY, PARTLY_NIGHT, RAIN, SNOW, STORM, FOG, BATTERY, BOLT, ALARM, CLOCK, LIST, RADIO, INFO, MOON_PHASE }
 
 /**
  * Small line icons drawn with Canvas so they can take any tint (including night-mode red)
- * without pulling in an icon library.
+ * without pulling in an icon library. [level] is the battery's charge for [Glyph.BATTERY], and where the
+ * moon is in its cycle (`moonCycle`) for [Glyph.MOON_PHASE].
  */
 @Composable
 fun GlyphIcon(glyph: Glyph, color: Color, size: Dp, modifier: Modifier = Modifier, level: Float = 1f) {
@@ -115,6 +118,7 @@ fun GlyphIcon(glyph: Glyph, color: Color, size: Dp, modifier: Modifier = Modifie
                 drawCircle(color, s * 0.05f, Offset(s / 2, s * 0.32f))
                 drawLine(color, Offset(s / 2, s * 0.46f), Offset(s / 2, s * 0.7f), stroke.width, StrokeCap.Round)
             }
+            Glyph.MOON_PHASE -> moonPhase(color, stroke, Offset(s / 2, s / 2), s * 0.38f, level.toDouble())
         }
     }
 }
@@ -138,6 +142,20 @@ private fun DrawScope.moon(color: Color, c: Offset, r: Float) {
     val disc = Path().apply { addOval(Rect(c, r)) }
     val cut = Path().apply { addOval(Rect(Offset(c.x + r * 0.55f, c.y - r * 0.45f), r * 0.9f)) }
     drawPath(Path.combine(PathOperation.Difference, disc, cut), color)
+}
+
+/** The moon's outline with its lit part filled in, as [moonShape] has it at [cycle]. */
+private fun DrawScope.moonPhase(color: Color, stroke: Stroke, c: Offset, r: Float, cycle: Double) {
+    drawCircle(color, r, c, style = stroke)
+    val shape = moonShape(cycle)
+    val half = Path().apply {
+        arcTo(Rect(c, r), if (shape.litOnRight) -90f else 90f, 180f, forceMoveTo = true)
+        close()
+    }
+    val w = r * abs(shape.bulge)
+    val terminator = Path().apply { addOval(Rect(c.x - w, c.y - r, c.x + w, c.y + r)) }
+    val op = if (shape.bulge >= 0f) PathOperation.Union else PathOperation.Difference
+    drawPath(Path.combine(op, half, terminator), color)
 }
 
 /** A cloud outline built from overlapping circles; [dy] shifts it vertically. */

@@ -25,6 +25,10 @@ one-line summary written for users.
   dimming off.
 - **Night mode:** when the room goes dark the clock turns dim red; without a light sensor it follows the time
   (22:00–07:00).
+- **The moon's phase on the night clock:** Settings › Show on the clock › *Moon phase* (off by default) adds
+  the moon's phase to the info line, a small drawing of the lit part with its name (*Waxing gibbous*), worked
+  out on the phone to within about a day, no network needed. It follows night mode's red, and Day mode keeps
+  its own moon.
 - **Tap to peek at the dim clock:** in the dark, a tap on the dim red clock brightens it for about six seconds,
   to a comfortable 40% of your brightest level and a soft warm colour, then it fades back; tap again during the
   peek for the controls. The screen saver peeks too, and a second tap closes it. Before an alarm, whichever is
