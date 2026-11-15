@@ -60,6 +60,9 @@ interface ClockPlatform {
      */
     @Composable
     fun wallpaperColor(): Int? = null
+
+    /** The proximity sensor at the top of the screen, for wave to peek and wave to snooze; null without one. */
+    val proximity: Proximity? get() = null
 }
 
 val LocalClockPlatform = staticCompositionLocalOf<ClockPlatform> { error("No ClockPlatform provided") }

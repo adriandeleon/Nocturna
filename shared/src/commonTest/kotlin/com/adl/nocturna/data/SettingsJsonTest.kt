@@ -254,4 +254,20 @@ class SettingsJsonTest {
         assertFalse(loaded.showMoon)
         assertFalse(loaded.showBattery)
     }
+
+    @Test fun waveSwitchesSurviveRoundTrip() {
+        val loaded = roundTrip(Settings(waveToSnooze = true, waveToPeek = true))
+        assertTrue(loaded.waveToSnooze)
+        assertTrue(loaded.waveToPeek)
+    }
+
+    @Test fun settingsSavedBeforeWavesLoadWithThemOff() {
+        val loaded = SettingsCodec.decode(
+            stored(Settings(waveToSnooze = true, waveToPeek = true, tapToPeek = false, alarmVibrate = false), remove = listOf("waveToSnooze", "waveToPeek")),
+        )
+        assertFalse(loaded.waveToSnooze)
+        assertFalse(loaded.waveToPeek)
+        assertFalse(loaded.tapToPeek)
+        assertFalse(loaded.alarmVibrate)
+    }
 }

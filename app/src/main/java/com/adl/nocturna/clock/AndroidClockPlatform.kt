@@ -58,4 +58,6 @@ class AndroidClockPlatform(context: Context) : ClockPlatform {
 
     @Composable
     override fun wallpaperColor(): Int? = rememberWallpaperColor()
+
+    override val proximity: Proximity? = AndroidProximity.of(app)
 }

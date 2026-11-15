@@ -31,6 +31,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.adl.nocturna.clock.DigitalClock
+import com.adl.nocturna.clock.Proximity
+import com.adl.nocturna.clock.WaveEffect
 import com.adl.nocturna.clock.rememberNow
 import com.adl.nocturna.data.SettingsStore
 import com.adl.nocturna.data.Station
@@ -45,7 +47,8 @@ import com.adl.nocturna.weather.wakeWeather
  *
  * Dismissing, and keeping on listening, take the alarm's [challenge]: a tap, the button held for
  * [HOLD_TO_STOP_MILLIS], or the sums from [seed] on a page of their own. Snoozing is always one tap. When the
- * challenge fails it calls [onChallengeFailed]; the host then passes [DismissChallenge.TAP] instead.
+ * challenge fails it calls [onChallengeFailed]; the host then passes [DismissChallenge.TAP] instead. With
+ * wave to snooze on, a wave of the hand over the [proximity] sensor snoozes too.
  */
 @Composable
 fun AlarmScreen(
@@ -57,8 +60,12 @@ fun AlarmScreen(
     challenge: DismissChallenge = DismissChallenge.TAP,
     seed: Long = 0L,
     onChallengeFailed: (Throwable) -> Unit = {},
+    /** The proximity sensor, for wave to snooze; null without one. */
+    proximity: Proximity? = null,
 ) {
     val settings = SettingsStore.current
+    // Wave to snooze: a wave does what the Snooze button does, never more, so the challenge stands.
+    WaveEffect(proximity, settings.waveToSnooze, onSnooze)
     val now by rememberNow()
     val accent = Color(settings.color)
     val weather by WeatherRepository.weather.collectAsStateWithLifecycle()

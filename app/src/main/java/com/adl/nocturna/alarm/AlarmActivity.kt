@@ -13,6 +13,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import com.adl.nocturna.clock.AndroidProximity
 import com.adl.nocturna.data.SettingsStore
 import com.adl.nocturna.radio.Radio
 import com.adl.nocturna.ui.NocturnaTheme
@@ -28,9 +29,12 @@ import kotlin.time.Clock
  * screen. While a radio alarm plays, "Keep listening" dismisses the alarm and carries on with the station
  * in the normal radio player. The weather under the time is refreshed in the background when it is old;
  * the ringing itself is [AlarmService]'s and never waits for it. If the alarm's [DismissChallenge] fails,
- * [AlarmService] falls back to a tap, so the alarm can always be stopped.
+ * [AlarmService] falls back to a tap, so the alarm can always be stopped. With wave to snooze on, a wave
+ * over the proximity sensor snoozes; the sensor is on only while this screen is started.
  */
 class AlarmActivity : ComponentActivity() {
+    private val proximity by lazy { AndroidProximity.of(this) }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableDarkEdgeToEdge()
@@ -59,6 +63,7 @@ class AlarmActivity : ComponentActivity() {
                         Log.w("AlarmActivity", "Dismiss challenge failed; falling back to a tap", e)
                         AlarmService.send(this@AlarmActivity, AlarmService.ACTION_CHALLENGE_FAILED)
                     },
+                    proximity = proximity,
                 )
             }
         }

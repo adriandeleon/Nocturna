@@ -18,6 +18,7 @@ A bedside clock for Android: a big, dimmable clock for the nightstand while your
 - **Brightness**: follows the room's light sensor between a darkest and brightest level you set.
 - **Night mode**: when the room goes dark the clock turns dim red. Without a light sensor it follows the time (22:00–07:00).
 - **Tap to peek**: tap the dim clock and it brightens for about six seconds, to 40% of your brightest level and a soft warm colour, then fades back; a second tap shows the controls (in the screen saver, closes it). Before an alarm the brighter of the peek and the sunrise wins; Day mode taps go straight to the controls. Turn it off under Settings › Brightness and night mode.
+- **Wave to peek and wave to snooze**: on phones with a proximity sensor, a wave of the hand over the top of the phone can peek at the night clock like a tap (Settings › Brightness and night mode › *Wave to peek*), or snooze a ringing alarm like the Snooze button (Settings › Alarms › *Wave to snooze*); a wave never stops an alarm. A covered phone (face down, in a pocket) doesn't count. Both are off by default, and the sensor is on only while the wake-up screen or the night clock shows.
 - **Do Not Disturb at night**: while the clock shows at night (22:00–07:00, or from when night mode starts in the evening), Nocturna can turn on priority-only Do Not Disturb, so alarms still ring, and turn it off again when the clock leaves the screen or in the morning. It never undoes a change you made yourself, and Day mode doesn't touch it. Settings › Starting the clock › *Do Not Disturb at night*; needs Do Not Disturb access.
 - **Burn-in protection**: the clock drifts slowly around the screen.
 - **Day mode**: a cheerful desk clock, calendar page and sticky note for a phone on a desk stand while you work. See [Day mode](#day-mode).
@@ -82,13 +83,13 @@ the code that doesn't depend on Android, ready for an iOS app later. Both use th
 
 | Package | What's in it |
 |---|---|
-| `clock` | `ClockScreen` and the clock faces (`shared`), which reach the phone through `ClockPlatform`; `ClockActivity`, `AndroidClockPlatform` and its sensor/battery/alarm state (`app`); the brightness curve, the sunrise before alarms, tap to peek and the moon phase |
+| `clock` | `ClockScreen` and the clock faces (`shared`), which reach the phone through `ClockPlatform`; `ClockActivity`, `AndroidClockPlatform` and its sensor/battery/alarm state (`app`); the brightness curve, the sunrise before alarms, tap to peek, telling a wave from the proximity sensor (`shared`, `Wave.kt`; `AndroidProximity` in `app`) and the moon phase |
 | `day` | Day mode: the desk calendar page and sticky note and the monthly scenes (`shared`); the background photo and today's events from the calendar provider (`app`); the schedule |
 | `clock` | `ClockScreen` and the clock faces (`shared`), which reach the phone through `ClockPlatform`; `ClockActivity`, `AndroidClockPlatform` and its sensor/battery/alarm state (`app`); the brightness curve and the sunrise before alarms |
 | `day` | Day mode: the desk calendar page and sticky note, the monthly scenes, the focus timer and the world clock with its city list (`shared`); the background photo and today's events from the calendar provider (`app`); the schedule |
 | `dream` | `NocturnaDream`, the screen saver |
 | `alarm` | The wake-up screen and the rules for skipping days off (`shared`); scheduling (`AlarmManager.setAlarmClock`), the ringing service and its activity, boot receiver, days off read from the calendar (`app`) |
-| `alarm` | Scheduling (`AlarmManager.setAlarmClock`), the ringing service, the wake-up screen, boot receiver; days off read from the calendar (`app`) and the rules for skipping them (`shared`); the bedtime reminder (`app`) and its timing and the countdown to the next alarm (`shared`); when a dated one-time alarm rings, the dismiss challenges, their sums and screens (`shared`) |
+| `alarm` | Scheduling (`AlarmManager.setAlarmClock`), the ringing service, the wake-up screen, boot receiver; days off read from the calendar (`app`) and the rules for skipping them (`shared`); the bedtime reminder (`app`) and its timing and the countdown to the next alarm (`shared`); when a dated one-time alarm rings, the dismiss challenges, their sums and screens (`shared`); wave to snooze on the wake-up screen |
 | `radio` | Media3 `RadioService` and the `Radio` controller with the sleep timer |
 | `sound` | The sleep sounds: seeded noise, rain and surf generators that loop seamlessly, and the WAV encoder (`shared`); their cached WAV files (`app`, in `radio`) |
 | `weather` | Open-Meteo current conditions, daily and hourly forecast and city search; the phone's location (`app`) |
