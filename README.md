@@ -39,7 +39,7 @@ The bedside clock is for the night; Day mode is for the desk, when your phone si
 
 **Tap to open your calendar**: tap a day on the page to open your calendar app on that date, tap an event on the sticky note to open the event, or tap anywhere else on the note to open today. If the phone is locked, it asks you to unlock first. Tapping anywhere else shows the clock's buttons, as usual; the screen saver is for looking only.
 
-Side by side in landscape, stacked in portrait. Day mode never turns night red; brightness still follows the room light if *Adjust to room light* is on.
+Side by side in landscape, stacked in portrait. Day mode never turns night red; brightness still follows the room light if *Adjust to room light* is on, but stops at 50%, so a screen that's lit all day wears more slowly. Change it in Settings › Day mode › *Screen care*.
 
 **Burn-in protection**: Day mode stays on screen all day, so on OLED screens nothing in it stays put. With *Burn-in protection* on, the layout drifts around a tenth of the screen, the clock, the calendar page and the sticky note each drift on their own as well, and every other hour the clock and the page trade places (sides in landscape, top and bottom in portrait). The page's paper, the brightest thing on screen, dims by about a quarter over its first four hours up, too slowly to notice. The background keeps moving whatever the setting: the sun crosses the sky from dawn to dusk and the moon from dusk to dawn, the stars turn, the clouds float up and down as they pass, the hills scroll and swell, the flowers are replanted every hour, and your own photo pans gently. The page and the note use warm tones a touch below white.
 
@@ -65,7 +65,7 @@ the code that doesn't depend on Android, ready for an iOS app later. Both use th
 
 | Package | What's in it |
 |---|---|
-| `clock` | `ClockActivity`, the shared `ClockScreen`, clock faces, sensor/battery/alarm state |
+| `clock` | `ClockActivity`, the shared `ClockScreen`, clock faces, the brightness curve, sensor/battery/alarm state |
 | `day` | Day mode: the desk calendar page and sticky note, the monthly scenes, the background photo, today's events from the calendar provider, the schedule |
 | `dream` | `NocturnaDream`, the screen saver |
 | `alarm` | Scheduling (`AlarmManager.setAlarmClock`), the ringing service, the wake-up screen, boot receiver |

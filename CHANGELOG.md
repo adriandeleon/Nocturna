@@ -35,10 +35,12 @@ one-line summary written for users.
   calendar page and the sticky note each drift on their own, as the night clock does, while the whole layout
   drifts too, and every other hour the clock and the page trade places: sides in landscape, top and bottom in
   portrait. The page's bright paper dims so slowly you won't see it happen, by about a quarter over its first
-  four hours on screen. The scene behind them never stops moving: the sun crosses the sky from dawn to dusk
-  and the moon from dusk to dawn, slowly turning, the stars wheel around the sky, the clouds float up and down
-  as they pass, the hills scroll and swell, and the flowers (or December's trees) are replanted somewhere new
-  every hour. Your own photo pans gently.
+  four hours on screen. When the brightness follows the room, Day mode stops at 50% instead of the clock's
+  80%, since a dimmer screen wears much more slowly; change it under Settings › Day mode › *Screen care*. The
+  scene behind them never stops moving: the sun crosses the sky from dawn to dusk and the moon from dusk to
+  dawn, slowly turning, the stars wheel around the sky, the clouds float up and down as they pass, the hills
+  scroll and swell, and the flowers (or December's trees) are replanted somewhere new every hour. Your own
+  photo pans gently.
 - **Day mode on a schedule:** set Day mode to *On a schedule* with the hours and days you work, for example
   weekdays 09:00–18:00, and the clock switches to the calendar and back on its own. Hours can run past
   midnight. The *Day mode* / *Clock only* button on the clock overrides the schedule until its next start or

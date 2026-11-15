@@ -53,6 +53,11 @@ data class Settings(
     val dayModeOverrideUntil: Long = 0L,
     /** Today's events from the phone's calendars in day mode; needs READ_CALENDAR. */
     val showCalendarEvents: Boolean = false,
+    /**
+     * Day mode's brightest, when the brightness follows the room: lower than [maxBrightness], since
+     * day mode stays up all day and a bright OLED screen wears fastest.
+     */
+    val dayMaxBrightness: Float = 0.5f,
     /** The calendar page's view when day mode starts. */
     val dayCalendarView: CalendarView = CalendarView.MONTH,
     /** When the day mode photo was picked (epoch millis); 0 means no photo, use the illustration. */
@@ -85,6 +90,8 @@ data class Settings(
         )
         const val STATIONS_VERSION = 2
         const val WEEKDAYS = 0b001_1111
+        /** What [dayMaxBrightness] may be set to. */
+        val DAY_BRIGHTNESS_RANGE = 0.2f..1f
 
         val DEFAULT_STATIONS = MONTERREY_STATIONS + listOf(
             Station("SomaFM Groove Salad", "https://ice1.somafm.com/groovesalad-128-mp3"),
