@@ -50,6 +50,7 @@ object SettingsCodec {
         put("focusMinutes", s.focusMinutes)
         put("focusBreakMinutes", s.focusBreakMinutes)
         put("focusLongBreakMinutes", s.focusLongBreakMinutes)
+        put("dayHourlyWeather", s.dayHourlyWeather)
         put("autoStartOnCharge", s.autoStartOnCharge)
         put("dndWhileShowing", s.dndWhileShowing)
         put("weatherUseDeviceLocation", s.weatherUseDeviceLocation)
@@ -133,6 +134,7 @@ object SettingsCodec {
                 .let { if (it in Settings.FOCUS_BREAK_MINUTES) it else d.focusBreakMinutes },
             focusLongBreakMinutes = j.optInt("focusLongBreakMinutes", d.focusLongBreakMinutes)
                 .let { if (it in Settings.FOCUS_LONG_BREAK_MINUTES) it else d.focusLongBreakMinutes },
+            dayHourlyWeather = j.optBoolean("dayHourlyWeather", d.dayHourlyWeather),
             autoStartOnCharge = j.optBoolean("autoStartOnCharge", d.autoStartOnCharge),
             dndWhileShowing = j.optBoolean("dndWhileShowing", d.dndWhileShowing),
             weatherUseDeviceLocation = j.optBoolean("weatherUseDeviceLocation", d.weatherUseDeviceLocation),
