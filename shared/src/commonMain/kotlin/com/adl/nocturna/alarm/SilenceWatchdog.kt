@@ -1,5 +1,8 @@
 package com.adl.nocturna.alarm
 
+/** How long a radio alarm may stay silent before the alarm tone takes over. */
+const val STREAM_TIMEOUT_MS = 15_000L
+
 /**
  * Decides when a radio alarm has been silent long enough to give up on the stream and ring the alarm
  * tone instead. Silence counts from [start] (the stream hasn't started yet) and again from any moment

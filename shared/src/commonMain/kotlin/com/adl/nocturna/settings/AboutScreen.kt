@@ -13,19 +13,21 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
-import com.adl.nocturna.BuildConfig
 
 @Composable
 fun AboutScreen(padding: PaddingValues) {
-    val context = LocalContext.current
+    val uriHandler = LocalUriHandler.current
+    fun open(url: String) {
+        runCatching { uriHandler.openUri(url) }
+    }
 
     LazyColumn(Modifier.fillMaxSize(), contentPadding = padding) {
         item {
             Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 24.dp)) {
                 Text("Nocturna", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
-                Text(versionLabel(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE, BuildConfig.DEBUG), style = MaterialTheme.typography.bodyMedium)
+                Text(LocalSettingsPlatform.current.versionLabel, style = MaterialTheme.typography.bodyMedium)
                 Spacer(Modifier.height(8.dp))
                 Text(
                     "A bedside clock for Android: a big, dimmable clock for the nightstand while your phone charges.",
@@ -35,10 +37,10 @@ fun AboutScreen(padding: PaddingValues) {
             }
         }
 
-        item { NavRow("Source code", REPOSITORY_URL.removePrefix("https://")) { context.openUrl(REPOSITORY_URL) } }
-        item { NavRow("Report a problem", "Opens an issue on GitHub") { context.openUrl("$REPOSITORY_URL/issues/new/choose") } }
-        item { NavRow("Licence", "MIT · $COPYRIGHT") { context.openUrl("$REPOSITORY_URL/blob/main/LICENSE") } }
-        item { NavRow("Made by Adrián De León", HOMEPAGE_URL.removePrefix("https://www.")) { context.openUrl(HOMEPAGE_URL) } }
+        item { NavRow("Source code", REPOSITORY_URL.removePrefix("https://")) { open(REPOSITORY_URL) } }
+        item { NavRow("Report a problem", "Opens an issue on GitHub") { open("$REPOSITORY_URL/issues/new/choose") } }
+        item { NavRow("Licence", "MIT · $COPYRIGHT") { open("$REPOSITORY_URL/blob/main/LICENSE") } }
+        item { NavRow("Made by Adrián De León", HOMEPAGE_URL.removePrefix("https://www.")) { open(HOMEPAGE_URL) } }
 
         item { BackupRows() }
 
@@ -61,6 +63,6 @@ fun AboutScreen(padding: PaddingValues) {
 
 @Composable
 private fun CreditRow(credit: Credit) {
-    val context = LocalContext.current
-    NavRow(credit.name, "${credit.detail} · ${credit.licence}") { context.openUrl(credit.url) }
+    val uriHandler = LocalUriHandler.current
+    NavRow(credit.name, "${credit.detail} · ${credit.licence}") { runCatching { uriHandler.openUri(credit.url) } }
 }
