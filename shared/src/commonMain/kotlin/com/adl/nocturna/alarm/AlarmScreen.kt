@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -19,6 +21,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -37,6 +42,10 @@ import com.adl.nocturna.weather.wakeWeather
  * The ringing alarm: the time, its [label] and [station], with big Snooze and Dismiss buttons. With a
  * [station], "Keep listening" dismisses the alarm and carries on with the station in the radio player.
  * Under the time it shows today's weather from [WeatherRepository]; the host refreshes that when it is old.
+ *
+ * Dismissing, and keeping on listening, take the alarm's [challenge]: a tap, the button held for
+ * [HOLD_TO_STOP_MILLIS], or the sums from [seed] on a page of their own. Snoozing is always one tap. When the
+ * challenge fails it calls [onChallengeFailed]; the host then passes [DismissChallenge.TAP] instead.
  */
 @Composable
 fun AlarmScreen(
@@ -45,14 +54,52 @@ fun AlarmScreen(
     onSnooze: () -> Unit,
     onDismiss: () -> Unit,
     onKeepListening: (Station) -> Unit,
+    challenge: DismissChallenge = DismissChallenge.TAP,
+    seed: Long = 0L,
+    onChallengeFailed: (Throwable) -> Unit = {},
 ) {
     val settings = SettingsStore.current
     val now by rememberNow()
     val accent = Color(settings.color)
     val weather by WeatherRepository.weather.collectAsStateWithLifecycle()
     val wake = wakeWeather(settings, weather, now.instant, now.zone)
+    // Set while the sums are showing: what solving them goes on to do.
+    var solving by remember { mutableStateOf<(() -> Unit)?>(null) }
+    fun startStop(stop: () -> Unit) {
+        if (challenge == DismissChallenge.SUM) solving = stop else stop()
+    }
+    val snooze = @Composable {
+        OutlinedButton(
+            onClick = onSnooze,
+            modifier = Modifier.size(width = 150.dp, height = 72.dp),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = accent),
+        ) { Text("Snooze ${settings.snoozeMinutes}m", fontSize = 18.sp) }
+    }
 
-    Column(
+    val afterSums = solving
+    if (afterSums != null && challenge == DismissChallenge.SUM) {
+        Column(
+            Modifier.fillMaxSize().background(Color.Black).safeDrawingPadding().verticalScroll(rememberScrollState()).padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            SumChallenge(
+                settings.alarmSums, seed, accent,
+                onSolved = afterSums,
+                onFailed = {
+                    solving = null
+                    onChallengeFailed(it)
+                },
+            )
+            Spacer(Modifier.height(24.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(24.dp), verticalAlignment = Alignment.CenterVertically) {
+                snooze()
+                TextButton(onClick = { solving = null }, colors = ButtonDefaults.textButtonColors(contentColor = accent)) {
+                    Text("Back", fontSize = 18.sp)
+                }
+            }
+        }
+    } else Column(
         Modifier.fillMaxSize().background(Color.Black).safeDrawingPadding().padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
@@ -75,23 +122,27 @@ fun AlarmScreen(
         }
         Spacer(Modifier.height(64.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-            OutlinedButton(
-                onClick = onSnooze,
-                modifier = Modifier.size(width = 150.dp, height = 72.dp),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = accent),
-            ) { Text("Snooze ${settings.snoozeMinutes}m", fontSize = 18.sp) }
-            Button(
-                onClick = onDismiss,
-                modifier = Modifier.size(width = 150.dp, height = 72.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = accent, contentColor = Color.Black),
-            ) { Text("Dismiss", fontSize = 18.sp) }
+            snooze()
+            if (challenge == DismissChallenge.HOLD) {
+                HoldButton("Hold to stop", accent, onDone = onDismiss)
+            } else {
+                Button(
+                    onClick = { startStop(onDismiss) },
+                    modifier = Modifier.size(width = 150.dp, height = 72.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = accent, contentColor = Color.Black),
+                ) { Text("Dismiss", fontSize = 18.sp) }
+            }
         }
         station?.let {
             Spacer(Modifier.height(24.dp))
-            TextButton(
-                onClick = { onKeepListening(it) },
-                colors = ButtonDefaults.textButtonColors(contentColor = accent),
-            ) { Text("Keep listening", fontSize = 18.sp) }
+            if (challenge == DismissChallenge.HOLD) {
+                HoldButton("Keep listening", accent, onDone = { onKeepListening(it) }, width = 200.dp, height = 56.dp, filled = false)
+            } else {
+                TextButton(
+                    onClick = { startStop { onKeepListening(it) } },
+                    colors = ButtonDefaults.textButtonColors(contentColor = accent),
+                ) { Text("Keep listening", fontSize = 18.sp) }
+            }
         }
     }
 }

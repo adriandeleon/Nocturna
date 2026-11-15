@@ -1,5 +1,6 @@
 package com.adl.nocturna.data
 
+import com.adl.nocturna.alarm.DismissChallenge
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -18,6 +19,7 @@ import kotlin.time.Instant
  * does nothing.
  * [skipDaysOff] makes a repeating alarm stay quiet on days off in the phone's calendars
  * (see `com.adl.nocturna.alarm.nextRing`).
+ * [challenge] is what it takes to stop it when it rings; snoozing is always one tap.
  */
 data class Alarm(
     val id: Long,
@@ -29,6 +31,7 @@ data class Alarm(
     val station: Station? = null,
     val skipDate: LocalDate? = null,
     val skipDaysOff: Boolean = false,
+    val challenge: DismissChallenge = DismissChallenge.TAP,
 ) {
     val repeats: Boolean get() = days != 0
 
