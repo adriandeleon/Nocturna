@@ -14,8 +14,10 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.adl.nocturna.alarm.AlarmActivity
 import com.adl.nocturna.alarm.AlarmService
@@ -25,6 +27,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.adl.nocturna.data.Storage
+import com.adl.nocturna.day.OpenCalendar
 import com.adl.nocturna.settings.SettingsActivity
 import com.adl.nocturna.ui.NocturnaTheme
 import com.adl.nocturna.ui.enableDarkEdgeToEdge
@@ -41,28 +44,31 @@ class ClockActivity : ComponentActivity() {
 
         setContent {
             NocturnaTheme {
+                val platform = remember { AndroidClockPlatform(this) }
                 // If the alarm's own screen couldn't open (e.g. notifications are off), show it as soon
                 // as the clock is visible, so there's always a way to stop a ringing alarm.
                 val ringing by AlarmService.ringing.collectAsStateWithLifecycle()
                 LaunchedEffect(ringing?.alarmId) {
                     if (ringing != null) startActivity(Intent(this@ClockActivity, AlarmActivity::class.java))
                 }
-                ClockScreen(
-                    interactive = true,
-                    onBrightness = { window.setBrightness(it) },
-                    onOpenSettings = { openUnlocked(Intent(this, SettingsActivity::class.java)) },
-                    onOpen = { intent ->
-                        openUnlocked(intent) {
-                            Toast.makeText(this, "No calendar app found", Toast.LENGTH_SHORT).show()
-                        }
-                    },
-                    onOpenAlarms = {
-                        openUnlocked(
-                            Intent(this, SettingsActivity::class.java)
-                                .putExtra(SettingsActivity.EXTRA_SCREEN, SettingsActivity.SCREEN_ALARMS)
-                        )
-                    },
-                )
+                CompositionLocalProvider(LocalClockPlatform provides platform) {
+                    ClockScreen(
+                        interactive = true,
+                        onBrightness = { window.setBrightness(it) },
+                        onOpenSettings = { openUnlocked(Intent(this, SettingsActivity::class.java)) },
+                        onOpenCalendar = { link ->
+                            openUnlocked(OpenCalendar.of(link)) {
+                                Toast.makeText(this, "No calendar app found", Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                        onOpenAlarms = {
+                            openUnlocked(
+                                Intent(this, SettingsActivity::class.java)
+                                    .putExtra(SettingsActivity.EXTRA_SCREEN, SettingsActivity.SCREEN_ALARMS)
+                            )
+                        },
+                    )
+                }
             }
         }
     }

@@ -4,6 +4,10 @@ kotlin = "2.4.21"
 composeBom = "2026.09.00"
 # Compose Multiplatform for the shared module; 1.12.2 is built on Jetpack Compose 1.12.1, the BOM's version.
 composeMultiplatform = "1.12.2"
+# Material 3 for Compose Multiplatform has its own versions; 1.9.0 is its latest stable release.
+composeMultiplatformMaterial3 = "1.9.0"
+# JetBrains' multiplatform build of AndroidX Lifecycle, the same version as the app's.
+lifecycleMultiplatform = "2.11.0"
 kotlinxDatetime = "0.8.0"
 kotlinxSerialization = "1.13.0"
 kotlinxCoroutines = "1.11.0"
@@ -34,6 +38,8 @@ androidx-media3-session = { group = "androidx.media3", name = "media3-session", 
 compose-mp-runtime = { group = "org.jetbrains.compose.runtime", name = "runtime", version.ref = "composeMultiplatform" }
 compose-mp-foundation = { group = "org.jetbrains.compose.foundation", name = "foundation", version.ref = "composeMultiplatform" }
 compose-mp-ui = { group = "org.jetbrains.compose.ui", name = "ui", version.ref = "composeMultiplatform" }
+compose-mp-material3 = { group = "org.jetbrains.compose.material3", name = "material3", version.ref = "composeMultiplatformMaterial3" }
+lifecycle-mp-runtime-compose = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycleMultiplatform" }
 
 kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "kotlinxDatetime" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }

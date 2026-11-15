@@ -65,8 +65,8 @@ the code that doesn't depend on Android, ready for an iOS app later. Both use th
 
 | Package | What's in it |
 |---|---|
-| `clock` | `ClockActivity`, the shared `ClockScreen`, clock faces, the brightness curve, sensor/battery/alarm state |
-| `day` | Day mode: the desk calendar page and sticky note, the monthly scenes, the background photo, today's events from the calendar provider, the schedule |
+| `clock` | `ClockScreen` and the clock faces (`shared`), which reach the phone through `ClockPlatform`; `ClockActivity`, `AndroidClockPlatform` and its sensor/battery/alarm state (`app`); the brightness curve |
+| `day` | Day mode: the desk calendar page and sticky note and the monthly scenes (`shared`); the background photo and today's events from the calendar provider (`app`); the schedule |
 | `dream` | `NocturnaDream`, the screen saver |
 | `alarm` | Scheduling (`AlarmManager.setAlarmClock`), the ringing service, the wake-up screen, boot receiver |
 | `radio` | Media3 `RadioService` and the `Radio` controller with the sleep timer |
@@ -75,6 +75,7 @@ the code that doesn't depend on Android, ready for an iOS app later. Both use th
 | `charging` | Foreground service that opens the clock when the charger is connected |
 | `settings` | The Settings hub and its pages: clock face, info line, brightness, day mode, weather, starting, alarms, stations, About |
 | `data` | Settings and alarms and their stores, kept as JSON in device-protected SharedPreferences on Android |
+| `text`, `ui` | Dates and names in the phone's language, the theme and the icons (`shared`) |
 
 ## License
 

@@ -70,9 +70,16 @@ The debug build installs as `com.adl.nocturna.debug`, beside a release build.
   `./gradlew :shared:compileKotlinIosSimulatorArm64` compiles them on Linux too.
 - Shared code uses kotlinx-datetime (`kotlin.time.Instant` plus a `TimeZone`, where the app used
   `ZonedDateTime`) and reads stored JSON with the org.json-style helpers in `data/StoredJson.kt`, which keep
-  the old lenient reading of what's already on phones. The app's UI still uses java.time and reaches the
-  shared functions through `JavaTimeBridge.kt` overloads in each package; those go as the UI moves.
-- Text that depends on the language (`formatTime`, day names) takes a `PlatformLocale`: `java.util.Locale` on
-  Android, `NSLocale` on iOS. Tests use `testLocale`, British English, never the machine's.
+  the old lenient reading of what's already on phones. App code calls the shared functions with those
+  types too; a `Moment` (from `rememberNow`) is the instant and zone the clock shows.
+- `ClockScreen` and Day mode live in `:shared` and reach the phone only through `ClockPlatform`, provided with
+  `LocalClockPlatform` (`AndroidClockPlatform` in the app): sensors, battery, next alarm, notification icons,
+  radio, location, calendar events and the Day mode photo. Taps that open the calendar come out as a
+  `CalendarLink`, which the app turns into an intent (`OpenCalendar.of`). Anything new the clock needs from
+  the phone goes on that interface, not into the shared code. The Settings screens are still in the app.
+- Text that depends on the language (`formatTime`, day names, `DateTimePattern`, `bestDateTimePattern`, week
+  numbers) takes a `PlatformLocale`: `java.util.Locale` on Android, `NSLocale` on iOS, and `currentLocale()`
+  in composables. Tests use `testLocale`, British English, never the machine's. `bestDateTimePattern` uses
+  Android's framework, which host tests don't have, so test the formatting with a fixed pattern.
 - Release builds are minified (`isMinifyEnabled`, `isShrinkResources`): check anything reached by reflection
   against `app/proguard-rules.pro`.

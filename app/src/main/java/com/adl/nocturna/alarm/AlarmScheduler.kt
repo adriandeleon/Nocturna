@@ -5,9 +5,9 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import com.adl.nocturna.data.AlarmStore
-import com.adl.nocturna.data.nextTrigger
 import com.adl.nocturna.settings.SettingsActivity
-import java.time.ZonedDateTime
+import kotlinx.datetime.TimeZone
+import kotlin.time.Clock
 
 /**
  * Keeps exactly one system alarm registered: the soonest of all enabled alarms and any pending snooze.
@@ -19,12 +19,13 @@ object AlarmScheduler {
 
     fun reschedule(context: Context) {
         val am = context.getSystemService(AlarmManager::class.java)
-        val now = ZonedDateTime.now()
+        val now = Clock.System.now()
+        val zone = TimeZone.currentSystemDefault()
 
         data class Candidate(val at: Long, val alarmId: Long, val snooze: Boolean)
 
         val candidates = AlarmStore.alarms.value.filter { it.enabled }.map {
-            Candidate(it.nextTrigger(now).toInstant().toEpochMilli(), it.id, false)
+            Candidate(it.nextTrigger(now, zone).toEpochMilliseconds(), it.id, false)
         }.toMutableList()
         AlarmStore.snooze.value?.let { if (it.until > System.currentTimeMillis()) candidates += Candidate(it.until, it.alarmId, true) }
 

@@ -14,23 +14,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
-import kotlinx.coroutines.delay
-import java.time.ZonedDateTime
 import kotlin.math.abs
-
-/** Current time, updated exactly on each second boundary. */
-@Composable
-fun rememberNow(): State<ZonedDateTime> = produceState(ZonedDateTime.now()) {
-    while (true) {
-        val now = ZonedDateTime.now()
-        value = now
-        delay(1000L - now.nano / 1_000_000 + 5)
-    }
-}
 
 /**
  * Smoothed ambient light in lux, or null when the device has no light sensor.
@@ -63,8 +50,6 @@ fun rememberAmbientLux(): State<Float?> {
     }
     return state
 }
-
-data class BatteryInfo(val level: Float, val charging: Boolean)
 
 @Composable
 fun rememberBattery(): State<BatteryInfo?> {

@@ -3,8 +3,6 @@ package com.adl.nocturna.day
 import android.content.ContentUris
 import android.content.Intent
 import android.provider.CalendarContract
-import java.time.LocalDate
-import java.time.ZonedDateTime
 
 /**
  * Intents that open the phone's calendar app from day mode. They use the calendar provider's
@@ -17,8 +15,11 @@ object OpenCalendar {
         CalendarContract.CONTENT_URI.buildUpon().appendPath("time").also { ContentUris.appendId(it, millis) }.build(),
     )
 
-    /** The calendar app on [day], scrolled to a sensible hour (see [dayOpenTime]). */
-    fun day(day: LocalDate, now: ZonedDateTime): Intent = at(dayOpenTime(day, now))
+    /** What day mode asked to open. */
+    fun of(link: CalendarLink): Intent = when (link) {
+        is CalendarLink.Day -> at(link.millis)
+        is CalendarLink.Event -> event(link.event)
+    }
 
     /**
      * The event itself. The begin and end times pick out the occurrence of a repeating event; without
