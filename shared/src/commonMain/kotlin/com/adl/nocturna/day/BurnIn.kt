@@ -6,11 +6,18 @@ import kotlin.math.sin
 
 /*
  * Day mode stays on screen for a whole working day, so on OLED screens nothing in it may stay put:
- * the layout drifts (ClockScreen's DriftLayout), swaps sides every hour in landscape, and the
- * background keeps moving slowly. These are the timings, kept here so they can be tested.
+ * the layout drifts (ClockScreen's DriftLayout), the clock, the page and the note each drift on their
+ * own as well (DayScreen), the clock and the page trade places every other hour (sides in
+ * landscape, top and bottom in portrait), the page's bright paper slowly dims the longer it stays up,
+ * and everything in the background keeps moving: the sun and the moon cross the sky, the clouds float up and down, the
+ * hills scroll and rise and fall, and the flowers are replanted every hour. These are the timings,
+ * kept here so they can be tested.
  */
 
-/** Whether the clock and the calendar page trade places: every other hour, when burn-in protection is on. */
+/**
+ * Whether the clock and the calendar page trade places: every other hour, when burn-in protection is
+ * on. In landscape they swap sides; in portrait the clock moves from the top to the bottom.
+ */
 fun sidesSwapped(hour: Int, burnInProtection: Boolean): Boolean = burnInProtection && hour % 2 == 1
 
 /** Seconds for the near hill to scroll one screen width; farther hills go slower, for depth. */
@@ -32,8 +39,76 @@ fun photoPan(seconds: Float): Pair<Float, Float> {
     return (reach * sin(t)).toFloat() to (reach * cos(t * 0.5)).toFloat()
 }
 
-/** The sun's small circle around its corner, as fractions of its radius, once an hour. */
+/** The sun's (and the moon's) small circle around its place on its way, as fractions of its radius, once an hour. */
 fun sunWobble(seconds: Float): Pair<Float, Float> {
     val t = 2 * PI * seconds / 3600.0
     return (0.35 * cos(t)).toFloat() to (0.35 * sin(t)).toFloat()
 }
+
+private const val DAY = 86_400f
+
+/** The sun is up from dawn (05:30) to dusk (20:00), as the sky's looks have it (see [skyMix]). */
+const val SUNRISE = 5.5f * 3600
+const val SUNSET = 20f * 3600
+
+/** The moon is up from early dusk (18:30) to after dawn (07:00), so it fades in and out with the night. */
+const val MOONRISE = 18.5f * 3600
+const val MOONSET = 7f * 3600
+
+/**
+ * How far along its trip across the sky a body that rises at [rise] and sets at [set] (seconds of
+ * the day, possibly across midnight) is [seconds] into the day: 0 rising, 1 setting. Held at 1
+ * while it is down.
+ */
+fun skyTrip(seconds: Float, rise: Float, set: Float): Float {
+    val span = ((set - rise) % DAY + DAY) % DAY
+    val since = ((seconds - rise) % DAY + DAY) % DAY
+    return (since / span).coerceIn(0f, 1f)
+}
+
+/**
+ * Where the sun or the moon is [trip] of the way across the sky (see [skyTrip]): x as a fraction of
+ * the width, from the left corner to the right one; y as its radii below the top edge, low in the
+ * corners and peeking over the top in the middle of its trip.
+ */
+fun skyArc(trip: Float): Pair<Float, Float> =
+    (0.06f + 0.88f * trip) to (0.35f - 0.6f * sin(PI * trip).toFloat())
+
+/** How far cloud [index] has floated up (-) or down (+), as a fraction of the screen height. */
+fun cloudBob(seconds: Float, index: Int): Float =
+    (0.035 * sin(2 * PI * seconds / (2400.0 + 700 * index) + index * 2.1)).toFloat()
+
+/**
+ * How far hill [layer] has risen (-) or sunk (+), as a fraction of the screen height: slow swells,
+ * so the hilltops' edges sweep a band of pixels and not a line.
+ */
+fun hillRise(seconds: Float, layer: Int): Float =
+    (0.012 * sin(2 * PI * seconds / (5400.0 + 1800 * layer) + layer)).toFloat()
+
+/** Degrees the starry sky has turned around its pole [seconds] into the day: six an hour. */
+fun starTurn(seconds: Float): Float = seconds / 600f
+
+/** The flowers and trees are replanted every hour, fading from one field to the next over five minutes. */
+private const val FIELD_PERIOD = 3600f
+private const val FIELD_FADE = 300f
+
+/** Which field is planted [seconds] into the day, the one before it, and how far it has grown in (0..1). */
+data class Planting(val now: Int, val before: Int, val grown: Float)
+
+fun planting(seconds: Float): Planting {
+    val count = (DAY / FIELD_PERIOD).toInt()
+    val now = (seconds / FIELD_PERIOD).toInt().mod(count)
+    return Planting(now, (now + count - 1) % count, ((seconds % FIELD_PERIOD) / FIELD_FADE).coerceIn(0f, 1f))
+}
+
+/** The page's paper starts dimming after half an hour on screen and is as dim as it goes after four hours. */
+private const val DIM_FROM_MINUTES = 30f
+private const val DIM_FULL_MINUTES = 240f
+
+/**
+ * How far the calendar page's paper has dimmed (0 = fresh, 1 = as dim as it goes) after [minutesShown]
+ * minutes on screen: so slowly that nobody sees it happen, since the bright page is what wears an
+ * OLED screen most.
+ */
+fun paperDim(minutesShown: Float): Float =
+    ((minutesShown - DIM_FROM_MINUTES) / (DIM_FULL_MINUTES - DIM_FROM_MINUTES)).coerceIn(0f, 1f)
