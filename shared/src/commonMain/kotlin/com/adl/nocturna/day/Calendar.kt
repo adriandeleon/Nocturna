@@ -96,6 +96,13 @@ fun rowsThatFit(heights: List<Int>, gap: Int, max: Int, moreHeight: Int): Int {
     return if (all == heights.size) all else fit(max - moreHeight - gap)
 }
 
+/**
+ * Whether the sticky note fits under the clock in landscape: the clock [clock] tall, a [gap], then the
+ * note at its smallest ([noteMin], its greeting and one event), all within [max]. When it doesn't, the
+ * note is left out instead of being squashed into a strip.
+ */
+fun noteFits(clock: Int, gap: Int, noteMin: Int, max: Int): Boolean = clock + gap + noteMin <= max
+
 /** The seven days of the week that holds [day], starting on [firstDayOfWeek]. */
 fun weekOf(day: LocalDate, firstDayOfWeek: DayOfWeek): List<LocalDate> {
     val start = day.minus((day.dayOfWeek.isoDayNumber - firstDayOfWeek.isoDayNumber + 7) % 7, DateTimeUnit.DAY)
