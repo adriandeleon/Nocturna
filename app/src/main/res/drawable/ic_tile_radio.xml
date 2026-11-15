@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A radio with its antenna and speaker: the Sleep radio tile and the widget's button. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:pathData="M5,8 L19,8 A2,2 0 0,1 21,10 L21,18 A2,2 0 0,1 19,20 L5,20 A2,2 0 0,1 3,18 L3,10 A2,2 0 0,1 5,8 Z M6,8 L17,3.5 M15,12 L18,12 M15,16 L18,16"
+        android:strokeWidth="1.8"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M9,11 A3,3 0 1,1 8.99,11 Z" />
+</vector>

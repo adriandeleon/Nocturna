@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The home-screen widget's look: the app's dark navy surface, light text and sky-blue accents. -->
+<resources>
+    <color name="widget_background">#F20B1020</color>
+    <color name="widget_button">#FF1C2338</color>
+    <color name="widget_text">#FFE3E6EE</color>
+    <color name="widget_text_dim">#FFC3C8D6</color>
+    <color name="widget_primary">#FF8FD3FF</color>
+    <color name="widget_accent">#FFFFD27A</color>
+    <dimen name="widget_radius">20dp</dimen>
+
+    <style name="Widget.Nocturna.Button" parent="">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">40dp</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:background">@drawable/widget_button</item>
+        <item name="android:drawablePadding">6dp</item>
+        <item name="android:drawableTint">@color/widget_primary</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:gravity">center</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:paddingStart">10dp</item>
+        <item name="android:paddingEnd">10dp</item>
+        <item name="android:textColor">@color/widget_text</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+</resources>
