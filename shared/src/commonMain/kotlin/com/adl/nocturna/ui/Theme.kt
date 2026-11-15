@@ -1,15 +1,10 @@
 package com.adl.nocturna.ui
 
-import androidx.activity.ComponentActivity
-import androidx.activity.SystemBarStyle
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.ReadOnlyComposable
-import androidx.compose.ui.platform.LocalConfiguration
-import java.util.Locale
 import androidx.compose.ui.graphics.Color
+import com.adl.nocturna.text.PlatformLocale
 
 private val scheme = darkColorScheme(
     primary = Color(0xFF8FD3FF),
@@ -47,16 +42,9 @@ fun NocturnaTheme(content: @Composable () -> Unit) {
     MaterialTheme(colorScheme = scheme, content = content)
 }
 
-/** Edge-to-edge with light system-bar icons; all our screens are dark whatever the system theme. */
-fun ComponentActivity.enableDarkEdgeToEdge() {
-    val transparent = android.graphics.Color.TRANSPARENT
-    enableEdgeToEdge(SystemBarStyle.dark(transparent), SystemBarStyle.dark(transparent))
-}
-
 /** The current locale, read so that composables recompose when it changes. */
 @Composable
-@ReadOnlyComposable
-fun currentLocale(): Locale = LocalConfiguration.current.locales[0]
+expect fun currentLocale(): PlatformLocale
 
 /** The dim red used in night mode; red light disturbs night vision and sleep the least. */
 val NightRed = Color(0xFFC62828)

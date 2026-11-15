@@ -21,8 +21,12 @@ import androidx.core.content.ContextCompat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-import java.time.LocalDate
-import java.time.ZoneId
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
+import kotlinx.datetime.minus
+import kotlinx.datetime.plus
 
 /** Reads event occurrences from the calendars on the device (Android's calendar provider). */
 object CalendarEvents {
@@ -33,9 +37,9 @@ object CalendarEvents {
      * Occurrences from [first] to [last], with a day more on either side because all-day events are
      * stored at UTC midnight. [covers] picks out the ones that really fall on a given day.
      */
-    fun between(context: Context, first: LocalDate, last: LocalDate, zone: ZoneId): List<CalendarEvent> {
-        val from = first.minusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
-        val to = last.plusDays(2).atStartOfDay(zone).toInstant().toEpochMilli()
+    fun between(context: Context, first: LocalDate, last: LocalDate, zone: TimeZone): List<CalendarEvent> {
+        val from = first.minus(1, DateTimeUnit.DAY).atStartOfDayIn(zone).toEpochMilliseconds()
+        val to = last.plus(2, DateTimeUnit.DAY).atStartOfDayIn(zone).toEpochMilliseconds()
         val uri = Instances.CONTENT_URI.buildUpon()
             .also { ContentUris.appendId(it, from); ContentUris.appendId(it, to) }
             .build()
@@ -64,7 +68,7 @@ object CalendarEvents {
  * is off or calendar access isn't granted.
  */
 @Composable
-fun rememberCalendarEvents(enabled: Boolean, first: LocalDate, last: LocalDate, zone: ZoneId): State<List<CalendarEvent>?> {
+fun rememberCalendarEvents(enabled: Boolean, first: LocalDate, last: LocalDate, zone: TimeZone): State<List<CalendarEvent>?> {
     val context = LocalContext.current
     val state = remember { mutableStateOf<List<CalendarEvent>?>(null) }
     val changes = remember { mutableIntStateOf(0) }

@@ -1,7 +1,6 @@
 package com.adl.nocturna.settings
 
 import android.Manifest
-import android.text.format.DateFormat
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -17,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.adl.nocturna.clock.Moment
 import com.adl.nocturna.clock.rememberNow
 import com.adl.nocturna.data.CalendarView
 import com.adl.nocturna.data.DayMode
@@ -27,13 +27,14 @@ import com.adl.nocturna.day.label
 import com.adl.nocturna.day.inDaySchedule
 import com.adl.nocturna.day.isDayModeActive
 import com.adl.nocturna.day.nextDayScheduleEdge
+import com.adl.nocturna.text.DateTimePattern
+import com.adl.nocturna.text.bestDateTimePattern
 import com.adl.nocturna.ui.currentLocale
 import kotlinx.coroutines.launch
-import java.time.Instant
+import kotlinx.datetime.toLocalDateTime
 import java.time.LocalTime
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlin.time.Instant
 import kotlin.math.roundToInt
 
 @Composable
@@ -158,15 +159,15 @@ private fun DayMode.label() = when (this) {
 }
 
 /** What the schedule is doing at [now] and when that changes, e.g. "Day mode now, until Fri 18:00". */
-private fun dayScheduleStatus(s: Settings, now: ZonedDateTime, locale: Locale): String {
-    val active = isDayModeActive(s, now)
+private fun dayScheduleStatus(s: Settings, now: Moment, locale: Locale): String {
+    val active = isDayModeActive(s, now.instant, now.zone)
     val state = if (active) "Day mode now" else "Clock only now"
     if (s.dayModeDays == 0) return "$state. Pick the days day mode starts on."
-    val overridden = active != inDaySchedule(s, now)
-    val until = if (overridden) Instant.ofEpochMilli(s.dayModeOverrideUntil).atZone(now.zone).takeIf { s.dayModeOverrideUntil != Long.MAX_VALUE }
-    else nextDayScheduleEdge(s, now)
-    val pattern = DateFormat.getBestDateTimePattern(locale, if (s.use24h) "EEEHHmm" else "EEEhmma")
-    val whenText = until?.format(DateTimeFormatter.ofPattern(pattern, locale))
+    val overridden = active != inDaySchedule(s, now.instant, now.zone)
+    val until = if (overridden) s.dayModeOverrideUntil.takeIf { it != Long.MAX_VALUE }?.let { Instant.fromEpochMilliseconds(it) }
+    else nextDayScheduleEdge(s, now.instant, now.zone)
+    val pattern = DateTimePattern(bestDateTimePattern(if (s.use24h) "EEEHHmm" else "EEEhmma", locale), locale)
+    val whenText = until?.let { pattern.format(it.toLocalDateTime(now.zone)) }
     return when {
         overridden && whenText != null -> "$state, switched from the clock until $whenText"
         overridden -> "$state, switched from the clock"

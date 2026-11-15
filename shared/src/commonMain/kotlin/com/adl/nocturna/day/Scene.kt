@@ -17,8 +17,9 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.rotate
-import java.time.LocalTime
-import java.time.Month
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.Month
+import kotlinx.datetime.number
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.hypot
@@ -38,7 +39,7 @@ class MonthTheme(
     val trees: Boolean = false,
 )
 
-fun monthTheme(month: Month): MonthTheme = THEMES[month.value - 1]
+fun monthTheme(month: Month): MonthTheme = THEMES[month.number - 1]
 
 private fun c(argb: Long) = Color(argb)
 
@@ -126,7 +127,7 @@ fun SceneBackground(theme: MonthTheme, time: LocalTime, seed: Int, modifier: Mod
             val stars = Random(seed * 7 + 3)
             val pole = Offset(w * 0.5f, -h * 0.4f)
             val reach = hypot(w * 0.5f, h * HORIZON - pole.y)
-            val turn = Math.toRadians(starTurn(seconds).toDouble())
+            val turn = starTurn(seconds) * PI / 180
             // As many as it takes for about 75 to be on screen at a time.
             val count = (75 * PI * reach * reach / (w * h * 0.6f)).toInt().coerceAtMost(1500)
             repeat(count) {

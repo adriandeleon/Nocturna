@@ -1,7 +1,5 @@
 package com.adl.nocturna.clock
 
-import android.content.Intent
-import android.text.format.DateFormat
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -35,7 +33,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -46,46 +43,44 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.Layout
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.adl.nocturna.data.ClockStyle
 import com.adl.nocturna.data.Settings
 import com.adl.nocturna.data.SettingsStore
+import com.adl.nocturna.text.DateTimePattern
+import com.adl.nocturna.text.bestDateTimePattern
 import com.adl.nocturna.text.shortName
+import com.adl.nocturna.day.CalendarLink
 import com.adl.nocturna.day.DayBackground
 import com.adl.nocturna.day.DayLayout
 import com.adl.nocturna.day.isDayModeActive
 import com.adl.nocturna.day.withDayModeToggled
-import com.adl.nocturna.notify.NotifIcon
-import com.adl.nocturna.notify.NotificationIconService
-import com.adl.nocturna.radio.Radio
 import com.adl.nocturna.ui.Glyph
 import com.adl.nocturna.ui.GlyphIcon
 import com.adl.nocturna.ui.DeskNavy
 import com.adl.nocturna.ui.NightRed
-import com.adl.nocturna.weather.DeviceLocation
 import com.adl.nocturna.weather.WeatherRepository
 import com.adl.nocturna.weather.pickForecast
+import androidx.compose.runtime.mutableIntStateOf
 import kotlinx.coroutines.delay
-import java.time.Instant
-import java.time.ZoneId
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
+import kotlin.time.Instant
 import com.adl.nocturna.ui.currentLocale
 import kotlin.random.Random
 
 /**
- * The bedside clock. Shared by [ClockActivity] (interactive, with a tap-to-show control bar)
- * and the screen saver (display only). In day mode it sits beside a calendar ([DayLayout]).
+ * The bedside clock: interactive in the app, with a tap-to-show control bar, and display only in the
+ * screen saver. In day mode it sits beside a calendar ([DayLayout]). It reads the phone through
+ * [LocalClockPlatform].
  *
  * @param onBrightness receives the window brightness to apply (0..1), or -1 for "system default".
  */
@@ -95,15 +90,15 @@ fun ClockScreen(
     onBrightness: (Float) -> Unit,
     onOpenSettings: () -> Unit = {},
     onOpenAlarms: () -> Unit = {},
-    /** Opens another app (day mode's calendar); only used when [interactive]. */
-    onOpen: (Intent) -> Unit = {},
+    /** Opens day mode's calendar in the phone's calendar app; only used when [interactive]. */
+    onOpenCalendar: (CalendarLink) -> Unit = {},
 ) {
-    val context = LocalContext.current
+    val platform = LocalClockPlatform.current
     val settings by SettingsStore.settings.collectAsStateWithLifecycle()
     val now by rememberNow()
-    val lux by rememberAmbientLux()
+    val lux = platform.ambientLux()
     // Follows the schedule on its own: now ticks every second.
-    val day = isDayModeActive(settings, now)
+    val day = isDayModeActive(settings, now.instant, now.zone)
 
     // Night mode with hysteresis so it doesn't flicker around the threshold.
     var night by remember { mutableStateOf(false) }
@@ -133,13 +128,13 @@ fun ClockScreen(
     LaunchedEffect(settings.showWeather, settings.weatherUseDeviceLocation, settings.weatherLat, settings.weatherLon) {
         if (!settings.showWeather) return@LaunchedEffect
         while (true) {
-            WeatherRepository.refreshIfStale(settings) { DeviceLocation.get(context) }
+            WeatherRepository.refreshIfStale(settings) { platform.deviceLocation() }
             delay(10 * 60_000L)
         }
     }
 
     var controlsVisible by remember { mutableStateOf(false) }
-    var lastInteraction by remember { mutableLongStateOf(0L) }
+    var lastInteraction by remember { mutableIntStateOf(0) }
     LaunchedEffect(controlsVisible, lastInteraction) {
         if (controlsVisible) {
             delay(8_000)
@@ -200,7 +195,7 @@ fun ClockScreen(
             if (day) DayLayout(
                 landscape, now, settings,
                 Modifier.fillMaxSize(if (settings.burnInProtection) 0.9f else 0.96f),
-                onOpen = if (interactive) onOpen else null,
+                onOpen = if (interactive) onOpenCalendar else null,
                 clock = clock,
             )
             else clock()
@@ -213,7 +208,7 @@ fun ClockScreen(
                 exit = fadeOut(),
                 modifier = Modifier.align(Alignment.BottomCenter).safeDrawingPadding().padding(16.dp),
             ) {
-                Controls(settings, day, color, onOpenSettings, onOpenAlarms, onInteract = { controlsVisible = true; lastInteraction = System.nanoTime() })
+                Controls(settings, day, color, onOpenSettings, onOpenAlarms, onInteract = { controlsVisible = true; lastInteraction++ })
             }
         }
     }
@@ -222,23 +217,24 @@ fun ClockScreen(
 @Composable
 private fun InfoBlock(
     settings: Settings,
-    now: ZonedDateTime,
+    now: Moment,
     color: Color,
     fontSize: androidx.compose.ui.unit.TextUnit,
     glyphSize: Dp,
     shadow: Shadow? = null,
 ) {
     val style = TextStyle(color = color.copy(alpha = if (shadow != null) 1f else 0.85f), fontSize = fontSize, shadow = shadow)
-    val battery by rememberBattery()
-    val nextAlarm by rememberNextAlarm()
+    val platform = LocalClockPlatform.current
+    val battery = platform.battery()
+    val nextAlarm = platform.nextAlarm()
     val weather by WeatherRepository.weather.collectAsStateWithLifecycle()
-    val notifications by NotificationIconService.icons.collectAsStateWithLifecycle()
-    val radioTitle by Radio.title.collectAsStateWithLifecycle()
+    val notifications = platform.notificationIcons()
+    val radioTitle by platform.radio.title.collectAsStateWithLifecycle()
 
     val locale = currentLocale()
     if (settings.showDate) {
-        val pattern = DateFormat.getBestDateTimePattern(locale, "EEEEdMMMM")
-        Text(now.format(DateTimeFormatter.ofPattern(pattern, locale)), style = style)
+        val pattern = remember(locale) { DateTimePattern(bestDateTimePattern("EEEEdMMMM", locale), locale) }
+        Text(pattern.format(now.local), style = style)
         Spacer(Modifier.height(glyphSize * 0.4f))
     }
 
@@ -253,7 +249,7 @@ private fun InfoBlock(
         if (settings.showWeather && w != null) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Item(w.glyph, w.temperatureText(settings.weatherFahrenheit), color, style, glyphSize)
-                val pick = if (settings.showForecast) pickForecast(w.days, now.toLocalDateTime()) else null
+                val pick = if (settings.showForecast) pickForecast(w.days, now.local) else null
                 if (pick != null) {
                     // Today: "↑24° ↓12°" after the current temperature. Evening: "Sat ☁ ↑20° ↓11°" for tomorrow.
                     Spacer(Modifier.width(glyphSize * 0.6f))
@@ -278,10 +274,12 @@ private fun InfoBlock(
             }
         }
         val a = nextAlarm
-        if (settings.showNextAlarm && a != null && a - System.currentTimeMillis() < 24 * 3600_000L) {
-            val t = Instant.ofEpochMilli(a).atZone(ZoneId.systemDefault())
-            val pattern = DateFormat.getBestDateTimePattern(locale, if (settings.use24h) "EEEHHmm" else "EEEhmma")
-            Item(Glyph.ALARM, t.format(DateTimeFormatter.ofPattern(pattern, locale)), color, style, glyphSize)
+        if (settings.showNextAlarm && a != null && a - now.epochMillis < 24 * 3600_000L) {
+            val t = Instant.fromEpochMilliseconds(a).toLocalDateTime(now.zone)
+            val pattern = remember(locale, settings.use24h) {
+                DateTimePattern(bestDateTimePattern(if (settings.use24h) "EEEHHmm" else "EEEhmma", locale), locale)
+            }
+            Item(Glyph.ALARM, pattern.format(t), color, style, glyphSize)
         }
     }
 
@@ -306,14 +304,11 @@ private fun Item(glyph: Glyph, text: String, color: Color, style: TextStyle, siz
 }
 
 @Composable
-private fun NotificationRow(icons: List<NotifIcon>, color: Color, size: Dp) {
-    val context = LocalContext.current
+private fun NotificationRow(icons: List<NotificationIcon>, color: Color, size: Dp) {
     val px = with(LocalDensity.current) { size.roundToPx() }
     Row(horizontalArrangement = Arrangement.spacedBy(size * 0.5f)) {
         icons.forEach { n ->
-            val bitmap = remember(n.key, px) {
-                runCatching { n.icon.loadDrawable(context)?.toBitmap(px, px)?.asImageBitmap() }.getOrNull()
-            }
+            val bitmap = remember(n.key, px) { n.image(px) }
             if (bitmap != null) {
                 Image(bitmap, contentDescription = null, colorFilter = ColorFilter.tint(color), modifier = Modifier.size(size))
             }
@@ -332,10 +327,10 @@ private fun Controls(
     onOpenAlarms: () -> Unit,
     onInteract: () -> Unit,
 ) {
-    val context = LocalContext.current
-    val radioOn by Radio.isOn.collectAsStateWithLifecycle()
-    val sleepAt by Radio.sleepAt.collectAsStateWithLifecycle()
-    val error by Radio.error.collectAsStateWithLifecycle()
+    val radio = LocalClockPlatform.current.radio
+    val radioOn by radio.isOn.collectAsStateWithLifecycle()
+    val sleepAt by radio.sleepAt.collectAsStateWithLifecycle()
+    val error by radio.error.collectAsStateWithLifecycle()
     // Over day mode's bright background, see-through buttons vanish: fill them in the desk clock's navy.
     val buttonColors = if (day) ButtonDefaults.outlinedButtonColors(containerColor = DeskNavy, contentColor = Color.White)
     else ButtonDefaults.outlinedButtonColors(contentColor = color)
@@ -372,22 +367,22 @@ private fun Controls(
             ) { GlyphIcon(if (settings.dimEnabled) Glyph.MOON else Glyph.SUN, color, 24.dp) }
             OutlinedButton(
                 // On a schedule this overrides it until the next start or end.
-                onClick = { onInteract(); SettingsStore.update { it.withDayModeToggled(ZonedDateTime.now()) } },
+                onClick = { onInteract(); SettingsStore.update { it.withDayModeToggled(Clock.System.now(), TimeZone.currentSystemDefault()) } },
                 colors = buttonColors, border = border,
             ) { Text(if (day) "Clock only" else "Day mode") }
             OutlinedButton(onClick = onOpenAlarms, colors = buttonColors, border = border) { Text("Alarms") }
             OutlinedButton(
-                onClick = { onInteract(); Radio.toggle(context, settings.currentStation) },
+                onClick = { onInteract(); radio.toggle(settings.currentStation) },
                 colors = buttonColors, border = border,
             ) { Text(if (radioOn) "■  Radio" else "▶  Radio") }
             if (radioOn) {
-                val remaining = sleepAt?.let { ((it - System.currentTimeMillis()) / 60_000L).coerceAtLeast(0) + 1 }
+                val remaining = sleepAt?.let { ((it - Clock.System.now().toEpochMilliseconds()) / 60_000L).coerceAtLeast(0) + 1 }
                 OutlinedButton(
                     onClick = {
                         onInteract()
                         // Cycle off -> 15 -> 30 -> 60 -> 90 -> off.
                         val idx = remaining?.let { r -> SLEEP_STEPS.indexOfFirst { it >= r } } ?: 0
-                        Radio.setSleepTimer(SLEEP_STEPS[(idx + 1) % SLEEP_STEPS.size])
+                        radio.setSleepTimer(SLEEP_STEPS[(idx + 1) % SLEEP_STEPS.size])
                     },
                     colors = buttonColors, border = border,
                 ) { Text(if (remaining == null) "Sleep: off" else "Sleep: ${remaining}m") }

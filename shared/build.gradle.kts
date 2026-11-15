@@ -45,6 +45,8 @@ kotlin {
             implementation(libs.compose.mp.runtime)
             implementation(libs.compose.mp.foundation)
             implementation(libs.compose.mp.ui)
+            implementation(libs.compose.mp.material3)
+            implementation(libs.lifecycle.mp.runtime.compose)
             api(libs.kotlinx.datetime)
             implementation(libs.kotlinx.serialization.json)
             api(libs.kotlinx.coroutines.core)

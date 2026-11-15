@@ -2,7 +2,6 @@ package com.adl.nocturna.settings
 
 import android.Manifest
 import android.os.Build
-import android.text.format.DateFormat
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -50,17 +49,19 @@ import com.adl.nocturna.data.Alarm
 import com.adl.nocturna.data.AlarmStore
 import com.adl.nocturna.data.SettingsStore
 import com.adl.nocturna.data.Station
-import com.adl.nocturna.data.nextTrigger
-import com.adl.nocturna.data.skipping
-import com.adl.nocturna.data.toggleSkip
+import com.adl.nocturna.clock.Moment
+import com.adl.nocturna.text.DateTimePattern
+import com.adl.nocturna.text.bestDateTimePattern
 import com.adl.nocturna.ui.currentLocale
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atTime
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalTime
 import java.time.ZoneId
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlin.math.roundToInt
 
@@ -190,8 +191,8 @@ private fun AlarmCard(
                     modifier = Modifier.weight(1f),
                 )
                 if (alarm.enabled && alarm.repeats) {
-                    val skipping = alarm.skipping(ZonedDateTime.now()) != null
-                    TextButton(onClick = { AlarmStore.update(alarm.id) { it.toggleSkip(ZonedDateTime.now()) } }) {
+                    val skipping = alarm.skipping(Clock.System.now(), TimeZone.currentSystemDefault()) != null
+                    TextButton(onClick = { AlarmStore.update(alarm.id) { it.toggleSkip(Clock.System.now(), TimeZone.currentSystemDefault()) } }) {
                         Text(if (skipping) "Undo skip" else "Skip next")
                     }
                 }
@@ -255,11 +256,11 @@ private fun LabelField(alarm: Alarm, modifier: Modifier) {
 
 private fun describe(alarm: Alarm, use24h: Boolean, locale: Locale): String {
     if (!alarm.enabled) return "Off"
-    val now = ZonedDateTime.now()
-    val next = alarm.nextTrigger(now)
-    val pattern = DateFormat.getBestDateTimePattern(locale, if (use24h) "EEEdMMMHHmm" else "EEEdMMMhmma")
-    val skipped = alarm.skipping(now)?.let {
-        " · skipping " + it.format(DateTimeFormatter.ofPattern(DateFormat.getBestDateTimePattern(locale, "EEEdMMM"), locale))
+    val now = Moment.now()
+    val next = alarm.nextTrigger(now.instant, now.zone).toLocalDateTime(now.zone)
+    val pattern = DateTimePattern(bestDateTimePattern(if (use24h) "EEEdMMMHHmm" else "EEEdMMMhmma", locale), locale)
+    val skipped = alarm.skipping(now.instant, now.zone)?.let {
+        " · skipping " + DateTimePattern(bestDateTimePattern("EEEdMMM", locale), locale).format(it.atTime(0, 0))
     }.orEmpty()
     val repeat = when (alarm.days) {
         0 -> "Once"
@@ -268,5 +269,5 @@ private fun describe(alarm: Alarm, use24h: Boolean, locale: Locale): String {
         0b1100000 -> "Weekends"
         else -> "Repeats"
     }
-    return "$repeat$skipped · next ${next.format(DateTimeFormatter.ofPattern(pattern, locale))}"
+    return "$repeat$skipped · next ${pattern.format(next)}"
 }
