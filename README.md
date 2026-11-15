@@ -83,13 +83,10 @@ the code that doesn't depend on Android, ready for an iOS app later. Both use th
 
 | Package | What's in it |
 |---|---|
-| `clock` | `ClockScreen` and the clock faces (`shared`), which reach the phone through `ClockPlatform`; `ClockActivity`, `AndroidClockPlatform` and its sensor/battery/alarm state (`app`); the brightness curve, the sunrise before alarms, tap to peek, telling a wave from the proximity sensor (`shared`, `Wave.kt`; `AndroidProximity` in `app`) and the moon phase |
-| `day` | Day mode: the desk calendar page and sticky note and the monthly scenes (`shared`); the background photo and today's events from the calendar provider (`app`); the schedule |
-| `clock` | `ClockScreen` and the clock faces (`shared`), which reach the phone through `ClockPlatform`; `ClockActivity`, `AndroidClockPlatform` and its sensor/battery/alarm state (`app`); the brightness curve and the sunrise before alarms |
+| `clock` | `ClockScreen` and the clock faces (`shared`), which reach the phone through `ClockPlatform`; `ClockActivity`, `AndroidClockPlatform` and its sensor/battery/alarm state (`app`); the brightness curve, the sunrise before alarms, tap to peek, telling a wave from the proximity sensor (`shared`, `Wave.kt`; `AndroidProximity` in `app`) and the moon phase; Do Not Disturb while it shows (`app`) |
 | `day` | Day mode: the desk calendar page and sticky note, the monthly scenes, the focus timer and the world clock with its city list (`shared`); the background photo and today's events from the calendar provider (`app`); the schedule |
 | `dream` | `NocturnaDream`, the screen saver |
-| `alarm` | The wake-up screen and the rules for skipping days off (`shared`); scheduling (`AlarmManager.setAlarmClock`), the ringing service and its activity, boot receiver, days off read from the calendar (`app`) |
-| `alarm` | Scheduling (`AlarmManager.setAlarmClock`), the ringing service, the wake-up screen, boot receiver; days off read from the calendar (`app`) and the rules for skipping them (`shared`); the bedtime reminder (`app`) and its timing and the countdown to the next alarm (`shared`); when a dated one-time alarm rings, the dismiss challenges, their sums and screens (`shared`); wave to snooze on the wake-up screen |
+| `alarm` | The wake-up screen, the rules for skipping days off, the bedtime reminder's timing and the countdown to the next alarm, when a dated one-time alarm rings, the dismiss challenges with their sums and screens, and wave to snooze (`shared`); scheduling (`AlarmManager.setAlarmClock`), the ringing service and its activity, boot receiver, days off read from the calendar and the bedtime reminder (`app`) |
 | `radio` | Media3 `RadioService` and the `Radio` controller with the sleep timer |
 | `sound` | The sleep sounds: seeded noise, rain and surf generators that loop seamlessly, and the WAV encoder (`shared`); their cached WAV files (`app`, in `radio`) |
 | `weather` | Open-Meteo current conditions, daily and hourly forecast and city search; the phone's location (`app`) |
