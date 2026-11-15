@@ -1,0 +1,99 @@
+package com.adl.nocturna.data
+
+enum class ClockStyle { DIGITAL, ANALOG }
+
+enum class ClockFont { THIN, LIGHT, REGULAR, CONDENSED, MONO, SERIF }
+
+/** When day mode shows: never, always, or inside the schedule in [Settings]. */
+enum class DayMode { OFF, ON, SCHEDULED }
+
+/** What day mode's calendar page shows; swiping the page moves between them. */
+enum class CalendarView { MONTH, WEEK, DAY }
+
+data class Station(val name: String, val url: String)
+
+data class Settings(
+    // Clock
+    val style: ClockStyle = ClockStyle.DIGITAL,
+    val use24h: Boolean = true,
+    val showSeconds: Boolean = false,
+    val font: ClockFont = ClockFont.THIN,
+    val color: Int = 0xFF8FD3FF.toInt(),
+    // Info line
+    val showDate: Boolean = true,
+    val showBattery: Boolean = true,
+    val showNextAlarm: Boolean = true,
+    val showWeather: Boolean = true,
+    /** Today's high and low next to the weather, or tomorrow's in the evening. */
+    val showForecast: Boolean = true,
+    val showNotifications: Boolean = true,
+    // Brightness and night mode
+    /** Master switch for all dimming: room-light brightness and night mode. */
+    val dimEnabled: Boolean = true,
+    val autoBrightness: Boolean = true,
+    val minBrightness: Float = 0.02f,
+    val maxBrightness: Float = 0.8f,
+    val nightModeEnabled: Boolean = true,
+    /** Ambient light (lux) below which the clock switches to the dim red night look. */
+    val nightModeLux: Float = 4f,
+    val burnInProtection: Boolean = true,
+    // Day mode
+    /** Clock beside a month calendar, for a desk during the day; never turns night red. */
+    val dayMode: DayMode = DayMode.OFF,
+    /** Scheduled day mode starts at this minute of the day (0..1439) on [dayModeDays]. */
+    val dayModeStart: Int = 9 * 60,
+    /** Scheduled day mode ends at this minute of the day; at or before [dayModeStart], the next day. */
+    val dayModeEnd: Int = 18 * 60,
+    /** Days the schedule starts on: bit 0 = Monday ... bit 6 = Sunday, as in [Alarm.days]. */
+    val dayModeDays: Int = WEEKDAYS,
+    /**
+     * Epoch millis until which the clock's Day mode button overrides the schedule, flipping it; 0 for none.
+     * It is set to the schedule's next edge, so the schedule takes over again on its own.
+     */
+    val dayModeOverrideUntil: Long = 0L,
+    /** Today's events from the phone's calendars in day mode; needs READ_CALENDAR. */
+    val showCalendarEvents: Boolean = false,
+    /** The calendar page's view when day mode starts. */
+    val dayCalendarView: CalendarView = CalendarView.MONTH,
+    /** When the day mode photo was picked (epoch millis); 0 means no photo, use the illustration. */
+    val dayPhotoVersion: Long = 0L,
+    // Launching
+    val autoStartOnCharge: Boolean = false,
+    // Weather
+    val weatherUseDeviceLocation: Boolean = false,
+    val weatherCity: String = "",
+    val weatherLat: Double = Double.NaN,
+    val weatherLon: Double = Double.NaN,
+    val weatherFahrenheit: Boolean = false,
+    // Alarms
+    val snoozeMinutes: Int = 9,
+    val alarmRampSeconds: Int = 45,
+    val alarmVibrate: Boolean = true,
+    // Radio
+    val stations: List<Station> = DEFAULT_STATIONS,
+    val selectedStation: Int = 0,
+) {
+    val hasWeatherLocation: Boolean get() = !weatherLat.isNaN() && !weatherLon.isNaN()
+    val currentStation: Station? get() = stations.getOrNull(selectedStation) ?: stations.firstOrNull()
+
+    companion object {
+        /** Stations added in later versions; merged once into lists saved by older versions. */
+        val MONTERREY_STATIONS = listOf(
+            Station("Classic 106.9", "https://mdstrm.com/audio/673788019b826f0dc1842750/icecast.audio"),
+            Station("D99", "https://mdstrm.com/audio/662800a9c30cbb3e2e61f44b/icecast.audio"),
+            Station("Imagen Monterrey", "https://monterrey.radio.wnsol.com/;stream.mp3"),
+        )
+        const val STATIONS_VERSION = 2
+        const val WEEKDAYS = 0b001_1111
+
+        val DEFAULT_STATIONS = MONTERREY_STATIONS + listOf(
+            Station("SomaFM Groove Salad", "https://ice1.somafm.com/groovesalad-128-mp3"),
+            Station("SomaFM Drone Zone", "https://ice1.somafm.com/dronezone-128-mp3"),
+            Station("SomaFM Deep Space One", "https://ice1.somafm.com/deepspaceone-128-mp3"),
+        )
+        val COLORS = listOf(
+            0xFF8FD3FF, 0xFFFFFFFF, 0xFFFFD27A, 0xFFFF8A65,
+            0xFFFF5252, 0xFFB388FF, 0xFF69F0AE, 0xFF80CBC4,
+        ).map { it.toInt() }
+    }
+}

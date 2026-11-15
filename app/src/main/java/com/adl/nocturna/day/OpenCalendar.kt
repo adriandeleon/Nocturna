@@ -4,7 +4,6 @@ import android.content.ContentUris
 import android.content.Intent
 import android.provider.CalendarContract
 import java.time.LocalDate
-import java.time.LocalTime
 import java.time.ZonedDateTime
 
 /**
@@ -32,14 +31,3 @@ object OpenCalendar {
             .putExtra(CalendarContract.EXTRA_EVENT_END_TIME, event.end)
             .putExtra(CalendarContract.EXTRA_EVENT_ALL_DAY, event.allDay)
 }
-
-/** The hour a day view opens at: the current time for today, the start of the working day otherwise. */
-private val WORKDAY_START = LocalTime.of(9, 0)
-
-/**
- * The moment to open the calendar at for [day]: now if it's today (so the view shows what's next),
- * otherwise 09:00 that day in the same zone.
- */
-fun dayOpenTime(day: LocalDate, now: ZonedDateTime): Long =
-    if (day == now.toLocalDate()) now.toInstant().toEpochMilli()
-    else day.atTime(WORKDAY_START).atZone(now.zone).toInstant().toEpochMilli()

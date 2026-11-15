@@ -4,13 +4,14 @@ kotlin = "2.4.21"
 composeBom = "2026.09.00"
 # Compose Multiplatform for the shared module; 1.12.2 is built on Jetpack Compose 1.12.1, the BOM's version.
 composeMultiplatform = "1.12.2"
+kotlinxDatetime = "0.8.0"
+kotlinxSerialization = "1.13.0"
 coreKtx = "1.19.1"
 activityCompose = "1.13.0"
 lifecycle = "2.11.0"
 savedstate = "1.5.0"
 media3 = "1.11.1"
 junit = "4.13.2"
-orgJson = "20250517"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -32,9 +33,11 @@ compose-mp-runtime = { group = "org.jetbrains.compose.runtime", name = "runtime"
 compose-mp-foundation = { group = "org.jetbrains.compose.foundation", name = "foundation", version.ref = "composeMultiplatform" }
 compose-mp-ui = { group = "org.jetbrains.compose.ui", name = "ui", version.ref = "composeMultiplatform" }
 
+kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "kotlinxDatetime" }
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
+
 kotlin-test = { group = "org.jetbrains.kotlin", name = "kotlin-test", version.ref = "kotlin" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
-org-json = { group = "org.json", name = "json", version.ref = "orgJson" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

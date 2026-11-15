@@ -50,6 +50,7 @@ import androidx.compose.material3.OutlinedButton
 import com.adl.nocturna.ui.Glyph
 import com.adl.nocturna.ui.GlyphIcon
 import java.time.DayOfWeek
+import kotlinx.datetime.toKotlinLocalTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
@@ -175,7 +176,7 @@ fun DayToggles(days: Int, locale: Locale, modifier: Modifier = Modifier, onChang
 }
 
 fun formatTime(t: LocalTime, use24h: Boolean, locale: Locale): String =
-    t.format(DateTimeFormatter.ofPattern(if (use24h) "HH:mm" else "h:mm a", locale))
+    com.adl.nocturna.text.formatTime(t.toKotlinLocalTime(), use24h, locale)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
