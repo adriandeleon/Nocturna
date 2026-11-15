@@ -177,4 +177,12 @@ class SettingsJsonTest {
 
     @Test fun unknownSleepHoursTurnTheBedtimeReminderOff() =
         assertEquals(0f, SettingsCodec.decode(stored(put = mapOf("bedtimeSleepHours" to JsonPrimitive(7.25)))).bedtimeSleepHours)
+    @Test fun dndWhileShowingSurvivesRoundTrip() =
+        assertEquals(true, roundTrip(Settings(dndWhileShowing = true)).dndWhileShowing)
+
+    @Test fun settingsSavedBeforeDndWhileShowingLoadWithItOff() {
+        val loaded = SettingsCodec.decode(stored(Settings(dndWhileShowing = true, autoStartOnCharge = true), remove = listOf("dndWhileShowing")))
+        assertFalse(loaded.dndWhileShowing)
+        assertEquals(true, loaded.autoStartOnCharge)
+    }
 }

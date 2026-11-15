@@ -99,6 +99,8 @@ fun ClockScreen(
     onOpenCalendar: (CalendarLink) -> Unit = {},
     /** The screen saver's way out: a tap that doesn't peek, or a second one during a peek, ends it. */
     onDismiss: (() -> Unit)? = null,
+    /** Told when night mode (the dim red look) goes on or off. */
+    onNight: (Boolean) -> Unit = {},
 ) {
     val platform = LocalClockPlatform.current
     val settings by SettingsStore.settings.collectAsStateWithLifecycle()
@@ -138,6 +140,7 @@ fun ClockScreen(
         night -> currentLux < settings.nightModeLux * 2.5f
         else -> currentLux < settings.nightModeLux
     }
+    LaunchedEffect(night) { onNight(night) }
 
     val room = screenBrightness(
         currentLux, night, day, settings.dimEnabled, settings.autoBrightness,

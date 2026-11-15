@@ -47,6 +47,7 @@ object SettingsCodec {
         put("dayPhotoVersion", s.dayPhotoVersion)
         put("meetingChimeMinutes", s.meetingChimeMinutes)
         put("autoStartOnCharge", s.autoStartOnCharge)
+        put("dndWhileShowing", s.dndWhileShowing)
         put("weatherUseDeviceLocation", s.weatherUseDeviceLocation)
         put("weatherCity", s.weatherCity)
         // JSON has no NaN: no place is stored as no keys.
@@ -122,6 +123,7 @@ object SettingsCodec {
             meetingChimeMinutes = j.optInt("meetingChimeMinutes", d.meetingChimeMinutes)
                 .let { if (it in Settings.MEETING_CHIME_MINUTES) it else d.meetingChimeMinutes },
             autoStartOnCharge = j.optBoolean("autoStartOnCharge", d.autoStartOnCharge),
+            dndWhileShowing = j.optBoolean("dndWhileShowing", d.dndWhileShowing),
             weatherUseDeviceLocation = j.optBoolean("weatherUseDeviceLocation", d.weatherUseDeviceLocation),
             weatherCity = j.optString("weatherCity", d.weatherCity),
             weatherLat = j.optDouble("weatherLat", Double.NaN),

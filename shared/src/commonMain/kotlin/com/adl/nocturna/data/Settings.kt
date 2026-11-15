@@ -75,6 +75,8 @@ data class Settings(
     val meetingChimeMinutes: Int = 0,
     // Launching
     val autoStartOnCharge: Boolean = false,
+    /** Priority-only Do Not Disturb while the clock shows at night; needs Do Not Disturb access. */
+    val dndWhileShowing: Boolean = false,
     // Weather
     val weatherUseDeviceLocation: Boolean = false,
     val weatherCity: String = "",
