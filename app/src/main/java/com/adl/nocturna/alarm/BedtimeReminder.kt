@@ -76,7 +76,7 @@ object BedtimeReminder {
     private fun nextAlarmRing(context: Context, now: Instant, zone: TimeZone): Instant? {
         val enabled = AlarmStore.alarms.value.filter { it.enabled }
         val daysOff = if (enabled.any { it.skipDaysOff && it.repeats }) DaysOffCalendar.read(context, now, zone) else emptyMap()
-        return enabled.minOfOrNull { it.nextRing(now, zone, daysOff) }
+        return enabled.mapNotNull { it.nextRing(now, zone, daysOff) }.minOrNull()
     }
 
     private fun operation(context: Context): PendingIntent =

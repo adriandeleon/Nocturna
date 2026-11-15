@@ -8,6 +8,7 @@ import kotlinx.datetime.isoDayNumber
 import kotlinx.datetime.plus
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
+import com.adl.nocturna.alarm.datedRing
 import kotlin.time.Instant
 
 /**
@@ -18,6 +19,8 @@ import kotlin.time.Instant
  * does nothing.
  * [skipDaysOff] makes a repeating alarm stay quiet on days off in the phone's calendars
  * (see `com.adl.nocturna.alarm.nextRing`).
+ * [date] makes a one-time alarm ring on that day rather than the next time its clock time comes; it is
+ * ignored while the alarm [repeats] (see `com.adl.nocturna.alarm.datedRing`).
  */
 data class Alarm(
     val id: Long,
@@ -29,8 +32,12 @@ data class Alarm(
     val station: Station? = null,
     val skipDate: LocalDate? = null,
     val skipDaysOff: Boolean = false,
+    val date: LocalDate? = null,
 ) {
     val repeats: Boolean get() = days != 0
+
+    /** The day this one-time alarm rings on, or null when it rings the next time its clock time comes. */
+    val ringDate: LocalDate? get() = date.takeIf { !repeats }
 
     fun repeatsOn(dayIndex: Int) = days and (1 shl dayIndex) != 0
 
@@ -39,8 +46,10 @@ data class Alarm(
      *
      * Each candidate is built from its own calendar date, so a daylight-saving change only affects
      * the day it happens on (a time inside the spring-forward gap moves later by the length of the gap).
+     * Null only for an alarm with a [ringDate] whose time has passed: it has nothing left to ring.
      */
-    fun nextTrigger(now: Instant, zone: TimeZone): Instant = nextTrigger(now, zone, skipDate)
+    fun nextTrigger(now: Instant, zone: TimeZone): Instant? =
+        if (ringDate != null) datedRing(now, zone) else nextTrigger(now, zone, skipDate)
 
     private fun nextTrigger(now: Instant, zone: TimeZone, skip: LocalDate?): Instant {
         var date = now.toLocalDateTime(zone).date
@@ -53,7 +62,7 @@ data class Alarm(
             date = date.plus(1, DateTimeUnit.DAY)
         }
         // Only reachable with no valid day bits; treat as "once" rather than loop forever.
-        return copy(days = 0, skipDate = null).nextTrigger(now, zone)
+        return copy(days = 0, skipDate = null, date = null).nextTrigger(now, zone, null)
     }
 
     /** The occurrence being skipped, or null when none is still ahead of [now]. */

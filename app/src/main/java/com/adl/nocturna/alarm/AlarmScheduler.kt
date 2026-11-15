@@ -29,8 +29,9 @@ object AlarmScheduler {
 
         val enabled = AlarmStore.alarms.value.filter { it.enabled }
         val daysOff = if (enabled.any { it.skipDaysOff && it.repeats }) DaysOffCalendar.read(context, now, zone) else emptyMap()
-        val candidates = enabled.map {
-            Candidate(it.nextRing(now, zone, daysOff).toEpochMilliseconds(), it.id, false)
+        // An alarm whose date has passed (the phone was off then) has no ring left: it isn't set.
+        val candidates = enabled.mapNotNull { a ->
+            a.nextRing(now, zone, daysOff)?.let { Candidate(it.toEpochMilliseconds(), a.id, false) }
         }.toMutableList()
         scheduleDaysOffCheck(context, am, enabled.mapNotNull { it.firstSkippedRing(now, zone, daysOff) }.minOrNull(), now)
         BedtimeReminder.schedule(context, am, candidates.minOfOrNull { it.at }?.let(Instant::fromEpochMilliseconds), now, zone)

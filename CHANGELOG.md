@@ -81,6 +81,11 @@ one-line summary written for users.
   wake-up screen leaves the station playing after you dismiss the alarm.
 - **Skip the next alarm:** a repeating alarm can skip its next ring, for a day off, without being switched
   off and back on. *Undo skip* brings it back, and changing the alarm's time or days drops the skip.
+- **One-time alarms on a date:** an alarm without repeat days can be set for a day of your choice, such as a
+  flight on Friday, with *Date* on its card; the list shows the day (*Fri 21 Nov*). It rings once, at its time
+  on that day, and then switches itself off. Without a date a one-time alarm rings the next time its time comes,
+  as before. A date and repeat days don't go together: picking days takes the date off. Past dates can't be
+  picked, days off don't silence it, and switching it back on after its day takes the date off.
 - **A sunrise before your alarms:** in the 20 minutes before an alarm the clock slowly brightens, up to the
   brightest level you allow, and warms from night red through amber to a soft white, so the room is light
   when the alarm rings. It starts gently and speeds up, like a real dawn, and ends when the alarm rings. It
