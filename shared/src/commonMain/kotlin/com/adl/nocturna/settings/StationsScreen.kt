@@ -23,21 +23,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.adl.nocturna.data.SettingsStore
 import com.adl.nocturna.data.Station
-import com.adl.nocturna.radio.Radio
+import com.adl.nocturna.clock.LocalClockPlatform
+import com.adl.nocturna.clock.RadioControl
 import com.adl.nocturna.sound.SleepSound
 
 @Composable
 fun StationsScreen(padding: PaddingValues) {
-    val context = LocalContext.current
+    val radio = LocalClockPlatform.current.radio
     val s by SettingsStore.settings.collectAsStateWithLifecycle()
-    val radioOn by Radio.isOn.collectAsStateWithLifecycle()
-    val error by Radio.error.collectAsStateWithLifecycle()
+    val radioOn by radio.isOn.collectAsStateWithLifecycle()
+    val error by radio.error.collectAsStateWithLifecycle()
     var name by remember { mutableStateOf("") }
     var url by remember { mutableStateOf("") }
 
@@ -53,10 +53,10 @@ fun StationsScreen(padding: PaddingValues) {
         error?.let { item { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(horizontal = 16.dp)) } }
         itemsIndexed(s.stations) { i, station ->
             Row(
-                Modifier.fillMaxWidth().clickable { select(context, i, station, radioOn) }.padding(horizontal = 8.dp, vertical = 4.dp),
+                Modifier.fillMaxWidth().clickable { select(radio, i, station, radioOn) }.padding(horizontal = 8.dp, vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                RadioButton(selected = s.currentSleepSound == null && i == s.selectedStation, onClick = { select(context, i, station, radioOn) })
+                RadioButton(selected = s.currentSleepSound == null && i == s.selectedStation, onClick = { select(radio, i, station, radioOn) })
                 Column(Modifier.weight(1f)) {
                     Text(station.name, style = MaterialTheme.typography.bodyLarge)
                     Text(
@@ -88,10 +88,10 @@ fun StationsScreen(padding: PaddingValues) {
         }
         items(SleepSound.entries) { sound ->
             Row(
-                Modifier.fillMaxWidth().clickable { select(context, sound, radioOn) }.padding(horizontal = 8.dp, vertical = 4.dp),
+                Modifier.fillMaxWidth().clickable { select(radio, sound, radioOn) }.padding(horizontal = 8.dp, vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                RadioButton(selected = sound == s.currentSleepSound, onClick = { select(context, sound, radioOn) })
+                RadioButton(selected = sound == s.currentSleepSound, onClick = { select(radio, sound, radioOn) })
                 Column(Modifier.weight(1f)) {
                     Text(sound.label, style = MaterialTheme.typography.bodyLarge)
                     Text(
@@ -103,10 +103,10 @@ fun StationsScreen(padding: PaddingValues) {
         }
         item {
             Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                TextButton(onClick = { Radio.play(context, s.currentStation ?: return@TextButton) }, enabled = !radioOn && s.currentStation != null) {
+                TextButton(onClick = { radio.play(s.currentStation ?: return@TextButton) }, enabled = !radioOn && s.currentStation != null) {
                     Text("▶  Play")
                 }
-                TextButton(onClick = { Radio.stop(context) }, enabled = radioOn) { Text("■  Stop") }
+                TextButton(onClick = { radio.stop() }, enabled = radioOn) { Text("■  Stop") }
             }
         }
         item { SectionHeader("Add a station") }
@@ -132,12 +132,12 @@ fun StationsScreen(padding: PaddingValues) {
     }
 }
 
-private fun select(context: android.content.Context, index: Int, station: Station, radioOn: Boolean) {
+private fun select(radio: RadioControl, index: Int, station: Station, radioOn: Boolean) {
     SettingsStore.update { it.copy(selectedStation = index, selectedSound = "") }
-    if (radioOn) Radio.play(context, station)
+    if (radioOn) radio.play(station)
 }
 
-private fun select(context: android.content.Context, sound: SleepSound, radioOn: Boolean) {
+private fun select(radio: RadioControl, sound: SleepSound, radioOn: Boolean) {
     SettingsStore.update { it.copy(selectedSound = sound.id) }
-    if (radioOn) Radio.play(context, sound.station)
+    if (radioOn) radio.play(sound.station)
 }

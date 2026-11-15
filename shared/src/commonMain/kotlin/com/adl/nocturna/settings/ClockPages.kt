@@ -13,22 +13,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.adl.nocturna.clock.AnalogClock
 import com.adl.nocturna.clock.DigitalClock
+import com.adl.nocturna.clock.LocalClockPlatform
 import com.adl.nocturna.clock.clockColor
 import com.adl.nocturna.clock.label
-import com.adl.nocturna.clock.rememberAmbientLux
 import com.adl.nocturna.clock.rememberNow
-import com.adl.nocturna.clock.rememberWallpaperColor
 import com.adl.nocturna.clock.selectedSwatch
 import com.adl.nocturna.data.ClockFont
 import com.adl.nocturna.data.ClockStyle
 import com.adl.nocturna.data.Settings
 import com.adl.nocturna.data.SettingsStore
+import com.adl.nocturna.text.formatNumber
+import com.adl.nocturna.ui.currentLocale
 import kotlin.math.roundToInt
 
 private fun set(block: (Settings) -> Settings) = SettingsStore.update(block)
@@ -47,7 +47,7 @@ fun ClockFacePage(padding: PaddingValues) {
             }
         }
         SettingsGroup("Colour") {
-            val wallpaper = rememberWallpaperColor()
+            val wallpaper = LocalClockPlatform.current.wallpaperColor()
             ColorRow(
                 Settings.COLORS, selectedSwatch(s, wallpaper),
                 wallpaper = wallpaper, wallpaperSelected = s.colorFromWallpaper && wallpaper != null,
@@ -75,7 +75,7 @@ private fun ClockPreview(s: Settings) {
             .background(Color.Black),
         contentAlignment = Alignment.Center,
     ) {
-        val color = Color(clockColor(s, rememberWallpaperColor()))
+        val color = Color(clockColor(s, LocalClockPlatform.current.wallpaperColor()))
         if (s.style == ClockStyle.DIGITAL) DigitalClock(now, s.use24h, s.showSeconds, s.font, color, 76.sp)
         else AnalogClock(now, s.showSeconds, color, 140.dp)
     }
@@ -83,9 +83,9 @@ private fun ClockPreview(s: Settings) {
 
 @Composable
 fun InfoLinePage(padding: PaddingValues, onNavigate: (String) -> Unit) {
-    val context = LocalContext.current
+    val platform = LocalSettingsPlatform.current
     val s by SettingsStore.settings.collectAsStateWithLifecycle()
-    val access = rememberSystemAccess()
+    val access = platform.access()
     SettingsPage(padding) {
         Hint("The line of small details under the time", Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
         SettingsGroup {
@@ -107,7 +107,7 @@ fun InfoLinePage(padding: PaddingValues, onNavigate: (String) -> Unit) {
                 SwitchRow("Forecast", s.showForecast, "Today's high and low; tomorrow's in the evening") { v ->
                     set { it.copy(showForecast = v) }
                 }
-                NavRow("Place and units", weatherSummary(s)) { onNavigate(SettingsActivity.SCREEN_WEATHER) }
+                NavRow("Place and units", weatherSummary(s)) { onNavigate(SettingsPages.WEATHER) }
             }
         }
         SettingsGroup("Notifications") {
@@ -116,7 +116,7 @@ fun InfoLinePage(padding: PaddingValues, onNavigate: (String) -> Unit) {
                 if (access.notificationAccess) "Icons of the apps with notifications" else "Needs notification access",
             ) { v -> set { it.copy(showNotifications = v) } }
             if (s.showNotifications && !access.notificationAccess) {
-                ActionButton("Grant notification access") { openNotificationAccessSettings(context) }
+                ActionButton("Grant notification access") { platform.open(SystemPage.NOTIFICATION_ACCESS) }
             }
         }
     }
@@ -125,10 +125,11 @@ fun InfoLinePage(padding: PaddingValues, onNavigate: (String) -> Unit) {
 @Composable
 fun BrightnessPage(padding: PaddingValues) {
     val s by SettingsStore.settings.collectAsStateWithLifecycle()
-    val lux by rememberAmbientLux()
+    val lux = LocalClockPlatform.current.ambientLux()
+    val locale = currentLocale()
     SettingsPage(padding) {
         Hint(
-            lux?.let { "Light sensor reads ${"%.1f".format(it)} lux now" }
+            lux?.let { "Light sensor reads ${formatNumber(it.toDouble(), 1, locale)} lux now" }
                 ?: "No light sensor: night mode follows the clock (22:00–07:00)",
             Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
         )
@@ -162,7 +163,7 @@ fun BrightnessPage(padding: PaddingValues) {
                     set { it.copy(nightModeEnabled = v) }
                 }
                 if (s.nightModeEnabled) {
-                    SliderRow("Turn on below", s.nightModeLux, 0.5f..30f, { "${"%.1f".format(it)} lux" }) { v ->
+                    SliderRow("Turn on below", s.nightModeLux, 0.5f..30f, { "${formatNumber(it.toDouble(), 1, locale)} lux" }) { v ->
                         set { it.copy(nightModeLux = v) }
                     }
                 }

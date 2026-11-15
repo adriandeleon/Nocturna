@@ -1,0 +1,97 @@
+package com.adl.nocturna.alarm
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.adl.nocturna.clock.DigitalClock
+import com.adl.nocturna.clock.rememberNow
+import com.adl.nocturna.data.SettingsStore
+import com.adl.nocturna.data.Station
+import com.adl.nocturna.ui.GlyphIcon
+import com.adl.nocturna.weather.WeatherRepository
+import com.adl.nocturna.weather.wakeWeather
+
+/**
+ * The ringing alarm: the time, its [label] and [station], with big Snooze and Dismiss buttons. With a
+ * [station], "Keep listening" dismisses the alarm and carries on with the station in the radio player.
+ * Under the time it shows today's weather from [WeatherRepository]; the host refreshes that when it is old.
+ */
+@Composable
+fun AlarmScreen(
+    label: String,
+    station: Station?,
+    onSnooze: () -> Unit,
+    onDismiss: () -> Unit,
+    onKeepListening: (Station) -> Unit,
+) {
+    val settings = SettingsStore.current
+    val now by rememberNow()
+    val accent = Color(settings.color)
+    val weather by WeatherRepository.weather.collectAsStateWithLifecycle()
+    val wake = wakeWeather(settings, weather, now.instant, now.zone)
+
+    Column(
+        Modifier.fillMaxSize().background(Color.Black).safeDrawingPadding().padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        DigitalClock(now, settings.use24h, false, settings.font, accent, 96.sp)
+        Spacer(Modifier.height(12.dp))
+        Text(label.ifBlank { "Alarm" }, style = MaterialTheme.typography.headlineSmall, color = accent.copy(alpha = 0.8f))
+        station?.let {
+            Spacer(Modifier.height(4.dp))
+            Text(it.name, style = MaterialTheme.typography.bodyLarge, color = accent.copy(alpha = 0.6f))
+        }
+        wake?.let { w ->
+            Spacer(Modifier.height(12.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                val color = accent.copy(alpha = 0.7f)
+                GlyphIcon(w.glyph, color, 26.dp)
+                Spacer(Modifier.width(8.dp))
+                Text(w.text, style = MaterialTheme.typography.titleLarge, color = color, softWrap = false)
+            }
+        }
+        Spacer(Modifier.height(64.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+            OutlinedButton(
+                onClick = onSnooze,
+                modifier = Modifier.size(width = 150.dp, height = 72.dp),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = accent),
+            ) { Text("Snooze ${settings.snoozeMinutes}m", fontSize = 18.sp) }
+            Button(
+                onClick = onDismiss,
+                modifier = Modifier.size(width = 150.dp, height = 72.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = accent, contentColor = Color.Black),
+            ) { Text("Dismiss", fontSize = 18.sp) }
+        }
+        station?.let {
+            Spacer(Modifier.height(24.dp))
+            TextButton(
+                onClick = { onKeepListening(it) },
+                colors = ButtonDefaults.textButtonColors(contentColor = accent),
+            ) { Text("Keep listening", fontSize = 18.sp) }
+        }
+    }
+}

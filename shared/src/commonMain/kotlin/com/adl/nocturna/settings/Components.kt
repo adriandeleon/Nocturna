@@ -1,8 +1,5 @@
 package com.adl.nocturna.settings
 
-import android.content.Context
-import android.content.Intent
-import androidx.core.net.toUri
 import androidx.compose.foundation.border
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -50,12 +47,9 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.OutlinedButton
 import com.adl.nocturna.ui.Glyph
 import com.adl.nocturna.ui.GlyphIcon
-import java.time.DayOfWeek
-import kotlinx.datetime.toKotlinLocalTime
-import java.time.LocalTime
-import java.time.format.DateTimeFormatter
-import java.time.format.TextStyle
-import java.util.Locale
+import com.adl.nocturna.text.PlatformLocale
+import com.adl.nocturna.text.narrowName
+import kotlinx.datetime.DayOfWeek
 
 @Composable
 fun SectionHeader(text: String) {
@@ -169,14 +163,9 @@ fun ColorRow(
     }
 }
 
-/** Opens [url] in the browser; does nothing when no app can handle it. */
-fun Context.openUrl(url: String) {
-    runCatching { startActivity(Intent(Intent.ACTION_VIEW, url.toUri())) }
-}
-
 /** One round toggle per weekday, Monday first, for a [days] bitmask with bit 0 = Monday. */
 @Composable
-fun DayToggles(days: Int, locale: Locale, modifier: Modifier = Modifier, onChange: (Int) -> Unit) {
+fun DayToggles(days: Int, locale: PlatformLocale, modifier: Modifier = Modifier, onChange: (Int) -> Unit) {
     Row(modifier, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         DayOfWeek.entries.forEachIndexed { i, day ->
             OutlinedIconToggleButton(
@@ -189,13 +178,10 @@ fun DayToggles(days: Int, locale: Locale, modifier: Modifier = Modifier, onChang
                 ),
                 shape = CircleShape,
                 modifier = Modifier.size(36.dp),
-            ) { Text(day.getDisplayName(TextStyle.NARROW, locale), fontSize = 13.sp) }
+            ) { Text(day.narrowName(locale), fontSize = 13.sp) }
         }
     }
 }
-
-fun formatTime(t: LocalTime, use24h: Boolean, locale: Locale): String =
-    com.adl.nocturna.text.formatTime(t.toKotlinLocalTime(), use24h, locale)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

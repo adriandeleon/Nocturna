@@ -14,6 +14,12 @@ expect fun formatTime(time: LocalTime, use24h: Boolean, locale: PlatformLocale):
 /** The day's short name in [locale]'s language: "Mon", "lun.", "月"… */
 expect fun DayOfWeek.shortName(locale: PlatformLocale): String
 
+/** [locale]'s language as an ISO 639 code: "en", "es"… */
+expect val PlatformLocale.languageCode: String
+
+/** [value] with [fractionDigits] decimals, written the way [locale] writes numbers: "2.5", "2,5"… */
+expect fun formatNumber(value: Double, fractionDigits: Int, locale: PlatformLocale): String
+
 /** The day's one-letter name for a calendar's header row: "M", "L", "月"… */
 expect fun DayOfWeek.narrowName(locale: PlatformLocale): String
 

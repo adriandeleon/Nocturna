@@ -315,8 +315,6 @@ class AlarmService : Service() {
         private const val NOTIFICATION_ID = 42
         private const val START_VOLUME = 0.05f
         private const val MAX_RING_MS = 10 * 60_000L
-        /** How long a radio alarm may stay silent before the alarm tone takes over. */
-        const val STREAM_TIMEOUT_MS = 15_000L
         const val ACTION_SNOOZE = "com.adl.nocturna.SNOOZE"
         const val ACTION_DISMISS = "com.adl.nocturna.DISMISS"
 
