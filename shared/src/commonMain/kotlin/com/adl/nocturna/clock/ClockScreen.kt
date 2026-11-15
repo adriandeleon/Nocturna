@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -63,6 +64,7 @@ import com.adl.nocturna.day.CalendarLink
 import com.adl.nocturna.day.DayBackground
 import com.adl.nocturna.day.DayLayout
 import com.adl.nocturna.day.FocusTimer
+import com.adl.nocturna.day.HourlyStrip
 import com.adl.nocturna.day.focusTimerFromSaved
 import com.adl.nocturna.day.toSaved
 import androidx.compose.runtime.saveable.Saver
@@ -252,7 +254,7 @@ fun ClockScreen(
                     ClockStyle.ANALOG -> AnalogClock(now, settings.showSeconds, color, analogSize)
                 }
                 Spacer(Modifier.height(infoFontDp * 0.6f))
-                InfoBlock(settings, now, color, infoSize, infoFontDp, shadow)
+                InfoBlock(settings, now, color, infoSize, infoFontDp, shadow, hourlyWidth = if (day) clockWidth else null)
             }
         }
 
@@ -298,6 +300,8 @@ private fun InfoBlock(
     fontSize: androidx.compose.ui.unit.TextUnit,
     glyphSize: Dp,
     shadow: Shadow? = null,
+    /** Day mode's width for the next hours' weather under the weather line; null leaves it out. */
+    hourlyWidth: Dp? = null,
 ) {
     val style = TextStyle(color = color.copy(alpha = if (shadow != null) 1f else 0.85f), fontSize = fontSize, shadow = shadow)
     val platform = LocalClockPlatform.current
@@ -361,6 +365,16 @@ private fun InfoBlock(
             } else null
             Item(Glyph.ALARM, countdown ?: pattern.format(t), color, style, glyphSize)
         }
+    }
+
+    val hours = weather?.hours.orEmpty()
+    if (hourlyWidth != null && settings.showWeather && settings.dayHourlyWeather && hours.isNotEmpty()) {
+        Spacer(Modifier.height(glyphSize * 0.4f))
+        HourlyStrip(
+            hours, now, settings.use24h, settings.weatherFahrenheit, locale,
+            style.copy(color = style.color.copy(alpha = style.color.alpha * 0.75f), fontSize = fontSize * 0.85f),
+            glyphSize * 0.85f, Modifier.widthIn(max = hourlyWidth),
+        )
     }
 
     if (radioTitle != null) {
