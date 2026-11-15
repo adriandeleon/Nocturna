@@ -19,7 +19,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import com.adl.nocturna.ui.NocturnaTheme
 import com.adl.nocturna.ui.enableDarkEdgeToEdge
 
 class SettingsActivity : ComponentActivity() {
@@ -32,7 +31,7 @@ class SettingsActivity : ComponentActivity() {
         val directEntry = start != SCREEN_MAIN
 
         setContent {
-            NocturnaTheme {
+            SettingsTheme {
                 var screen by rememberSaveable { mutableStateOf(start) }
                 val goBack = { if (screen == SCREEN_MAIN || directEntry) finish() else screen = SCREEN_MAIN }
                 BackHandler(onBack = goBack)

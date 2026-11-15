@@ -19,9 +19,12 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.adl.nocturna.clock.AnalogClock
 import com.adl.nocturna.clock.DigitalClock
+import com.adl.nocturna.clock.clockColor
 import com.adl.nocturna.clock.label
 import com.adl.nocturna.clock.rememberAmbientLux
 import com.adl.nocturna.clock.rememberNow
+import com.adl.nocturna.clock.rememberWallpaperColor
+import com.adl.nocturna.clock.selectedSwatch
 import com.adl.nocturna.data.ClockFont
 import com.adl.nocturna.data.ClockStyle
 import com.adl.nocturna.data.Settings
@@ -44,7 +47,12 @@ fun ClockFacePage(padding: PaddingValues) {
             }
         }
         SettingsGroup("Colour") {
-            ColorRow(Settings.COLORS, s.color) { v -> set { it.copy(color = v) } }
+            val wallpaper = rememberWallpaperColor()
+            ColorRow(
+                Settings.COLORS, selectedSwatch(s, wallpaper),
+                wallpaper = wallpaper, wallpaperSelected = s.colorFromWallpaper && wallpaper != null,
+                onSelectWallpaper = { set { it.copy(colorFromWallpaper = true) } },
+            ) { v -> set { it.copy(color = v, colorFromWallpaper = false) } }
         }
         SettingsGroup("Time") {
             SwitchRow("24-hour time", s.use24h) { v -> set { it.copy(use24h = v) } }
@@ -67,7 +75,7 @@ private fun ClockPreview(s: Settings) {
             .background(Color.Black),
         contentAlignment = Alignment.Center,
     ) {
-        val color = Color(s.color)
+        val color = Color(clockColor(s, rememberWallpaperColor()))
         if (s.style == ClockStyle.DIGITAL) DigitalClock(now, s.use24h, s.showSeconds, s.font, color, 76.sp)
         else AnalogClock(now, s.showSeconds, color, 140.dp)
     }

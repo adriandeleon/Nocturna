@@ -12,6 +12,10 @@ one-line summary written for users.
 
 - **A big bedside clock for the nightstand:** digital, in six font styles, 12 or 24 hours, with or without
   seconds, or analog, in a colour you pick.
+- **A clock in your wallpaper's colours (Material You):** on Android 12 and later, pick *From wallpaper* in
+  Settings › Clock face › *Colour* and the clock and its info line take a light accent from your wallpaper, and
+  change with it. Night mode still turns the clock red, and Day mode keeps its own look. The settings screens
+  follow your wallpaper's colours too.
 - **An info line under the clock** with the date, the weather (from Open-Meteo, no account needed), the battery
   and charging state, the next alarm and the radio station playing.
 - **A short forecast next to the weather:** today's high and low during the day, and from 18:00 tomorrow's

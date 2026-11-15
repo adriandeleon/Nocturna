@@ -50,6 +50,13 @@ interface ClockPlatform {
 
     /** One short, quiet chime before a meeting, on the notification sound (never the alarm's). */
     fun playMeetingChime() {}
+
+    /**
+     * A light accent from the phone's wallpaper palette (Material You) as ARGB, kept current as the
+     * wallpaper changes; null where the phone has no such palette.
+     */
+    @Composable
+    fun wallpaperColor(): Int? = null
 }
 
 val LocalClockPlatform = staticCompositionLocalOf<ClockPlatform> { error("No ClockPlatform provided") }
