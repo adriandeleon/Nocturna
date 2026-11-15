@@ -1,6 +1,8 @@
 package com.adl.nocturna.day
 
 import com.adl.nocturna.text.DateTimePattern
+import com.adl.nocturna.text.PlatformLocale
+import com.adl.nocturna.text.strings
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Instant
@@ -33,12 +35,12 @@ fun minutesUntil(event: CalendarEvent, now: Instant): Int {
  * The countdown over the event's title on the sticky note, with its start time in [time] read in
  * [zone], e.g. "In 12 min · 10:00".
  */
-fun countdownLabel(event: CalendarEvent, now: Instant, zone: TimeZone, time: DateTimePattern): String =
-    "In ${minutesUntil(event, now)} min · ${time.format(Instant.fromEpochMilliseconds(event.begin).toLocalDateTime(zone))}"
+fun countdownLabel(event: CalendarEvent, now: Instant, zone: TimeZone, time: DateTimePattern, locale: PlatformLocale): String =
+    strings(locale).meetingIn(minutesUntil(event, now), time.format(Instant.fromEpochMilliseconds(event.begin).toLocalDateTime(zone)))
 
 /** The countdown on its own line, where the note isn't showing, e.g. "Standup in 12 min". */
-fun countdownLine(event: CalendarEvent, now: Instant): String =
-    "${event.title.trim().ifEmpty { "Next event" }} in ${minutesUntil(event, now)} min"
+fun countdownLine(event: CalendarEvent, now: Instant, locale: PlatformLocale): String =
+    strings(locale).meetingLine(event.title.trim().ifEmpty { strings(locale).nextEvent }, minutesUntil(event, now))
 
 /** One occurrence of an event, so its chime plays only once. */
 fun chimeKey(event: CalendarEvent): String = "${event.eventId}@${event.begin}"

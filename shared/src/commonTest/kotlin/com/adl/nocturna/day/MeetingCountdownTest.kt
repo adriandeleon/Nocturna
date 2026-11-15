@@ -77,18 +77,18 @@ class MeetingCountdownTest {
     }
 
     @Test fun lineNamesTheEvent() {
-        assertEquals("Standup in 12 min", countdownLine(standup, at(9, 48)))
-        assertEquals("Standup in 1 min", countdownLine(standup, at(9, 59, 30)))
-        assertEquals("Next event in 5 min", countdownLine(standup.copy(title = "  "), at(9, 55)))
+        assertEquals("Standup in 12 min", countdownLine(standup, at(9, 48), testLocale))
+        assertEquals("Standup in 1 min", countdownLine(standup, at(9, 59, 30), testLocale))
+        assertEquals("Next event in 5 min", countdownLine(standup.copy(title = "  "), at(9, 55), testLocale))
     }
 
     @Test fun noteLabelHasTheStartTimeInTheClocksZone() {
         val time = DateTimePattern("HH:mm", testLocale)
-        assertEquals("In 12 min · 10:00", countdownLabel(standup, at(9, 48), monterrey, time))
+        assertEquals("In 12 min · 10:00", countdownLabel(standup, at(9, 48), monterrey, time, testLocale))
         // New York is an hour ahead of Monterrey in November.
-        assertEquals("In 12 min · 11:00", countdownLabel(standup, at(9, 48), TimeZone.of("America/New_York"), time))
+        assertEquals("In 12 min · 11:00", countdownLabel(standup, at(9, 48), TimeZone.of("America/New_York"), time, testLocale))
         val twelveHour = DateTimePattern("h:mm a", testLocale)
-        assertEquals("in 1 min · 10:00 am", countdownLabel(standup, at(9, 59, 30), monterrey, twelveHour).lowercase())
+        assertEquals("in 1 min · 10:00 am", countdownLabel(standup, at(9, 59, 30), monterrey, twelveHour, testLocale).lowercase())
     }
 
     @Test fun chimesAtItsMinuteOnly() {

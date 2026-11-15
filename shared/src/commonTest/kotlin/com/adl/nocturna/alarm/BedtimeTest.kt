@@ -86,8 +86,8 @@ class BedtimeTest {
     }
 
     @Test fun sleepLabels() {
-        assertEquals("Off", sleepHoursLabel(0f))
-        assertEquals("7 h", sleepHoursLabel(7f))
-        assertEquals("8 h 30 m", sleepHoursLabel(8.5f))
+        assertEquals("Off", sleepHoursLabel(0f, testLocale))
+        assertEquals("7 h", sleepHoursLabel(7f, testLocale))
+        assertEquals("8 h 30 m", sleepHoursLabel(8.5f, testLocale))
     }
 }

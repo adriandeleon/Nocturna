@@ -36,13 +36,15 @@ import com.adl.nocturna.clock.WaveEffect
 import com.adl.nocturna.clock.rememberNow
 import com.adl.nocturna.data.SettingsStore
 import com.adl.nocturna.data.Station
+import com.adl.nocturna.resources.*
 import com.adl.nocturna.ui.GlyphIcon
 import com.adl.nocturna.weather.WeatherRepository
 import com.adl.nocturna.weather.wakeWeather
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * The ringing alarm: the time, its [label] and [station], with big Snooze and Dismiss buttons. With a
- * [station], "Keep listening" dismisses the alarm and carries on with the station in the radio player.
+ * [station], stringResource(Res.string.alarm_keep_listening) dismisses the alarm and carries on with the station in the radio player.
  * Under the time it shows today's weather from [WeatherRepository]; the host refreshes that when it is old.
  *
  * Dismissing, and keeping on listening, take the alarm's [challenge]: a tap, the button held for
@@ -80,7 +82,7 @@ fun AlarmScreen(
             onClick = onSnooze,
             modifier = Modifier.size(width = 150.dp, height = 72.dp),
             colors = ButtonDefaults.outlinedButtonColors(contentColor = accent),
-        ) { Text("Snooze ${settings.snoozeMinutes}m", fontSize = 18.sp) }
+        ) { Text(stringResource(Res.string.alarm_snooze, settings.snoozeMinutes), fontSize = 18.sp) }
     }
 
     val afterSums = solving
@@ -102,7 +104,7 @@ fun AlarmScreen(
             Row(horizontalArrangement = Arrangement.spacedBy(24.dp), verticalAlignment = Alignment.CenterVertically) {
                 snooze()
                 TextButton(onClick = { solving = null }, colors = ButtonDefaults.textButtonColors(contentColor = accent)) {
-                    Text("Back", fontSize = 18.sp)
+                    Text(stringResource(Res.string.alarm_back), fontSize = 18.sp)
                 }
             }
         }
@@ -113,7 +115,7 @@ fun AlarmScreen(
     ) {
         DigitalClock(now, settings.use24h, false, settings.font, accent, 96.sp)
         Spacer(Modifier.height(12.dp))
-        Text(label.ifBlank { "Alarm" }, style = MaterialTheme.typography.headlineSmall, color = accent.copy(alpha = 0.8f))
+        Text(label.ifBlank { stringResource(Res.string.alarm_default_label) }, style = MaterialTheme.typography.headlineSmall, color = accent.copy(alpha = 0.8f))
         station?.let {
             Spacer(Modifier.height(4.dp))
             Text(it.name, style = MaterialTheme.typography.bodyLarge, color = accent.copy(alpha = 0.6f))
@@ -131,24 +133,24 @@ fun AlarmScreen(
         Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
             snooze()
             if (challenge == DismissChallenge.HOLD) {
-                HoldButton("Hold to stop", accent, onDone = onDismiss)
+                HoldButton(stringResource(Res.string.alarm_hold_to_stop), accent, onDone = onDismiss)
             } else {
                 Button(
                     onClick = { startStop(onDismiss) },
                     modifier = Modifier.size(width = 150.dp, height = 72.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = accent, contentColor = Color.Black),
-                ) { Text("Dismiss", fontSize = 18.sp) }
+                ) { Text(stringResource(Res.string.alarm_dismiss), fontSize = 18.sp) }
             }
         }
         station?.let {
             Spacer(Modifier.height(24.dp))
             if (challenge == DismissChallenge.HOLD) {
-                HoldButton("Keep listening", accent, onDone = { onKeepListening(it) }, width = 200.dp, height = 56.dp, filled = false)
+                HoldButton(stringResource(Res.string.alarm_keep_listening), accent, onDone = { onKeepListening(it) }, width = 200.dp, height = 56.dp, filled = false)
             } else {
                 TextButton(
                     onClick = { startStop { onKeepListening(it) } },
                     colors = ButtonDefaults.textButtonColors(contentColor = accent),
-                ) { Text("Keep listening", fontSize = 18.sp) }
+                ) { Text(stringResource(Res.string.alarm_keep_listening), fontSize = 18.sp) }
             }
         }
     }

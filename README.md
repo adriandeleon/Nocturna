@@ -95,7 +95,7 @@ the code that doesn't depend on Android, ready for an iOS app later. Both use th
 | `widget` | Quick Settings tiles, the home-screen widget and its one-tap sleep radio (`app`); the widget's next-alarm text and clock size (`shared`) |
 | `settings` | The Settings hub and its pages: clock face, info line, brightness, day mode, weather, starting, alarms, stations, About and backup (`shared`), which reach the phone through `SettingsPlatform`; `SettingsActivity`, its Material You theme and `AndroidSettingsPlatform` (`app`) |
 | `data` | Settings and alarms and their stores, kept as JSON in device-protected SharedPreferences on Android; the backup file format (`shared`) |
-| `text`, `ui` | Dates and names in the phone's language, the theme and the icons (`shared`) |
+| `text`, `ui` | Dates and names in the phone's language, the words that plain functions put together (`Strings`), the theme and the icons (`shared`); the screens' own text is in `shared/src/commonMain/composeResources`, the notifications', tiles' and widget's in `app/src/main/res` |
 
 ## License
 

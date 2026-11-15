@@ -4,11 +4,12 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
+import java.util.Locale
 
 class CreditsTest {
-    @Test fun releaseVersionLabel() = assertEquals("Version 0.1.0 (1)", versionLabel("0.1.0", 1, debug = false))
+    @Test fun releaseVersionLabel() = assertEquals("Version 0.1.0 (1)", versionLabel("0.1.0", 1, debug = false, Locale.UK))
 
-    @Test fun debugVersionLabel() = assertEquals("Version 0.2.0 (7) · debug", versionLabel("0.2.0", 7, debug = true))
+    @Test fun debugVersionLabel() = assertEquals("Version 0.2.0 (7) · debug", versionLabel("0.2.0", 7, debug = true, Locale.UK))
 
     /** Gradle runs unit tests from the module directory; the repository root is one up. */
     private val notice: String = listOf(File("../NOTICE"), File("NOTICE")).first { it.isFile }.readText()

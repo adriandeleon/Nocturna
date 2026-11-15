@@ -19,15 +19,17 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.adl.nocturna.data.Settings
 import com.adl.nocturna.data.SettingsStore
-import com.adl.nocturna.weather.WeatherRepository
-import androidx.compose.ui.platform.LocalUriHandler
+import com.adl.nocturna.resources.*
 import com.adl.nocturna.text.languageCode
 import com.adl.nocturna.ui.currentLocale
+import com.adl.nocturna.weather.WeatherRepository
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun WeatherPage(padding: PaddingValues, onNavigate: (String) -> Unit) {
@@ -41,11 +43,11 @@ fun WeatherPage(padding: PaddingValues, onNavigate: (String) -> Unit) {
     SettingsPage(padding) {
         if (!s.showWeather) {
             SettingsGroup {
-                NavRow("The weather is hidden", "Tap to show it under the clock") { onNavigate(SettingsPages.INFO_LINE) }
+                NavRow(stringResource(Res.string.weather_hidden), stringResource(Res.string.weather_hidden_detail)) { onNavigate(SettingsPages.INFO_LINE) }
             }
         }
-        SettingsGroup("Place") {
-            SwitchRow("Use my location", s.weatherUseDeviceLocation, "Approximate location only") { v ->
+        SettingsGroup(stringResource(Res.string.weather_place)) {
+            SwitchRow(stringResource(Res.string.weather_use_location), s.weatherUseDeviceLocation, stringResource(Res.string.weather_use_location_detail)) { v ->
                 if (v && !platform.isGranted(Permission.LOCATION)) {
                     askLocation()
                 } else {
@@ -55,8 +57,10 @@ fun WeatherPage(padding: PaddingValues, onNavigate: (String) -> Unit) {
             }
             CitySearch(s)
         }
-        SettingsGroup("Units") {
-            ChoiceRow("Temperature", listOf(false, true), s.weatherFahrenheit, { if (it) "Fahrenheit (°F)" else "Celsius (°C)" }) { v ->
+        SettingsGroup(stringResource(Res.string.weather_units)) {
+            val fahrenheit = stringResource(Res.string.weather_fahrenheit)
+            val celsius = stringResource(Res.string.weather_celsius)
+            ChoiceRow(stringResource(Res.string.weather_temperature), listOf(false, true), s.weatherFahrenheit, { if (it) fahrenheit else celsius }) { v ->
                 SettingsStore.update { it.copy(weatherFahrenheit = v) }
             }
         }
@@ -69,7 +73,7 @@ fun WeatherPage(padding: PaddingValues, onNavigate: (String) -> Unit) {
 private fun WeatherAttribution() {
     val uriHandler = LocalUriHandler.current
     Text(
-        "Weather data by Open-Meteo.com (CC BY 4.0). City search based on GeoNames.",
+        stringResource(Res.string.weather_attribution),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
         modifier = Modifier
@@ -87,15 +91,16 @@ private fun CitySearch(s: Settings) {
     var query by remember { mutableStateOf("") }
     var status by remember { mutableStateOf<String?>(null) }
     var busy by remember { mutableStateOf(false) }
+    val noMatch = stringResource(Res.string.weather_no_match)
 
     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp)) {
         Text(
-            if (s.weatherCity.isNotBlank()) "City: ${s.weatherCity}" else "City: not set",
+            if (s.weatherCity.isNotBlank()) stringResource(Res.string.weather_city, s.weatherCity) else stringResource(Res.string.weather_city_not_set),
             style = MaterialTheme.typography.bodyLarge,
         )
         if (s.weatherUseDeviceLocation) {
             Text(
-                "Used when your location isn't available",
+                stringResource(Res.string.weather_city_fallback),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
             )
@@ -109,7 +114,7 @@ private fun CitySearch(s: Settings) {
                 value = query,
                 onValueChange = { query = it },
                 singleLine = true,
-                placeholder = { Text("Search a city") },
+                placeholder = { Text(stringResource(Res.string.weather_search_city)) },
                 modifier = Modifier.weight(1f),
             )
             Button(
@@ -121,7 +126,7 @@ private fun CitySearch(s: Settings) {
                         val place = runCatching { WeatherRepository.geocode(query, language) }.getOrNull()
                         busy = false
                         if (place == null) {
-                            status = "No match (or no connection)"
+                            status = noMatch
                         } else {
                             SettingsStore.update { it.copy(weatherCity = place.name, weatherLat = place.lat, weatherLon = place.lon) }
                             WeatherRepository.invalidate()
@@ -129,7 +134,7 @@ private fun CitySearch(s: Settings) {
                         }
                     }
                 },
-            ) { Text(if (busy) "…" else "Find") }
+            ) { Text(if (busy) "…" else stringResource(Res.string.weather_find)) }
         }
         status?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error) }
     }

@@ -1,5 +1,6 @@
 package com.adl.nocturna.day
 
+import com.adl.nocturna.text.testLocale
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -30,31 +31,31 @@ class FocusTest {
         assertEquals(FocusPhase.FOCUS, s.phase)
         assertEquals(min(25), s.left)
         assertEquals(0f, s.progress)
-        assertEquals("Focus · 25:00 left", focusLabel(s))
+        assertEquals("Focus · 25:00 left", focusLabel(s, testLocale))
     }
 
     @Test fun timeLeftFollowsTheClock() {
         val s = FocusTimer.start(t0).status(t0 + min(6, 18), lengths)
-        assertEquals("Focus · 18:42 left", focusLabel(s))
+        assertEquals("Focus · 18:42 left", focusLabel(s, testLocale))
         assertEquals(0.252f, s.progress, 0.001f)
     }
 
     @Test fun movesToABreakThenTheNextBlock() {
         val timer = FocusTimer.start(t0)
-        assertEquals("Focus · 0:01 left", focusLabel(timer.status(t0 + min(25) - 1, lengths)))
+        assertEquals("Focus · 0:01 left", focusLabel(timer.status(t0 + min(25) - 1, lengths), testLocale))
         val brk = timer.status(t0 + min(26, 50), lengths)
         assertEquals(FocusPhase.BREAK, brk.phase)
-        assertEquals("Break · 3:10 left", focusLabel(brk))
+        assertEquals("Break · 3:10 left", focusLabel(brk, testLocale))
         val next = timer.status(t0 + min(30), lengths)
         assertEquals(2, next.step)
-        assertEquals("Focus · 25:00 left", focusLabel(next))
+        assertEquals("Focus · 25:00 left", focusLabel(next, testLocale))
     }
 
     @Test fun theFourthBreakIsLong() {
         // Four blocks and three short breaks: 4 × 25 + 3 × 5 = 115 minutes.
         val s = FocusTimer.start(t0).status(t0 + min(115), lengths)
         assertEquals(7, s.step)
-        assertEquals("Long break · 15:00 left", focusLabel(s))
+        assertEquals("Long break · 15:00 left", focusLabel(s, testLocale))
         // Then the cycle starts over with a focus block.
         val over = FocusTimer.start(t0).status(t0 + min(130), lengths)
         assertEquals(8, over.step)
@@ -65,13 +66,13 @@ class FocusTest {
         // A cycle is 130 minutes; ten of them and 27 minutes more is two minutes into the first break.
         val s = FocusTimer.start(t0).status(t0 + min(1300 + 27), lengths)
         assertEquals(81, s.step)
-        assertEquals("Break · 3:00 left", focusLabel(s))
+        assertEquals("Break · 3:00 left", focusLabel(s, testLocale))
     }
 
     @Test fun lengthsComeFromTheSettings() {
         val short = FocusLengths(focus = 50, shortBreak = 10, longBreak = 30)
-        assertEquals("Focus · 45:00 left", focusLabel(FocusTimer.start(t0).status(t0 + min(5), short)))
-        assertEquals("Break · 10:00 left", focusLabel(FocusTimer.start(t0).status(t0 + min(50), short)))
+        assertEquals("Focus · 45:00 left", focusLabel(FocusTimer.start(t0).status(t0 + min(5), short), testLocale))
+        assertEquals("Break · 10:00 left", focusLabel(FocusTimer.start(t0).status(t0 + min(50), short), testLocale))
         // Zero would stall the cycle: a step lasts at least a minute.
         assertEquals(60_000L, FocusLengths(shortBreak = 0).millis(FocusPhase.BREAK))
     }
@@ -80,23 +81,23 @@ class FocusTest {
         val paused = FocusTimer.start(t0).pause(t0 + min(10))
         assertTrue(paused.paused)
         val during = paused.status(t0 + min(40), lengths)
-        assertEquals("Focus paused · 15:00 left", focusLabel(during))
+        assertEquals("Focus paused · 15:00 left", focusLabel(during, testLocale))
         assertEquals(paused, paused.pause(t0 + min(20)))
         // Resumed after 30 minutes paused, it goes on from 15:00.
         val resumed = paused.resume(t0 + min(40))
-        assertEquals("Focus · 15:00 left", focusLabel(resumed.status(t0 + min(40), lengths)))
-        assertEquals("Focus · 10:00 left", focusLabel(resumed.status(t0 + min(45), lengths)))
+        assertEquals("Focus · 15:00 left", focusLabel(resumed.status(t0 + min(40), lengths), testLocale))
+        assertEquals("Focus · 10:00 left", focusLabel(resumed.status(t0 + min(45), lengths), testLocale))
         assertEquals(FocusPhase.BREAK, resumed.status(t0 + min(55), lengths).phase)
     }
 
     @Test fun skipStartsTheNextStepNow() {
         val timer = FocusTimer.start(t0)
         val skipped = timer.skip(t0 + min(3), lengths)
-        assertEquals("Break · 5:00 left", focusLabel(skipped.status(t0 + min(3), lengths)))
-        assertEquals("Focus · 25:00 left", focusLabel(skipped.skip(t0 + min(4), lengths).status(t0 + min(4), lengths)))
+        assertEquals("Break · 5:00 left", focusLabel(skipped.status(t0 + min(3), lengths), testLocale))
+        assertEquals("Focus · 25:00 left", focusLabel(skipped.skip(t0 + min(4), lengths).status(t0 + min(4), lengths), testLocale))
         // A paused timer skips to the next step, still paused.
         val pausedSkip = timer.pause(t0 + min(1)).skip(t0 + min(2), lengths)
-        assertEquals("Break paused · 5:00 left", focusLabel(pausedSkip.status(t0 + min(9), lengths)))
+        assertEquals("Break paused · 5:00 left", focusLabel(pausedSkip.status(t0 + min(9), lengths), testLocale))
     }
 
     @Test fun chimesOnceAtEachSwitchTheClockRunsInto() {

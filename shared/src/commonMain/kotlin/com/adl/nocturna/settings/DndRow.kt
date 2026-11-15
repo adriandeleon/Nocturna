@@ -11,9 +11,11 @@ import androidx.compose.runtime.setValue
 import com.adl.nocturna.clock.MORNING_HOUR
 import com.adl.nocturna.clock.NIGHT_START_HOUR
 import com.adl.nocturna.data.SettingsStore
+import com.adl.nocturna.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 /**
- * The "Do Not Disturb at night" switch (Settings.dndWhileShowing). It needs Do Not Disturb access, which
+ * The stringResource(Res.string.dnd_title) switch (Settings.dndWhileShowing). It needs Do Not Disturb access, which
  * only the user can give, on a system screen; without it the switch says so and nothing happens.
  */
 @Composable
@@ -25,46 +27,44 @@ fun DndRow(enabled: Boolean) {
     var explain by remember { mutableStateOf(false) }
 
     val subtitle = when {
-        enabled && !access -> "Not allowed: Nocturna doesn't have Do Not Disturb access"
-        enabled && !alarmsAllowed -> "Not turned on: your Do Not Disturb settings would silence alarms"
-        else -> "Turn on Do Not Disturb while the clock is on screen at night"
+        enabled && !access -> stringResource(Res.string.dnd_not_allowed)
+        enabled && !alarmsAllowed -> stringResource(Res.string.dnd_not_turned_on)
+        else -> stringResource(Res.string.dnd_detail)
     }
-    SwitchRow("Do Not Disturb at night", enabled, subtitle) { v ->
+    SwitchRow(stringResource(Res.string.dnd_title), enabled, subtitle) { v ->
         if (v && !access) explain = true
         else SettingsStore.update { it.copy(dndWhileShowing = v) }
     }
     // Where the system has no such screen (some watches and TVs), the switch keeps saying it isn't allowed.
-    if (enabled && !access) ActionButton("Allow Do Not Disturb access") { platform.open(SystemPage.DND_ACCESS) }
+    if (enabled && !access) ActionButton(stringResource(Res.string.dnd_allow_access)) { platform.open(SystemPage.DND_ACCESS) }
     if (enabled && alarmsAllowed) {
         Hint(
-            "From $NIGHT_START_HOUR:00 to ${MORNING_HOUR.toString().padStart(2, '0')}:00, or from when night mode " +
-                "starts in the evening. Priority only, so alarms still ring.",
+            stringResource(
+                Res.string.dnd_hours,
+                "$NIGHT_START_HOUR:00",
+                "${MORNING_HOUR.toString().padStart(2, '0')}:00",
+            ),
         )
     }
     if (enabled && access && !alarmsAllowed) {
-        Hint("Allow alarms in your phone's Do Not Disturb settings and Nocturna will turn it on at night.")
+        Hint(stringResource(Res.string.dnd_allow_alarms))
     }
 
     if (explain) {
         AlertDialog(
             onDismissRequest = { explain = false },
-            title = { Text("Allow Do Not Disturb access") },
+            title = { Text(stringResource(Res.string.dnd_allow_access)) },
             text = {
-                Text(
-                    "To silence notifications at night, Nocturna needs your OK to change Do Not Disturb. " +
-                        "On the next screen, find Nocturna and allow it. It only sets priority mode, so " +
-                        "alarms still ring, and it puts things back when the clock leaves the screen or " +
-                        "in the morning.",
-                )
+                Text(stringResource(Res.string.dnd_explain))
             },
             confirmButton = {
                 TextButton(onClick = {
                     explain = false
                     SettingsStore.update { it.copy(dndWhileShowing = true) }
                     platform.open(SystemPage.DND_ACCESS)
-                }) { Text("Continue") }
+                }) { Text(stringResource(Res.string.dnd_continue)) }
             },
-            dismissButton = { TextButton(onClick = { explain = false }) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = { explain = false }) { Text(stringResource(Res.string.cancel)) } },
         )
     }
 }

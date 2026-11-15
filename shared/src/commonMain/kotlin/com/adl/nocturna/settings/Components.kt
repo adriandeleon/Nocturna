@@ -1,24 +1,33 @@
 package com.adl.nocturna.settings
 
-import androidx.compose.foundation.border
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.OutlinedIconToggleButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedIconToggleButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -36,20 +45,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.OutlinedButton
-import com.adl.nocturna.ui.Glyph
-import com.adl.nocturna.ui.GlyphIcon
+import com.adl.nocturna.resources.*
 import com.adl.nocturna.text.PlatformLocale
 import com.adl.nocturna.text.narrowName
+import com.adl.nocturna.ui.Glyph
+import com.adl.nocturna.ui.GlyphIcon
 import kotlinx.datetime.DayOfWeek
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun SectionHeader(text: String) {
@@ -145,7 +147,7 @@ fun ColorRow(
                 FilterChip(
                     selected = wallpaperSelected,
                     onClick = onSelectWallpaper,
-                    label = { Text("From wallpaper") },
+                    label = { Text(stringResource(Res.string.color_from_wallpaper)) },
                     leadingIcon = { Box(Modifier.size(18.dp).clip(CircleShape).background(Color(wallpaper))) },
                 )
             }
@@ -189,8 +191,8 @@ fun TimeDialog(hour: Int, minute: Int, use24h: Boolean, onDismiss: () -> Unit, o
     val state = rememberTimePickerState(initialHour = hour, initialMinute = minute, is24Hour = use24h)
     AlertDialog(
         onDismissRequest = onDismiss,
-        confirmButton = { TextButton(onClick = { onConfirm(state.hour, state.minute) }) { Text("OK") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+        confirmButton = { TextButton(onClick = { onConfirm(state.hour, state.minute) }) { Text(stringResource(Res.string.ok)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) } },
         text = { TimePicker(state) },
     )
 }

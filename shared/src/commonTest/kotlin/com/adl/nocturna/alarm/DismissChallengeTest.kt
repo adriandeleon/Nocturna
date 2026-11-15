@@ -1,5 +1,6 @@
 package com.adl.nocturna.alarm
 
+import com.adl.nocturna.text.testLocale
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -24,7 +25,7 @@ class DismissChallengeTest {
 
     @Test fun showsAndSpeaksTheSum() {
         assertEquals("37 + 48", Sum(37, 48).text)
-        assertEquals("37 plus 48", Sum(37, 48).spoken)
+        assertEquals("37 plus 48", Sum(37, 48).spoken(testLocale))
     }
 
     @Test fun checksTheAnswer() {

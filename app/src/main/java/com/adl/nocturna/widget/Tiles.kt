@@ -10,6 +10,8 @@ import com.adl.nocturna.R
 import com.adl.nocturna.clock.ClockActivity
 import com.adl.nocturna.data.SettingsStore
 import com.adl.nocturna.radio.RadioService
+import com.adl.nocturna.sound.displayName
+import java.util.Locale
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
@@ -47,7 +49,7 @@ class SleepRadioTileService : TileService() {
         scope?.cancel()
         scope = MainScope().apply {
             launch {
-                combine(RadioService.nowPlaying, SettingsStore.settings) { playing, s -> playing to s.currentStation?.name }
+                combine(RadioService.nowPlaying, SettingsStore.settings) { playing, s -> playing to s.currentStation?.displayName(Locale.getDefault()) }
                     .collect { (playing, station) -> render(playing, station) }
             }
         }
@@ -75,7 +77,7 @@ class SleepRadioTileService : TileService() {
         }
         val subtitle = playing?.ifEmpty { station } ?: station ?: getString(R.string.tile_no_station)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) tile.subtitle = subtitle
-        tile.contentDescription = "${tile.label}, $subtitle"
+        tile.contentDescription = getString(R.string.tile_description, tile.label, subtitle)
         tile.updateTile()
     }
 }

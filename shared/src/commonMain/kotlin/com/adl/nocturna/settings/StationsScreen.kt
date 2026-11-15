@@ -26,11 +26,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.adl.nocturna.data.SettingsStore
-import com.adl.nocturna.data.Station
 import com.adl.nocturna.clock.LocalClockPlatform
 import com.adl.nocturna.clock.RadioControl
+import com.adl.nocturna.data.SettingsStore
+import com.adl.nocturna.data.Station
+import com.adl.nocturna.resources.*
 import com.adl.nocturna.sound.SleepSound
+import com.adl.nocturna.ui.currentLocale
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun StationsScreen(padding: PaddingValues) {
@@ -40,12 +43,12 @@ fun StationsScreen(padding: PaddingValues) {
     val error by radio.error.collectAsStateWithLifecycle()
     var name by remember { mutableStateOf("") }
     var url by remember { mutableStateOf("") }
+    val locale = currentLocale()
 
     LazyColumn(Modifier.fillMaxSize(), contentPadding = padding) {
         item {
             Text(
-                "Pick what the clock's Radio button plays: a web station (any MP3, AAC or HLS stream URL works) or " +
-                    "one of the sleep sounds below.",
+                stringResource(Res.string.stations_hint),
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(16.dp),
             )
@@ -74,14 +77,13 @@ fun StationsScreen(padding: PaddingValues) {
                         }
                         it.copy(stations = list, selectedStation = sel.coerceAtMost((list.size - 1).coerceAtLeast(0)))
                     }
-                }) { Text("Remove", color = MaterialTheme.colorScheme.error) }
+                }) { Text(stringResource(Res.string.zones_remove), color = MaterialTheme.colorScheme.error) }
             }
         }
-        item { SectionHeader("Sleep sounds") }
+        item { SectionHeader(stringResource(Res.string.stations_sleep_sounds)) }
         item {
             Text(
-                "Made on your phone, so they play without the internet. They loop for as long as you like, " +
-                    "and the sleep timer fades them out like a station.",
+                stringResource(Res.string.stations_sounds_hint),
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
             )
@@ -93,9 +95,9 @@ fun StationsScreen(padding: PaddingValues) {
             ) {
                 RadioButton(selected = sound == s.currentSleepSound, onClick = { select(radio, sound, radioOn) })
                 Column(Modifier.weight(1f)) {
-                    Text(sound.label, style = MaterialTheme.typography.bodyLarge)
+                    Text(sound.label(locale), style = MaterialTheme.typography.bodyLarge)
                     Text(
-                        sound.description, style = MaterialTheme.typography.bodySmall,
+                        sound.description(locale), style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                     )
                 }
@@ -104,17 +106,17 @@ fun StationsScreen(padding: PaddingValues) {
         item {
             Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
                 TextButton(onClick = { radio.play(s.currentStation ?: return@TextButton) }, enabled = !radioOn && s.currentStation != null) {
-                    Text("▶  Play")
+                    Text(stringResource(Res.string.stations_play))
                 }
-                TextButton(onClick = { radio.stop() }, enabled = radioOn) { Text("■  Stop") }
+                TextButton(onClick = { radio.stop() }, enabled = radioOn) { Text(stringResource(Res.string.stations_stop)) }
             }
         }
-        item { SectionHeader("Add a station") }
+        item { SectionHeader(stringResource(Res.string.stations_add_title)) }
         item {
             Column(Modifier.padding(horizontal = 16.dp)) {
-                OutlinedTextField(name, { name = it }, label = { Text("Name") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(name, { name = it }, label = { Text(stringResource(Res.string.stations_name)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
                 OutlinedTextField(
-                    url, { url = it }, label = { Text("Stream URL") }, singleLine = true,
+                    url, { url = it }, label = { Text(stringResource(Res.string.stations_url)) }, singleLine = true,
                     placeholder = { Text("https://…") }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                 )
                 val valid = name.isNotBlank() && (url.startsWith("http://") || url.startsWith("https://"))
@@ -126,7 +128,7 @@ fun StationsScreen(padding: PaddingValues) {
                         url = ""
                     },
                     modifier = Modifier.padding(vertical = 12.dp),
-                ) { Text("Add") }
+                ) { Text(stringResource(Res.string.stations_add)) }
             }
         }
     }

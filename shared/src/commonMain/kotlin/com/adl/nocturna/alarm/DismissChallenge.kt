@@ -1,16 +1,25 @@
 package com.adl.nocturna.alarm
 
+import com.adl.nocturna.text.PlatformLocale
+import com.adl.nocturna.text.strings
 import kotlin.random.Random
 
 /**
  * What it takes to stop a ringing alarm, chosen per alarm (*To stop it*). Snoozing is always one tap,
  * whatever this says. [key] is how it is stored.
  */
-enum class DismissChallenge(val key: String, val label: String) {
-    TAP("tap", "Just tap"),
-    SUM("sum", "Solve a sum"),
-    HOLD("hold", "Hold the button 3 s"),
+enum class DismissChallenge(val key: String) {
+    TAP("tap"),
+    SUM("sum"),
+    HOLD("hold"),
     ;
+
+    /** As the alarm's setting reads: "Just tap", "Solve a sum", "Hold the button 3 s". */
+    fun label(locale: PlatformLocale): String = when (this) {
+        TAP -> strings(locale).challengeTap
+        SUM -> strings(locale).challengeSum
+        HOLD -> strings(locale).challengeHold(HOLD_TO_STOP_MILLIS / 1000)
+    }
 
     companion object {
         /** The challenge stored as [key]; anything unknown is [TAP], so an alarm can always be stopped. */
@@ -32,7 +41,7 @@ data class Sum(val a: Int, val b: Int) {
     val text: String get() = "$a + $b"
 
     /** As TalkBack reads it: "37 plus 48". */
-    val spoken: String get() = "$a plus $b"
+    fun spoken(locale: PlatformLocale): String = strings(locale).sumSpoken(a, b)
 }
 
 /**

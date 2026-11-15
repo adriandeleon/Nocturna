@@ -2,15 +2,18 @@ package com.adl.nocturna.radio
 
 import android.content.ComponentName
 import android.content.Context
-import androidx.core.net.toUri
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
+import com.adl.nocturna.R
 import com.adl.nocturna.data.Station
+import com.adl.nocturna.sound.displayName
+import java.util.Locale
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,6 +23,9 @@ object Radio {
     private var controller: MediaController? = null
     private var connecting = false
     private val pending = mutableListOf<(MediaController) -> Unit>()
+
+    /** For the error messages' text; set on the first [connect]. */
+    private var appContext: Context? = null
 
     private val onState = MutableStateFlow(false)
     private val titleState = MutableStateFlow<String?>(null)
@@ -39,7 +45,7 @@ object Radio {
     private val listener = object : Player.Listener {
         override fun onEvents(player: Player, events: Player.Events) = sync(player)
         override fun onPlayerError(error: PlaybackException) {
-            errorState.value = "Can't play this station (${error.errorCodeName})"
+            errorState.value = appContext?.getString(R.string.radio_cant_play, error.errorCodeName)
         }
     }
 
@@ -60,13 +66,14 @@ object Radio {
         if (connecting) return
         connecting = true
         val app = context.applicationContext
+        appContext = app
         val future = MediaController.Builder(app, SessionToken(app, ComponentName(app, RadioService::class.java))).buildAsync()
         future.addListener({
             connecting = false
             val c = runCatching { future.get() }.getOrNull()
             if (c == null) {
                 pending.clear()
-                errorState.value = "Radio service unavailable"
+                errorState.value = app.getString(R.string.radio_unavailable)
                 return@addListener
             }
             controller = c
@@ -86,7 +93,7 @@ object Radio {
             val item = MediaItem.Builder()
                 .setMediaId(station.url)
                 .setRequestMetadata(MediaItem.RequestMetadata.Builder().setMediaUri(station.url.toUri()).build())
-                .setMediaMetadata(MediaMetadata.Builder().setTitle(station.name).setArtist("Nocturna").build())
+                .setMediaMetadata(MediaMetadata.Builder().setTitle(station.displayName(Locale.getDefault())).setArtist("Nocturna").build())
                 .build()
             c.setMediaItem(item)
             c.prepare()

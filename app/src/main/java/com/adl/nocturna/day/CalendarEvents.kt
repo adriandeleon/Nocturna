@@ -18,6 +18,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
+import com.adl.nocturna.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -50,7 +51,7 @@ object CalendarEvents {
         context.contentResolver.query(uri, projection, selection, null, "${Instances.BEGIN} ASC")?.use { c ->
             while (c.moveToNext()) {
                 events += CalendarEvent(
-                    title = c.getString(0)?.takeIf { it.isNotBlank() } ?: "(No title)",
+                    title = c.getString(0)?.takeIf { it.isNotBlank() } ?: context.getString(R.string.calendar_no_title),
                     begin = c.getLong(1),
                     end = c.getLong(2),
                     allDay = c.getInt(3) != 0,

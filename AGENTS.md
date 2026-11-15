@@ -87,5 +87,12 @@ The debug build installs as `com.adl.nocturna.debug`, beside a release build.
   numbers) takes a `PlatformLocale`: `java.util.Locale` on Android, `NSLocale` on iOS, and `currentLocale()`
   in composables. Tests use `testLocale`, British English, never the machine's. `bestDateTimePattern` uses
   Android's framework, which host tests don't have, so test the formatting with a fixed pattern.
+- **User-visible text never goes inline.** Text a composable shows lives in
+  `shared/src/commonMain/composeResources/values/strings.xml` and is read with `stringResource(Res.string.…)`
+  (`pluralStringResource` for plurals; placeholders are positional, `%1$s` and `%1$d`). Text that a plain
+  function builds (summaries, countdowns, the focus timer, enum labels) comes from `strings(locale)` in
+  `text/Strings.kt`, one object per language, so `commonTest` checks it without a Compose runtime: such a
+  function takes a `PlatformLocale`, and composables pass `currentLocale()`. Notifications, tiles and the widget
+  use the app's `res/values/strings.xml`. A new string goes in every language's file.
 - Release builds are minified (`isMinifyEnabled`, `isShrinkResources`): check anything reached by reflection
   against `app/proguard-rules.pro`.

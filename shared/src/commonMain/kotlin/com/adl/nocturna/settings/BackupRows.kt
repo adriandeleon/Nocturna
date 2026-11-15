@@ -14,9 +14,12 @@ import com.adl.nocturna.data.Backup
 import com.adl.nocturna.data.BackupCodec
 import com.adl.nocturna.data.BackupException
 import com.adl.nocturna.data.SettingsStore
+import com.adl.nocturna.resources.*
+import com.adl.nocturna.ui.currentLocale
+import kotlin.time.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
-import kotlin.time.Clock
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Export and Import of settings, radio stations and alarms, through files the user picks with the system's
@@ -29,9 +32,16 @@ fun BackupRows() {
     // The title and text of a dialog saying what went wrong.
     var error by remember { mutableStateOf<Pair<String, String>?>(null) }
 
+    val locale = currentLocale()
+    val savedMessage = stringResource(Res.string.backup_saved)
+    val importedMessage = stringResource(Res.string.backup_imported)
+    val cantExport = stringResource(Res.string.backup_cant_export)
+    val cantExportDetail = stringResource(Res.string.backup_cant_export_detail)
+    val cantImport = stringResource(Res.string.backup_cant_import)
+    val cantImportDetail = stringResource(Res.string.backup_cant_import_detail)
     val export = platform.rememberSaveFile(MIME_TYPE) { saved ->
-        if (saved) platform.showMessage("Backup saved")
-        else error = "Can't export" to "The backup couldn't be saved there. Try another place."
+        if (saved) platform.showMessage(savedMessage)
+        else error = cantExport to cantExportDetail
     }
     val import = platform.rememberOpenFile(MAX_BYTES) { file ->
         val read = when (file) {
@@ -40,33 +50,33 @@ fun BackupRows() {
             OpenedFile.Unreadable -> Result.failure(IllegalStateException("Unreadable file"))
         }
         read.onSuccess { pending = it }.onFailure {
-            error = "Can't import" to ((it as? BackupException)?.message ?: "The file couldn't be opened. Nothing was changed.")
+            error = cantImport to ((it as? BackupException)?.problem?.message(locale) ?: cantImportDetail)
         }
     }
 
     Column {
-        SectionHeader("Backup")
-        NavRow("Export…", "Saves your settings, radio stations and alarms to a file") {
+        SectionHeader(stringResource(Res.string.backup_title))
+        NavRow(stringResource(Res.string.backup_export), stringResource(Res.string.backup_export_detail)) {
             val backup = Backup(platform.versionName, SettingsStore.current, AlarmStore.alarms.value)
             export(BackupCodec.fileName(Clock.System.todayIn(TimeZone.currentSystemDefault())), BackupCodec.encode(backup))
         }
-        NavRow("Import…", "Replaces them with the ones in a backup file") { import() }
-        Hint("The Day mode photo isn't included in a backup.")
+        NavRow(stringResource(Res.string.backup_import), stringResource(Res.string.backup_import_detail)) { import() }
+        Hint(stringResource(Res.string.backup_no_photo))
     }
 
     pending?.let { backup ->
         AlertDialog(
             onDismissRequest = { pending = null },
-            title = { Text("Import this backup?") },
-            text = { Text("${backup.summary}; replaces your current settings, radio stations and alarms.") },
+            title = { Text(stringResource(Res.string.backup_import_question)) },
+            text = { Text(stringResource(Res.string.backup_import_detail_summary, backup.summary(locale))) },
             confirmButton = {
                 TextButton(onClick = {
                     pending = null
                     restore(platform, backup)
-                    platform.showMessage("Backup imported")
-                }) { Text("Replace") }
+                    platform.showMessage(importedMessage)
+                }) { Text(stringResource(Res.string.backup_replace)) }
             },
-            dismissButton = { TextButton(onClick = { pending = null }) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = { pending = null }) { Text(stringResource(Res.string.cancel)) } },
         )
     }
     error?.let { (title, message) ->
@@ -74,7 +84,7 @@ fun BackupRows() {
             onDismissRequest = { error = null },
             title = { Text(title) },
             text = { Text(message) },
-            confirmButton = { TextButton(onClick = { error = null }) { Text("OK") } },
+            confirmButton = { TextButton(onClick = { error = null }) { Text(stringResource(Res.string.ok)) } },
         )
     }
 }

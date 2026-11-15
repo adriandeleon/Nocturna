@@ -1,5 +1,8 @@
 package com.adl.nocturna.day
 
+import com.adl.nocturna.text.PlatformLocale
+import com.adl.nocturna.text.strings
+
 /** After this many focus blocks, the break is a long one. */
 const val FOCUS_BLOCKS_PER_LONG_BREAK = 4
 
@@ -92,13 +95,14 @@ data class FocusStatus(val step: Int, val left: Long, val length: Long, val paus
 }
 
 /** What the desk clock shows, e.g. "Focus · 18:42 left", "Break · 3:10 left" or "Focus paused · 18:42 left". */
-fun focusLabel(status: FocusStatus): String {
+fun focusLabel(status: FocusStatus, locale: PlatformLocale): String {
+    val t = strings(locale)
     val name = when (status.phase) {
-        FocusPhase.FOCUS -> "Focus"
-        FocusPhase.BREAK -> "Break"
-        FocusPhase.LONG_BREAK -> "Long break"
+        FocusPhase.FOCUS -> t.focus
+        FocusPhase.BREAK -> t.focusBreak
+        FocusPhase.LONG_BREAK -> t.focusLongBreak
     }
-    return "$name${if (status.paused) " paused" else ""} · ${focusTimeLeft(status.left)} left"
+    return t.focusLabel(name, status.paused, focusTimeLeft(status.left))
 }
 
 /** [millis] as "18:42", or "1:05:00" from an hour up; rounded up to the second, so it reads 0:00 only at the end. */
