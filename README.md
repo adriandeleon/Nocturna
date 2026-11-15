@@ -19,6 +19,7 @@ A bedside clock for Android: a big, dimmable clock for the nightstand while your
 - **Burn-in protection**: the clock drifts slowly around the screen.
 - **Day mode**: a cheerful desk clock, calendar page and sticky note for a phone on a desk stand while you work. See [Day mode](#day-mode).
 - **Alarms**: repeat days, labels, snooze, a gentle volume ramp, vibration, and a full-screen wake-up screen over the lock screen. An alarm can wake you with a radio station, and falls back to the alarm tone if the station doesn't play. A repeating alarm can skip its next ring.
+- **Sleep sounds**: white, pink and brown noise, rain and surf, made on the phone so they play offline; they loop seamlessly and play from the Radio button like a station, sleep timer included.
 - **Web radio**: any MP3/AAC/HLS stream, with a sleep timer that fades out (15/30/60/90 min).
 - **Starts on its own**:
   - as the Android screen saver (Settings › Display › Screen saver › Nocturna, "while charging"), or
@@ -70,6 +71,7 @@ the code that doesn't depend on Android, ready for an iOS app later. Both use th
 | `dream` | `NocturnaDream`, the screen saver |
 | `alarm` | Scheduling (`AlarmManager.setAlarmClock`), the ringing service, the wake-up screen, boot receiver |
 | `radio` | Media3 `RadioService` and the `Radio` controller with the sleep timer |
+| `sound` | The sleep sounds: seeded noise, rain and surf generators that loop seamlessly, and the WAV encoder (`shared`); their cached WAV files (`app`, in `radio`) |
 | `weather` | Open-Meteo current conditions, forecast and city search; the phone's location (`app`) |
 | `notify` | Notification listener that mirrors notification icons |
 | `charging` | Foreground service that opens the clock when the charger is connected |

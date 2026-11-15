@@ -1,5 +1,7 @@
 package com.adl.nocturna.data
 
+import com.adl.nocturna.sound.SleepSound
+
 enum class ClockStyle { DIGITAL, ANALOG }
 
 enum class ClockFont { THIN, LIGHT, REGULAR, CONDENSED, MONO, SERIF }
@@ -77,9 +79,13 @@ data class Settings(
     // Radio
     val stations: List<Station> = DEFAULT_STATIONS,
     val selectedStation: Int = 0,
+    /** Id of the [SleepSound] the Radio button plays instead of [selectedStation]; blank for a web station. */
+    val selectedSound: String = "",
 ) {
     val hasWeatherLocation: Boolean get() = !weatherLat.isNaN() && !weatherLon.isNaN()
-    val currentStation: Station? get() = stations.getOrNull(selectedStation) ?: stations.firstOrNull()
+    val currentSleepSound: SleepSound? get() = SleepSound.byId(selectedSound)
+    val currentStation: Station?
+        get() = currentSleepSound?.station ?: stations.getOrNull(selectedStation) ?: stations.firstOrNull()
 
     companion object {
         /** Stations added in later versions; merged once into lists saved by older versions. */

@@ -4,6 +4,7 @@ import android.content.Intent
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
@@ -17,7 +18,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-/** Plays internet radio streams in the background with a media notification. */
+/** Plays internet radio streams and the built-in sleep sounds in the background with a media notification. */
 class RadioService : MediaSessionService() {
     private var session: MediaSession? = null
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -36,13 +37,18 @@ class RadioService : MediaSessionService() {
         session = MediaSession.Builder(this, player)
             .setCallback(object : MediaSession.Callback {
                 // Controllers send only request metadata across the binder; rebuild playable items from it.
+                // Sleep sounds become their cached loop, repeated seamlessly; streams play once.
                 override fun onAddMediaItems(
                     mediaSession: MediaSession,
                     controller: MediaSession.ControllerInfo,
                     mediaItems: MutableList<MediaItem>,
-                ): ListenableFuture<MutableList<MediaItem>> = Futures.immediateFuture(
-                    mediaItems.map { it.buildUpon().setUri(it.requestMetadata.mediaUri).build() }.toMutableList()
-                )
+                ): ListenableFuture<MutableList<MediaItem>> {
+                    val loops = mediaItems.any(SleepSoundFiles::isSleepSound)
+                    mediaSession.player.repeatMode = if (loops) Player.REPEAT_MODE_ONE else Player.REPEAT_MODE_OFF
+                    return if (loops) SleepSoundFiles.playable(this@RadioService, mediaItems) else Futures.immediateFuture(
+                        mediaItems.map { it.buildUpon().setUri(it.requestMetadata.mediaUri).build() }.toMutableList()
+                    )
+                }
             })
             .build()
 
