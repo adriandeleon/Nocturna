@@ -79,8 +79,10 @@ private val HILLS = listOf(
     floatArrayOf(0.85f, 0.035f, 1.6f, 4.1f),
 )
 
-private fun hillY(hill: FloatArray, x: Float, rise: Float = 0f): Float =
-    hill[0] + rise - hill[1] * sin(2 * PI * (hill[2] * x) + hill[3]).toFloat() - hill[1] * 0.4f * sin(2 * PI * (hill[2] * 2.7f * x) + 1f).toFloat()
+/** A hill's top at [x], raised by [rise] and with its smaller bumps rolled along by [morph] radians. */
+private fun hillY(hill: FloatArray, x: Float, rise: Float = 0f, morph: Float = 0f): Float =
+    hill[0] + rise - hill[1] * sin(2 * PI * (hill[2] * x) + hill[3]).toFloat() -
+        hill[1] * 0.6f * sin(2 * PI * (hill[2] * 2.7f * x) + 1f + morph).toFloat()
 
 /** The colours of one look of the sky. [shade] tints the hills (dusk, night); transparent leaves them be. */
 private class Sky(val top: Color, val bottom: Color, val sun: Color, val glow: Color, val cloud: Color, val shade: Color)
@@ -105,8 +107,8 @@ private fun mix(a: Sky, b: Sky, t: Float) = Sky(
  * A cheerful, flat illustration for day mode: sky, sun, drifting clouds and rolling hills in [theme]'s
  * colours. [time] sets the look of the sky: dawn, midday, golden afternoon or a starry night (see
  * [skyMix]), and keeps everything moving so no pixel is lit the same all day (see BurnIn.kt): the sun
- * and the moon cross the sky, the stars turn, the clouds float along, the hills swell and scroll, and
- * the flowers are replanted every hour.
+ * and the moon cross the sky, the stars turn, the clouds float along, the hills swell, scroll and
+ * change shape, and the flowers and trees sway, wander, grow and shrink, and are replanted every hour.
  */
 @Composable
 fun SceneBackground(theme: MonthTheme, time: LocalTime, seed: Int, modifier: Modifier = Modifier) {
@@ -193,9 +195,9 @@ fun SceneBackground(theme: MonthTheme, time: LocalTime, seed: Int, modifier: Mod
                 val steps = 64
                 for (s in 0..steps) {
                     val fx = s / steps.toFloat()
-                    // The hills scroll very slowly and swell up and down, so their edges never sit on
-                    // the same pixels for long.
-                    lineTo(fx * w, hillY(hill, fx + hillShift(seconds, i), hillRise(seconds, i)) * h)
+                    // The hills scroll slowly, swell up and down and change shape, so their edges never
+                    // sit on the same pixels for long.
+                    lineTo(fx * w, hillY(hill, fx + hillShift(seconds, i), hillRise(seconds, i), hillMorph(seconds, i)) * h)
                 }
                 lineTo(w, h)
                 close()
@@ -203,26 +205,36 @@ fun SceneBackground(theme: MonthTheme, time: LocalTime, seed: Int, modifier: Mod
             drawPath(path, theme.hills[i])
         }
 
-        // The flowers and trees ride along with the near hill, and every hour a new field of them
-        // grows in where the last one fades out, so none of them stays on the same spot all day.
+        // The flowers and trees ride along with the near hill, each also wandering around its spot,
+        // swaying in the breeze and slowly growing and shrinking, and every hour a new field of them
+        // grows in where the last one fades out, so none of them stays on the same spot for long.
         fun plant(arrangement: Int, alpha: Float) {
             val rnd = Random(seed * 31 + 7 + arrangement * 977)
             if (theme.trees) {
                 // On the near hill, so the page and the note don't hide them; sorted so lower trees draw in front.
-                List(14) { rnd.nextFloat() to rnd.nextFloat() }.sortedBy { it.second }.forEach { (start, depth) ->
-                    val fx = travel(start, seconds)
+                List(14) { rnd.nextFloat() to rnd.nextFloat() }.sortedBy { it.second }.forEachIndexed { i, (start, spot) ->
+                    val id = arrangement * 7 + i
+                    val (dx, dy) = plantWander(seconds, id)
+                    val fx = travel(start + dx, seconds)
                     val top = nearHillY(fx, seconds)
-                    tree(fx * w, (top + 0.02f + depth * (1f - top - 0.04f)) * h, minOf(w, h) * (0.07f + depth * 0.07f), alpha)
+                    val depth = (spot + dy).coerceIn(0f, 1f)
+                    val base = Offset(fx * w, (top + 0.02f + depth * (1f - top - 0.04f)) * h)
+                    rotate(plantSway(seconds, id) * 0.4f, base) {
+                        tree(base.x, base.y, minOf(w, h) * (0.07f + depth * 0.07f) * plantGrowth(seconds, id), alpha)
+                    }
                 }
             }
             if (theme.flowers.isNotEmpty()) {
-                repeat(55) {
-                    val fx = travel(rnd.nextFloat(), seconds)
+                repeat(55) { i ->
+                    val id = arrangement * 7 + 100 + i
+                    val (dx, dy) = plantWander(seconds, id)
+                    val fx = travel(rnd.nextFloat() + dx, seconds)
                     val top = nearHillY(fx, seconds)
-                    val fy = top + 0.015f + rnd.nextFloat() * (1f - top - 0.03f)
+                    val depth = (rnd.nextFloat() + dy).coerceIn(0f, 1f)
+                    val fy = top + 0.015f + depth * (1f - top - 0.03f)
                     // Nearer (lower) flowers are bigger.
-                    val r = minOf(w, h) * (0.006f + 0.012f * (fy - top) / (1f - top))
-                    flower(Offset(fx * w, fy * h), r, theme.flowers[rnd.nextInt(theme.flowers.size)], alpha)
+                    val r = minOf(w, h) * (0.006f + 0.012f * depth) * plantGrowth(seconds, id)
+                    flower(Offset(fx * w, fy * h), r, theme.flowers[rnd.nextInt(theme.flowers.size)], plantSway(seconds, id), alpha)
                 }
             }
         }
@@ -246,7 +258,8 @@ private fun DrawScope.moon(center: Offset, r: Float, alpha: Float) {
 private fun travel(start: Float, seconds: Float): Float = ((start - hillShift(seconds, 2)) % 1f + 1f) % 1f
 
 /** The near hill's top at screen position [x], as it has scrolled by [seconds]. */
-private fun nearHillY(x: Float, seconds: Float): Float = hillY(HILLS[2], x + hillShift(seconds, 2), hillRise(seconds, 2))
+private fun nearHillY(x: Float, seconds: Float): Float =
+    hillY(HILLS[2], x + hillShift(seconds, 2), hillRise(seconds, 2), hillMorph(seconds, 2))
 
 private fun DrawScope.cloud(x: Float, y: Float, w: Float, color: Color) {
     val white = color.copy(alpha = 0.92f)
@@ -256,9 +269,16 @@ private fun DrawScope.cloud(x: Float, y: Float, w: Float, color: Color) {
     drawRoundRect(white, Offset(x - w * 0.42f, y), Size(w * 0.86f, w * 0.2f), CornerRadius(w * 0.1f))
 }
 
-private fun DrawScope.flower(center: Offset, r: Float, petals: Color, alpha: Float) {
+/**
+ * A five-petalled flower at [spot], its head leaning [sway] degrees: it swings along an arc around a
+ * point below it, as if on a stem, and turns with the lean.
+ */
+private fun DrawScope.flower(spot: Offset, r: Float, petals: Color, sway: Float, alpha: Float) {
+    val lean = Math.toRadians(sway.toDouble())
+    val stem = r * 2.5f
+    val center = Offset(spot.x + stem * sin(lean).toFloat(), spot.y + stem * (1f - cos(lean).toFloat()))
     for (i in 0 until 5) {
-        val a = 2 * PI * i / 5
+        val a = 2 * PI * i / 5 + lean * 3
         drawCircle(petals, r * 0.55f, Offset(center.x + r * 0.6f * cos(a).toFloat(), center.y + r * 0.6f * sin(a).toFloat()), alpha = alpha)
     }
     drawCircle(Color(0xFFFFB300), r * 0.4f, center, alpha = alpha)

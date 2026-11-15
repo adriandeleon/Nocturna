@@ -10,7 +10,8 @@ import kotlin.math.sin
  * own as well (DayScreen), the clock and the page trade places every other hour (sides in
  * landscape, top and bottom in portrait), the page's bright paper slowly dims the longer it stays up,
  * and everything in the background keeps moving: the sun and the moon cross the sky, the clouds float up and down, the
- * hills scroll and rise and fall, and the flowers are replanted every hour. These are the timings,
+ * hills scroll, rise and fall and change shape, and the flowers and trees sway, wander, grow and shrink,
+ * and are replanted every hour. These are the timings,
  * kept here so they can be tested.
  */
 
@@ -21,7 +22,7 @@ import kotlin.math.sin
 fun sidesSwapped(hour: Int, burnInProtection: Boolean): Boolean = burnInProtection && hour % 2 == 1
 
 /** Seconds for the near hill to scroll one screen width; farther hills go slower, for depth. */
-private const val HILL_PERIOD = 4 * 3600f
+private const val HILL_PERIOD = 2 * 3600f
 
 /** How far hill [layer] (0 = farthest) has scrolled, in screen widths, [seconds] into the day. */
 fun hillShift(seconds: Float, layer: Int): Float = seconds / HILL_PERIOD * (layer + 1) / 3f
@@ -83,7 +84,40 @@ fun cloudBob(seconds: Float, index: Int): Float =
  * so the hilltops' edges sweep a band of pixels and not a line.
  */
 fun hillRise(seconds: Float, layer: Int): Float =
-    (0.012 * sin(2 * PI * seconds / (5400.0 + 1800 * layer) + layer)).toFloat()
+    (HILL_SWELL * sin(2 * PI * seconds / (2700.0 + 900 * layer) + layer)).toFloat()
+
+/** How far, as a fraction of the screen height, a hill rises or sinks at most. */
+const val HILL_SWELL = 0.025f
+
+/**
+ * How far the smaller bumps on hill [layer] have rolled along it, in radians: once around every one
+ * to two hours, so the hills' outline changes shape and not just place.
+ */
+fun hillMorph(seconds: Float, layer: Int): Float =
+    (2 * PI * seconds / (3600.0 + 1800 * layer)).toFloat() * if (layer % 2 == 0) 1f else -1f
+
+/** How far, in degrees, plant [index] leans in the breeze at most. */
+const val SWAY_DEGREES = 8f
+
+/** How far plant [index] leans in the breeze [seconds] into the day, in degrees: each sways at its own pace. */
+fun plantSway(seconds: Float, index: Int): Float =
+    (SWAY_DEGREES * sin(2 * PI * seconds / (24.0 + 7 * (index % 5)) + index * 1.7)).toFloat()
+
+/** How far, as a fraction of the screen width, a plant wanders from its spot at most. */
+const val WANDER = 0.03f
+
+/**
+ * Where plant [index] has wandered from its spot [seconds] into the day, as fractions of the screen's
+ * width (across) and of the field's depth (down), each within [WANDER]: a slow loop of its own.
+ */
+fun plantWander(seconds: Float, index: Int): Pair<Float, Float> {
+    val t = 2 * PI * seconds / (900.0 + 120 * (index % 7))
+    return (WANDER * sin(t + index)).toFloat() to (WANDER * 1.5 * sin(1.3 * t + index * 2.3)).toFloat()
+}
+
+/** How big plant [index] has grown [seconds] into the day, compared with its usual size: 0.85 to 1.15. */
+fun plantGrowth(seconds: Float, index: Int): Float =
+    (1.0 + 0.15 * sin(2 * PI * seconds / (1500.0 + 200 * (index % 4)) + index * 0.9)).toFloat()
 
 /** Degrees the starry sky has turned around its pole [seconds] into the day: six an hour. */
 fun starTurn(seconds: Float): Float = seconds / 600f

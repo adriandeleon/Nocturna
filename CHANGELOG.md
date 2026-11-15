@@ -39,8 +39,8 @@ one-line summary written for users.
   80%, since a dimmer screen wears much more slowly; change it under Settings › Day mode › *Screen care*. The
   scene behind them never stops moving: the sun crosses the sky from dawn to dusk and the moon from dusk to
   dawn, slowly turning, the stars wheel around the sky, the clouds float up and down as they pass, the hills
-  scroll and swell, and the flowers (or December's trees) are replanted somewhere new every hour. Your own
-  photo pans gently.
+  scroll, swell and change shape, and the flowers (or December's trees) sway in the breeze, wander about,
+  grow and shrink a little, and are replanted somewhere new every hour. Your own photo pans gently.
 - **Day mode on a schedule:** set Day mode to *On a schedule* with the hours and days you work, for example
   weekdays 09:00–18:00, and the clock switches to the calendar and back on its own. Hours can run past
   midnight. The *Day mode* / *Clock only* button on the clock overrides the schedule until its next start or

@@ -20,7 +20,7 @@ class BurnInTest {
         val s = 5_000f
         assertTrue(hillShift(s, 2) > hillShift(s, 1))
         assertTrue(hillShift(s, 1) > hillShift(s, 0))
-        assertEquals(1f, hillShift(4 * 3600f, 2), 0.0001f)
+        assertEquals(1f, hillShift(2 * 3600f, 2), 0.0001f)
     }
 
     @Test fun photoNeverPansPastItsExtraRoom() {
@@ -77,8 +77,40 @@ class BurnInTest {
 
     @Test fun hillsRiseAndSinkALittle() {
         for (layer in 0..2) {
-            for (s in 0 until 86_400 step 60) assertTrue(abs(hillRise(s.toFloat(), layer)) <= 0.012f)
+            for (s in 0 until 86_400 step 60) assertTrue(abs(hillRise(s.toFloat(), layer)) <= HILL_SWELL)
             assertTrue(hillRise(0f, layer) != hillRise(900f, layer))
+        }
+    }
+
+    @Test fun hillsChangeShapeAndNeighboursRollOppositeWays() {
+        for (layer in 0..2) assertTrue(abs(hillMorph(600f, layer)) > 0.5f)
+        assertTrue(hillMorph(600f, 0) > 0f && hillMorph(600f, 1) < 0f)
+    }
+
+    @Test fun plantsSwayBothWaysWithinLimits() {
+        for (index in 0 until 20) {
+            val leans = (0 until 120).map { plantSway(it.toFloat(), index) }
+            assertTrue(leans.all { abs(it) <= SWAY_DEGREES })
+            assertTrue(leans.max() > SWAY_DEGREES / 2 && leans.min() < -SWAY_DEGREES / 2)
+        }
+    }
+
+    @Test fun plantsSwayOutOfStep() = assertTrue(plantSway(0f, 0) != plantSway(0f, 1))
+
+    @Test fun plantsWanderNearTheirSpot() {
+        for (index in 0 until 20) {
+            val spots = (0 until 3600 step 30).map { plantWander(it.toFloat(), index) }
+            assertTrue(spots.all { (x, y) -> abs(x) <= WANDER && abs(y) <= WANDER * 1.5f })
+            assertTrue(spots.maxOf { it.first } - spots.minOf { it.first } > WANDER)
+            assertTrue(spots.maxOf { it.second } - spots.minOf { it.second } > WANDER)
+        }
+    }
+
+    @Test fun plantsGrowAndShrinkALittle() {
+        for (index in 0 until 20) {
+            val sizes = (0 until 3600 step 30).map { plantGrowth(it.toFloat(), index) }
+            assertTrue(sizes.all { it in 0.85f..1.15f })
+            assertTrue(sizes.max() > 1.1f && sizes.min() < 0.9f)
         }
     }
 
