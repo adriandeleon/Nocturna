@@ -80,7 +80,6 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle as DateTextStyle
 import com.adl.nocturna.ui.currentLocale
-import kotlin.math.log10
 import kotlin.random.Random
 
 /**
@@ -115,15 +114,10 @@ fun ClockScreen(
         else -> currentLux < settings.nightModeLux
     }
 
-    val brightness = when {
-        night -> settings.minBrightness
-        !settings.dimEnabled || !settings.autoBrightness -> -1f
-        currentLux == null -> -1f
-        else -> {
-            val f = (log10(1f + currentLux) / log10(1f + 1000f)).coerceIn(0f, 1f)
-            settings.minBrightness + (settings.maxBrightness - settings.minBrightness) * f
-        }
-    }
+    val brightness = screenBrightness(
+        currentLux, night, day, settings.dimEnabled, settings.autoBrightness,
+        settings.minBrightness, settings.maxBrightness, settings.dayMaxBrightness,
+    )
     LaunchedEffect(brightness) { onBrightness(brightness) }
 
     // Day mode's clock is white with a soft shadow, to read well over its colourful background.

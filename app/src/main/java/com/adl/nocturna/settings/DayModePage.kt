@@ -34,6 +34,7 @@ import java.time.LocalTime
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlin.math.roundToInt
 
 @Composable
 fun DayModePage(padding: PaddingValues) {
@@ -112,6 +113,24 @@ fun DayModePage(padding: PaddingValues) {
                 set { it.copy(dayCalendarView = v) }
             }
             Hint("On the clock, swipe the calendar page to switch between month, week and day", Modifier.padding(bottom = 6.dp))
+        }
+        SettingsGroup("Screen care") {
+            if (s.dimEnabled && s.autoBrightness) {
+                SliderRow("Brightest", s.dayMaxBrightness, Settings.DAY_BRIGHTNESS_RANGE, { "${(it * 100).roundToInt()}%" }) { v ->
+                    set { it.copy(dayMaxBrightness = v) }
+                }
+                Hint(
+                    "Day mode follows the room's light up to this, never above the clock's own brightest. " +
+                        "A dimmer screen wears much more slowly",
+                    Modifier.padding(bottom = 6.dp),
+                )
+            } else {
+                Hint(
+                    "Day mode uses the phone's own brightness. To keep it lower, turn on Adjust to room light " +
+                        "in Brightness and night mode",
+                    Modifier.padding(vertical = 6.dp),
+                )
+            }
         }
         SettingsGroup("Background") {
             NavRow(

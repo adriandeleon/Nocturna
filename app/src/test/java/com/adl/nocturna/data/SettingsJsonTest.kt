@@ -16,6 +16,7 @@ class SettingsJsonTest {
             showCalendarEvents = true,
             dayCalendarView = CalendarView.WEEK,
             dayPhotoVersion = 1_794_590_985_000L,
+            dayMaxBrightness = 0.35f,
         )
         assertEquals(settings, SettingsStore.decode(JSONObject(SettingsStore.encode(settings).toString())))
     }
@@ -32,6 +33,17 @@ class SettingsJsonTest {
         assertFalse(loaded.showCalendarEvents)
         assertEquals(CalendarView.MONTH, loaded.dayCalendarView)
         assertEquals(0L, loaded.dayPhotoVersion)
+    }
+
+    @Test fun settingsSavedBeforeTheDayBrightnessLimitGetTheDefault() {
+        val old = SettingsStore.encode(Settings()).apply { remove("dayMaxBrightness") }
+        assertEquals(Settings().dayMaxBrightness, SettingsStore.decode(JSONObject(old.toString())).dayMaxBrightness)
+    }
+
+    @Test fun outOfRangeDayBrightnessIsClamped() {
+        fun saved(v: Double) = SettingsStore.decode(SettingsStore.encode(Settings()).apply { put("dayMaxBrightness", v) })
+        assertEquals(0.2f, saved(0.0).dayMaxBrightness)
+        assertEquals(1f, saved(3.0).dayMaxBrightness)
     }
 
     @Test fun settingsSavedBeforeTheScheduleKeepTheirSwitch() {
