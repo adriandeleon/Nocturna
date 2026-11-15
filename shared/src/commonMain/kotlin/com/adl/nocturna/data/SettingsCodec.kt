@@ -46,6 +46,9 @@ object SettingsCodec {
         put("dayMaxBrightness", s.dayMaxBrightness.toDouble())
         put("dayPhotoVersion", s.dayPhotoVersion)
         put("meetingChimeMinutes", s.meetingChimeMinutes)
+        put("focusMinutes", s.focusMinutes)
+        put("focusBreakMinutes", s.focusBreakMinutes)
+        put("focusLongBreakMinutes", s.focusLongBreakMinutes)
         put("autoStartOnCharge", s.autoStartOnCharge)
         put("dndWhileShowing", s.dndWhileShowing)
         put("weatherUseDeviceLocation", s.weatherUseDeviceLocation)
@@ -122,6 +125,12 @@ object SettingsCodec {
             dayPhotoVersion = j.optLong("dayPhotoVersion", d.dayPhotoVersion),
             meetingChimeMinutes = j.optInt("meetingChimeMinutes", d.meetingChimeMinutes)
                 .let { if (it in Settings.MEETING_CHIME_MINUTES) it else d.meetingChimeMinutes },
+            focusMinutes = j.optInt("focusMinutes", d.focusMinutes)
+                .let { if (it in Settings.FOCUS_MINUTES) it else d.focusMinutes },
+            focusBreakMinutes = j.optInt("focusBreakMinutes", d.focusBreakMinutes)
+                .let { if (it in Settings.FOCUS_BREAK_MINUTES) it else d.focusBreakMinutes },
+            focusLongBreakMinutes = j.optInt("focusLongBreakMinutes", d.focusLongBreakMinutes)
+                .let { if (it in Settings.FOCUS_LONG_BREAK_MINUTES) it else d.focusLongBreakMinutes },
             autoStartOnCharge = j.optBoolean("autoStartOnCharge", d.autoStartOnCharge),
             dndWhileShowing = j.optBoolean("dndWhileShowing", d.dndWhileShowing),
             weatherUseDeviceLocation = j.optBoolean("weatherUseDeviceLocation", d.weatherUseDeviceLocation),

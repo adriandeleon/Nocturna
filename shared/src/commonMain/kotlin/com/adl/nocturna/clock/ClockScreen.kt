@@ -62,6 +62,13 @@ import com.adl.nocturna.text.shortName
 import com.adl.nocturna.day.CalendarLink
 import com.adl.nocturna.day.DayBackground
 import com.adl.nocturna.day.DayLayout
+import com.adl.nocturna.day.FocusTimer
+import com.adl.nocturna.day.focusTimerFromSaved
+import com.adl.nocturna.day.toSaved
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import com.adl.nocturna.day.isDayModeActive
 import com.adl.nocturna.day.withDayModeToggled
 import com.adl.nocturna.ui.Glyph
@@ -172,6 +179,20 @@ fun ClockScreen(
         }
     }
 
+    // Day mode's focus timer, kept across rotation: only where it started, so it follows the clock.
+    var focus by rememberSaveable(stateSaver = FocusTimerSaver) { mutableStateOf<FocusTimer?>(null) }
+    // Leaving day mode stops it, and so does leaving the app, except for the clock's own Settings and alarms.
+    var focusOutlivesStop by remember { mutableStateOf(false) }
+    LaunchedEffect(day, interactive) { if (!day || !interactive) focus = null }
+    LifecycleEventEffect(Lifecycle.Event.ON_STOP) {
+        if (!focusOutlivesStop) focus = null
+        focusOutlivesStop = false
+    }
+    // Back on the clock without having left it (say, an unlock prompt was cancelled): the next stop counts.
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { focusOutlivesStop = false }
+    val openSettings = { focusOutlivesStop = true; onOpenSettings() }
+    val openAlarms = { focusOutlivesStop = true; onOpenAlarms() }
+
     var controlsVisible by remember { mutableStateOf(false) }
     var lastInteraction by remember { mutableIntStateOf(0) }
     LaunchedEffect(controlsVisible, lastInteraction) {
@@ -244,6 +265,8 @@ fun ClockScreen(
                 landscape, now, settings,
                 Modifier.fillMaxSize(if (settings.burnInProtection) 0.9f else 0.96f),
                 onOpen = if (interactive) onOpenCalendar else null,
+                focus = focus,
+                onFocus = if (interactive) { f -> focus = f } else null,
                 clock = clock,
             )
             else clock()
@@ -256,7 +279,12 @@ fun ClockScreen(
                 exit = fadeOut(),
                 modifier = Modifier.align(Alignment.BottomCenter).safeDrawingPadding().padding(16.dp),
             ) {
-                Controls(settings, day, color, onOpenSettings, onOpenAlarms, onInteract = { controlsVisible = true; lastInteraction++ })
+                Controls(
+                    settings, day, color, openSettings, openAlarms,
+                    onInteract = { controlsVisible = true; lastInteraction++ },
+                    focusOn = focus != null,
+                    onFocus = { focus = if (focus == null) FocusTimer.start(Clock.System.now().toEpochMilliseconds()) else null },
+                )
             }
         }
     }
@@ -370,6 +398,12 @@ private fun NotificationRow(icons: List<NotificationIcon>, color: Color, size: D
 
 private val SLEEP_STEPS = listOf(0, 15, 30, 60, 90)
 
+/** Keeps the focus timer as a few numbers, which a saved instance state can hold. */
+private val FocusTimerSaver = Saver<FocusTimer?, LongArray>(
+    save = { it?.toSaved()?.toLongArray() },
+    restore = { focusTimerFromSaved(it.toList()) },
+)
+
 @Composable
 private fun Controls(
     settings: Settings,
@@ -378,6 +412,9 @@ private fun Controls(
     onOpenSettings: () -> Unit,
     onOpenAlarms: () -> Unit,
     onInteract: () -> Unit,
+    /** Whether day mode's focus timer is running; its button shows only in day mode. */
+    focusOn: Boolean,
+    onFocus: () -> Unit,
 ) {
     val radio = LocalClockPlatform.current.radio
     val radioOn by radio.isOn.collectAsStateWithLifecycle()
@@ -422,6 +459,11 @@ private fun Controls(
                 onClick = { onInteract(); SettingsStore.update { it.withDayModeToggled(Clock.System.now(), TimeZone.currentSystemDefault()) } },
                 colors = buttonColors, border = border,
             ) { Text(if (day) "Clock only" else "Day mode") }
+            if (day) {
+                OutlinedButton(onClick = { onInteract(); onFocus() }, colors = buttonColors, border = border) {
+                    Text(if (focusOn) "■  Focus" else "Focus")
+                }
+            }
             OutlinedButton(onClick = onOpenAlarms, colors = buttonColors, border = border) { Text("Alarms") }
             OutlinedButton(
                 onClick = { onInteract(); radio.toggle(settings.currentStation) },

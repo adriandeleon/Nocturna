@@ -73,6 +73,12 @@ data class Settings(
     val dayPhotoVersion: Long = 0L,
     /** Minutes before a meeting that day mode plays a soft chime: one of [MEETING_CHIME_MINUTES]; 0 is off. */
     val meetingChimeMinutes: Int = 0,
+    /** Day mode's focus timer: minutes in a focus block, one of [FOCUS_MINUTES]. */
+    val focusMinutes: Int = 25,
+    /** Minutes in the focus timer's short break, one of [FOCUS_BREAK_MINUTES]. */
+    val focusBreakMinutes: Int = 5,
+    /** Minutes in the long break after every fourth focus block, one of [FOCUS_LONG_BREAK_MINUTES]. */
+    val focusLongBreakMinutes: Int = 15,
     // Launching
     val autoStartOnCharge: Boolean = false,
     /** Priority-only Do Not Disturb while the clock shows at night; needs Do Not Disturb access. */
@@ -123,6 +129,10 @@ data class Settings(
         val MEETING_CHIME_MINUTES = listOf(0, 1, 2, 5)
         /** What [bedtimeSleepHours] may be set to; 0 is off. */
         val BEDTIME_SLEEP_HOURS = listOf(0f, 6f, 6.5f, 7f, 7.5f, 8f, 8.5f, 9f)
+        /** What [focusMinutes], [focusBreakMinutes] and [focusLongBreakMinutes] may be set to. */
+        val FOCUS_MINUTES = listOf(15, 20, 25, 30, 45, 50, 60, 90)
+        val FOCUS_BREAK_MINUTES = listOf(3, 5, 10, 15)
+        val FOCUS_LONG_BREAK_MINUTES = listOf(10, 15, 20, 30)
 
         val DEFAULT_STATIONS = MONTERREY_STATIONS + listOf(
             Station("SomaFM Groove Salad", "https://ice1.somafm.com/groovesalad-128-mp3"),

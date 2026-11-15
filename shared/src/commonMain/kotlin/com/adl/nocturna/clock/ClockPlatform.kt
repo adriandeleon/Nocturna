@@ -51,6 +51,9 @@ interface ClockPlatform {
     /** One short, quiet chime before a meeting, on the notification sound (never the alarm's). */
     fun playMeetingChime() {}
 
+    /** The focus timer's chime as it switches between focus and a break: the meeting chime's soft tone. */
+    fun playFocusChime() = playMeetingChime()
+
     /**
      * A light accent from the phone's wallpaper palette (Material You) as ARGB, kept current as the
      * wallpaper changes; null where the phone has no such palette.

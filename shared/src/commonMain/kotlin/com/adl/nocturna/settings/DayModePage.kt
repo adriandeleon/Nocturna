@@ -116,6 +116,20 @@ fun DayModePage(padding: PaddingValues) {
                 )
             }
         }
+        SettingsGroup("Focus timer") {
+            ChoiceRow("Focus", Settings.FOCUS_MINUTES, s.focusMinutes, { "$it min" }) { v -> set { it.copy(focusMinutes = v) } }
+            ChoiceRow("Short break", Settings.FOCUS_BREAK_MINUTES, s.focusBreakMinutes, { "$it min" }) { v ->
+                set { it.copy(focusBreakMinutes = v) }
+            }
+            ChoiceRow("Long break", Settings.FOCUS_LONG_BREAK_MINUTES, s.focusLongBreakMinutes, { "$it min" }) { v ->
+                set { it.copy(focusLongBreakMinutes = v) }
+            }
+            Hint(
+                "Tap the clock and pick Focus to start. After every fourth focus block the break is a long one. " +
+                    "A soft chime marks each switch, at the notification volume. Leaving day mode stops the timer",
+                Modifier.padding(bottom = 6.dp),
+            )
+        }
         SettingsGroup("Screen care") {
             if (s.dimEnabled && s.autoBrightness) {
                 SliderRow("Brightest", s.dayMaxBrightness, Settings.DAY_BRIGHTNESS_RANGE, { "${(it * 100).roundToInt()}%" }) { v ->

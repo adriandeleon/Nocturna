@@ -121,6 +121,11 @@ one-line summary written for users.
   tag under the desk clock instead. For a soft chime 1, 2 or 5 minutes before, set *Chime before meetings* in
   Settings › Day mode: one quiet tone at the notification volume, once per meeting, only while Day mode is
   showing and never on silent or Do Not Disturb.
+- **A focus timer (Pomodoro) in Day mode:** tap the clock and pick *Focus* for 25 minutes of work, then a
+  5-minute break, with a 15-minute break after every fourth block. The desk clock shows *Focus · 18:42 left* or
+  *Break · 3:10 left* beside a thin ring of the time gone; tap it to pause, skip or stop. A soft chime (the
+  meeting chime's tone, never the alarm's) marks each switch. Set the lengths in Settings › Day mode › *Focus
+  timer*. Turning the phone keeps it going; leaving Day mode or the app stops it.
 - **Quick Settings tiles and a home-screen widget:** the *Nocturna* tile opens the clock, and the *Sleep
   radio* tile shows your station, lights up while it plays, and with one tap plays it with a 30-minute sleep
   timer that fades out; tap again to stop. The dark *Nocturna clock* widget shows the time and your next
