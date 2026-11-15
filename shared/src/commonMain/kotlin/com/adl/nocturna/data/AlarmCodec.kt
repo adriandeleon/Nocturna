@@ -1,5 +1,6 @@
 package com.adl.nocturna.data
 
+import com.adl.nocturna.alarm.DismissChallenge
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -24,6 +25,7 @@ object AlarmCodec {
                     it.skipDate?.let { d -> put("skipDate", d.toString()) }
                     if (it.skipDaysOff) put("skipDaysOff", true)
                     it.ringDate?.let { d -> put("date", d.toString()) }
+                    if (it.challenge != DismissChallenge.TAP) put("challenge", it.challenge.key)
                 }
             )
         }
@@ -49,6 +51,7 @@ object AlarmCodec {
                 skipDaysOff = o.optBoolean("skipDaysOff", false),
                 // A date and repeat days never go together: the days win.
                 date = if (days != 0) null else o.optDate("date"),
+                challenge = DismissChallenge.of(o.optString("challenge")),
             )
         }
     }

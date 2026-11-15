@@ -1,5 +1,6 @@
 package com.adl.nocturna.data
 
+import com.adl.nocturna.alarm.DismissChallenge
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -21,6 +22,7 @@ import kotlin.time.Instant
  * (see `com.adl.nocturna.alarm.nextRing`).
  * [date] makes a one-time alarm ring on that day rather than the next time its clock time comes; it is
  * ignored while the alarm [repeats] (see `com.adl.nocturna.alarm.datedRing`).
+ * [challenge] is what it takes to stop it when it rings; snoozing is always one tap.
  */
 data class Alarm(
     val id: Long,
@@ -33,6 +35,7 @@ data class Alarm(
     val skipDate: LocalDate? = null,
     val skipDaysOff: Boolean = false,
     val date: LocalDate? = null,
+    val challenge: DismissChallenge = DismissChallenge.TAP,
 ) {
     val repeats: Boolean get() = days != 0
 

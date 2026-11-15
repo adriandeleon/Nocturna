@@ -207,4 +207,20 @@ class SettingsJsonTest {
         assertFalse(loaded.dndWhileShowing)
         assertEquals(true, loaded.autoStartOnCharge)
     }
+
+    @Test fun alarmSumsSurviveRoundTrip() = assertEquals(3, roundTrip(Settings(alarmSums = 3)).alarmSums)
+
+    @Test fun settingsSavedBeforeAlarmSumsAskForOne() =
+        assertEquals(1, SettingsCodec.decode(stored(Settings(alarmSums = 3), remove = listOf("alarmSums"))).alarmSums)
+
+    @Test fun alarmSumsAreHeldToOneToThree() =
+        assertEquals(3, SettingsCodec.decode(stored(put = mapOf("alarmSums" to JsonPrimitive(7)))).alarmSums)
+    @Test fun dayHourlyWeatherSurvivesRoundTrip() =
+        assertFalse(roundTrip(Settings(dayHourlyWeather = false)).dayHourlyWeather)
+
+    @Test fun settingsSavedBeforeDayHourlyWeatherShowTheStrip() {
+        val loaded = SettingsCodec.decode(stored(Settings(dayHourlyWeather = false, focusMinutes = 50), remove = listOf("dayHourlyWeather")))
+        assertEquals(true, loaded.dayHourlyWeather)
+        assertEquals(50, loaded.focusMinutes)
+    }
 }

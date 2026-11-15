@@ -30,6 +30,8 @@ data class Weather(
     val lon: Double,
     /** Daily forecasts by the forecast location's calendar date, today first. */
     val days: List<DayForecast> = emptyList(),
+    /** Hourly forecasts, earliest first, for day mode's strip of the next few hours. */
+    val hours: List<HourForecast> = emptyList(),
 ) {
     fun temperatureText(fahrenheit: Boolean): String = temperatureText(temperatureC, fahrenheit)
 
@@ -60,7 +62,7 @@ fun pickForecast(days: List<DayForecast>, now: LocalDateTime): ForecastPick? {
     return days.firstOrNull { it.date == date }?.let { ForecastPick(it, tomorrow) }
 }
 
-/** Open-Meteo's forecast response: current conditions at [lat], [lon] and the [parseDaily] days. */
+/** Open-Meteo's forecast response: current conditions at [lat], [lon], the [parseDaily] days and [parseHourly] hours. */
 fun parseWeather(body: String, lat: Double, lon: Double, fetchedAt: Long): Weather {
     val response = Json.parseToJsonElement(body).jsonObject
     val current = response.getObject("current")
@@ -72,6 +74,7 @@ fun parseWeather(body: String, lat: Double, lon: Double, fetchedAt: Long): Weath
         lat = lat,
         lon = lon,
         days = parseDaily(response),
+        hours = parseHourly(response),
     )
 }
 
@@ -110,7 +113,7 @@ internal fun temperatureText(celsius: Double, fahrenheit: Boolean): String {
     return "${t.roundToInt()}°"
 }
 
-private fun weatherGlyph(code: Int, isDay: Boolean): Glyph = when (code) {
+internal fun weatherGlyph(code: Int, isDay: Boolean): Glyph = when (code) {
     0 -> if (isDay) Glyph.SUN else Glyph.MOON
     1, 2 -> if (isDay) Glyph.PARTLY_DAY else Glyph.PARTLY_NIGHT
     3 -> Glyph.CLOUD

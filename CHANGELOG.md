@@ -86,6 +86,12 @@ one-line summary written for users.
   on that day, and then switches itself off. Without a date a one-time alarm rings the next time its time comes,
   as before. A date and repeat days don't go together: picking days takes the date off. Past dates can't be
   picked, days off don't silence it, and switching it back on after its day takes the date off.
+- **Alarms that make sure you're awake:** each alarm has *To stop it*: *Just tap* (as before), *Solve a sum*
+  or *Hold the button 3 s*. *Solve a sum* asks for one to three additions such as 37 + 48, typed on a numeric
+  keypad (*Sums to stop an alarm* under Settings › Alarms); a wrong answer just brings a new sum, never a wait,
+  and TalkBack reads each sum aloud. Snooze is always one tap, and with a challenge the notification's button
+  opens the wake-up screen instead of dismissing. If the challenge can't be shown, the alarm falls back to a
+  tap, so it can always be stopped.
 - **A sunrise before your alarms:** in the 20 minutes before an alarm the clock slowly brightens, up to the
   brightest level you allow, and warms from night red through amber to a soft white, so the room is light
   when the alarm rings. It starts gently and speeds up, like a real dawn, and ends when the alarm rings. It
@@ -139,6 +145,12 @@ one-line summary written for users.
   low show under the time, in the clock's units. They show at once from what the clock already has, and are
   refreshed in the background if that is old and the phone is online; the alarm never waits for them. Switch
   it off under *Alarms › Show weather*.
+- **The next few hours' weather in Day mode:** under the desk clock's weather line, a strip of the next six
+  hours with each hour's weather and temperature (*14h ☀ 22° · 15h ⛅ 23° …*), and the chance of rain when
+  it's 30% or more. It uses 12-hour labels on a 12-hour clock, shows fewer hours where the screen is narrow
+  and steps aside rather than crowd the clock. It comes in the same single weather request as before. Switch
+  it off under Settings › Day mode › *Weather › Next hours*, which shows once the weather is on and has a
+  place.
 
 ### Changed
 
