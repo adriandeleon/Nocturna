@@ -169,6 +169,11 @@
             android:directBootAware="true"
             android:exported="false" />
 
+        <!-- The bedtime reminder; reached only through Nocturna's own PendingIntent. -->
+        <receiver
+            android:name=".alarm.BedtimeReceiver"
+            android:exported="false" />
+
         <receiver
             android:name=".alarm.BootReceiver"
             android:directBootAware="true"

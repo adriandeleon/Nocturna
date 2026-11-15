@@ -73,6 +73,16 @@ class ClockActivity : ComponentActivity() {
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+        ClockVisibility.shown()
+    }
+
+    override fun onStop() {
+        ClockVisibility.hidden()
+        super.onStop()
+    }
+
     override fun onResume() {
         super.onResume()
         // Coming back to the clock while an alarm rings (e.g. after switching away from its screen)

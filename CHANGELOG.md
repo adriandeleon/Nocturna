@@ -86,6 +86,15 @@ one-line summary written for users.
   first day that isn't off. Change the words under Settings › Alarms › *Days off*; case and accents don't
   matter. It needs calendar access and asks for it; without it, or if the calendar can't be read, alarms ring
   as usual.
+- **How long until your alarm, on the clock:** when the next alarm is within 12 hours, the info line says
+  *⏰ 06:30 · in 7 h 20 m*, or *in 45 m* in the last hour, stepping every 5 minutes so it doesn't flicker.
+  Further off it shows the day and time as before. Switch it off under *Show on the clock › Time until the
+  alarm*.
+- **A bedtime reminder:** pick how much sleep you want (6 to 9 hours, in half hours) under Settings › Alarms
+  › *Bedtime reminder*, and the evening before a morning alarm a quiet notification says *Bedtime: 8 h before
+  your 06:30 alarm*, a quarter of an hour before you need to be asleep. It stays quiet if the clock is already
+  showing, isn't sent late, and follows your alarms as they change, skipped days off included. Off by
+  default; it needs notifications and does nothing without them.
 - **Starts on its own while charging,** as the Android screen saver or with *Open when charging*, which opens
   the clock when you plug in a locked phone.
 - **An About screen in Settings** with the version, links to the source code, bug reports, the licence and
