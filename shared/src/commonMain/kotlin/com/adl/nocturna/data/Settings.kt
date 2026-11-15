@@ -1,6 +1,7 @@
 package com.adl.nocturna.data
 
 import com.adl.nocturna.alarm.DEFAULT_DAY_OFF_KEYWORDS
+import com.adl.nocturna.alarm.SUM_COUNTS
 import com.adl.nocturna.sound.SleepSound
 
 enum class ClockStyle { DIGITAL, ANALOG }
@@ -95,6 +96,8 @@ data class Settings(
     val snoozeMinutes: Int = 9,
     val alarmRampSeconds: Int = 45,
     val alarmVibrate: Boolean = true,
+    /** How many sums an alarm set to *Solve a sum* asks for, in [SUM_COUNTS]: the difficulty. */
+    val alarmSums: Int = 1,
     /** Minutes before an alarm over which the clock brightens and warms up; 0 turns it off. */
     val sunriseMinutes: Int = 20,
     /** Today's weather under the time on the wake-up screen. */
