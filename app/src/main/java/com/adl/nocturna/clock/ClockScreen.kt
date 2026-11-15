@@ -60,6 +60,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.adl.nocturna.data.ClockStyle
 import com.adl.nocturna.data.Settings
 import com.adl.nocturna.data.SettingsStore
+import com.adl.nocturna.text.shortName
 import com.adl.nocturna.day.DayBackground
 import com.adl.nocturna.day.DayLayout
 import com.adl.nocturna.day.isDayModeActive
@@ -71,6 +72,7 @@ import com.adl.nocturna.ui.Glyph
 import com.adl.nocturna.ui.GlyphIcon
 import com.adl.nocturna.ui.DeskNavy
 import com.adl.nocturna.ui.NightRed
+import com.adl.nocturna.weather.DeviceLocation
 import com.adl.nocturna.weather.WeatherRepository
 import com.adl.nocturna.weather.pickForecast
 import kotlinx.coroutines.delay
@@ -78,7 +80,6 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
-import java.time.format.TextStyle as DateTextStyle
 import com.adl.nocturna.ui.currentLocale
 import kotlin.math.log10
 import kotlin.random.Random
@@ -138,7 +139,7 @@ fun ClockScreen(
     LaunchedEffect(settings.showWeather, settings.weatherUseDeviceLocation, settings.weatherLat, settings.weatherLon) {
         if (!settings.showWeather) return@LaunchedEffect
         while (true) {
-            WeatherRepository.refreshIfStale(context, settings)
+            WeatherRepository.refreshIfStale(settings) { DeviceLocation.get(context) }
             delay(10 * 60_000L)
         }
     }
@@ -264,7 +265,7 @@ private fun InfoBlock(
                     Spacer(Modifier.width(glyphSize * 0.6f))
                     val forecastStyle = style.copy(color = style.color.copy(alpha = style.color.alpha * 0.75f))
                     if (pick.tomorrow) {
-                        Text(pick.day.date.dayOfWeek.getDisplayName(DateTextStyle.SHORT, locale), style = forecastStyle, softWrap = false)
+                        Text(pick.day.date.dayOfWeek.shortName(locale), style = forecastStyle, softWrap = false)
                         Spacer(Modifier.width(glyphSize * 0.3f))
                         GlyphIcon(pick.day.glyph, forecastStyle.color, glyphSize)
                         Spacer(Modifier.width(glyphSize * 0.3f))

@@ -34,6 +34,27 @@ androidx.media3:media3-exoplayer, media3-exoplayer-hls, media3-session
 Copyright The Android Open Source Project.
 Licensed under the Apache License, Version 2.0.
 
+kotlinx-datetime — https://github.com/Kotlin/kotlinx-datetime
+org.jetbrains.kotlinx:kotlinx-datetime
+Copyright JetBrains s.r.o. and contributors.
+Licensed under the Apache License, Version 2.0.
+
+kotlinx.serialization — https://github.com/Kotlin/kotlinx.serialization
+org.jetbrains.kotlinx:kotlinx-serialization-json (the JSON the settings and
+alarms are stored as)
+Copyright JetBrains s.r.o. and contributors.
+Licensed under the Apache License, Version 2.0.
+
+kotlinx.coroutines — https://github.com/Kotlin/kotlinx.coroutines
+org.jetbrains.kotlinx:kotlinx-coroutines-core
+Copyright JetBrains s.r.o. and contributors.
+Licensed under the Apache License, Version 2.0.
+
+atomicfu — https://github.com/Kotlin/kotlinx-atomicfu
+org.jetbrains.kotlinx:atomicfu (the lock around settings changes)
+Copyright JetBrains s.r.o. and contributors.
+Licensed under the Apache License, Version 2.0.
+
 Kotlin standard library — https://kotlinlang.org
 Copyright JetBrains s.r.o. and Kotlin Programming Language contributors.
 Licensed under the Apache License, Version 2.0.
@@ -56,5 +77,5 @@ of their content.
 --------------------------------------------------------------------------------
 Build-time only (not shipped): Android Gradle Plugin (Apache-2.0), Kotlin
 compiler and Compose compiler plugin (Apache-2.0), Gradle (Apache-2.0),
-Kotlin Multiplatform Gradle plugin and kotlin-test (Apache-2.0), JUnit 4
-(EPL-1.0), JSON-java org.json:json for unit tests (Public Domain).
+Kotlin Multiplatform Gradle plugin, kotlin-test and kotlinx-coroutines-test
+(Apache-2.0), JUnit 4 (EPL-1.0).

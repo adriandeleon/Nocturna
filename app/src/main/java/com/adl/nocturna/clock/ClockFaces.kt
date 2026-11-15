@@ -45,15 +45,6 @@ fun ClockFont.weight(): FontWeight = when (this) {
     else -> FontWeight.Normal
 }
 
-fun ClockFont.label(): String = when (this) {
-    ClockFont.THIN -> "Thin"
-    ClockFont.LIGHT -> "Light"
-    ClockFont.REGULAR -> "Regular"
-    ClockFont.CONDENSED -> "Condensed"
-    ClockFont.MONO -> "Mono"
-    ClockFont.SERIF -> "Serif"
-}
-
 private val tight = LineHeightStyle(LineHeightStyle.Alignment.Center, LineHeightStyle.Trim.Both)
 
 /** Large digital time with optional small seconds and AM/PM marker. */

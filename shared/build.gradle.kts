@@ -13,6 +13,11 @@ plugins {
 }
 
 kotlin {
+    compilerOptions {
+        // PlatformLocale is an expect class: java.util.Locale on Android, NSLocale on iOS.
+        freeCompilerArgs.add("-Xexpect-actual-classes")
+    }
+
     android {
         namespace = "com.adl.nocturna.shared"
         compileSdk = 37
@@ -40,9 +45,14 @@ kotlin {
             implementation(libs.compose.mp.runtime)
             implementation(libs.compose.mp.foundation)
             implementation(libs.compose.mp.ui)
+            api(libs.kotlinx.datetime)
+            implementation(libs.kotlinx.serialization.json)
+            api(libs.kotlinx.coroutines.core)
+            implementation(libs.atomicfu)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+            implementation(libs.kotlinx.coroutines.test)
         }
     }
 }

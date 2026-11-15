@@ -1,0 +1,125 @@
+package com.adl.nocturna.data
+
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.put
+
+/** [Settings] as the one JSON object they are stored as. */
+object SettingsCodec {
+    fun encodeToString(s: Settings): String = encode(s).toString()
+
+    /** Reads what [encodeToString] wrote; throws when [json] isn't a JSON object at all. */
+    fun decodeFromString(json: String): Settings = decode(Json.parseToJsonElement(json).jsonObject)
+
+    fun encode(s: Settings): JsonObject = buildJsonObject {
+        put("style", s.style.name)
+        put("use24h", s.use24h)
+        put("showSeconds", s.showSeconds)
+        put("font", s.font.name)
+        put("color", s.color)
+        put("showDate", s.showDate)
+        put("showBattery", s.showBattery)
+        put("showNextAlarm", s.showNextAlarm)
+        put("showWeather", s.showWeather)
+        put("showForecast", s.showForecast)
+        put("showNotifications", s.showNotifications)
+        put("dimEnabled", s.dimEnabled)
+        put("autoBrightness", s.autoBrightness)
+        put("minBrightness", s.minBrightness.toDouble())
+        put("maxBrightness", s.maxBrightness.toDouble())
+        put("nightModeEnabled", s.nightModeEnabled)
+        put("nightModeLux", s.nightModeLux.toDouble())
+        put("burnInProtection", s.burnInProtection)
+        put("dayMode", s.dayMode.name)
+        put("dayModeStart", s.dayModeStart)
+        put("dayModeEnd", s.dayModeEnd)
+        put("dayModeDays", s.dayModeDays)
+        put("dayModeOverrideUntil", s.dayModeOverrideUntil)
+        put("showCalendarEvents", s.showCalendarEvents)
+        put("dayCalendarView", s.dayCalendarView.name)
+        put("dayPhotoVersion", s.dayPhotoVersion)
+        put("autoStartOnCharge", s.autoStartOnCharge)
+        put("weatherUseDeviceLocation", s.weatherUseDeviceLocation)
+        put("weatherCity", s.weatherCity)
+        // JSON has no NaN: no place is stored as no keys.
+        if (s.hasWeatherLocation) {
+            put("weatherLat", s.weatherLat)
+            put("weatherLon", s.weatherLon)
+        }
+        put("weatherFahrenheit", s.weatherFahrenheit)
+        put("snoozeMinutes", s.snoozeMinutes)
+        put("alarmRampSeconds", s.alarmRampSeconds)
+        put("alarmVibrate", s.alarmVibrate)
+        put("stations", buildJsonArray {
+            s.stations.forEach { add(buildJsonObject { put("name", it.name); put("url", it.url) }) }
+        })
+        put("selectedStation", s.selectedStation)
+        put("stationsVersion", Settings.STATIONS_VERSION)
+    }
+
+    fun decode(j: JsonObject): Settings {
+        val d = Settings()
+        var stations = j.optArray("stations")?.map { element ->
+            val o = element as? JsonObject ?: throw IllegalArgumentException("Station is not a JSON object")
+            Station(o.getString("name"), o.getString("url"))
+        } ?: d.stations
+        var selected = j.optInt("selectedStation", d.selectedStation)
+        // Lists saved before version 2 don't have the Monterrey stations yet: put them on top.
+        if (j.optInt("stationsVersion", 1) < 2) {
+            val added = Settings.MONTERREY_STATIONS.filter { new -> stations.none { it.url == new.url } }
+            stations = added + stations
+            selected += added.size
+        }
+        return Settings(
+            style = enumOr(j.optString("style"), d.style),
+            use24h = j.optBoolean("use24h", d.use24h),
+            showSeconds = j.optBoolean("showSeconds", d.showSeconds),
+            font = enumOr(j.optString("font"), d.font),
+            color = j.optInt("color", d.color),
+            showDate = j.optBoolean("showDate", d.showDate),
+            showBattery = j.optBoolean("showBattery", d.showBattery),
+            showNextAlarm = j.optBoolean("showNextAlarm", d.showNextAlarm),
+            showWeather = j.optBoolean("showWeather", d.showWeather),
+            showForecast = j.optBoolean("showForecast", d.showForecast),
+            showNotifications = j.optBoolean("showNotifications", d.showNotifications),
+            dimEnabled = j.optBoolean("dimEnabled", d.dimEnabled),
+            autoBrightness = j.optBoolean("autoBrightness", d.autoBrightness),
+            minBrightness = j.optDouble("minBrightness", d.minBrightness.toDouble()).toFloat(),
+            maxBrightness = j.optDouble("maxBrightness", d.maxBrightness.toDouble()).toFloat(),
+            nightModeEnabled = j.optBoolean("nightModeEnabled", d.nightModeEnabled),
+            nightModeLux = j.optDouble("nightModeLux", d.nightModeLux.toDouble()).toFloat(),
+            burnInProtection = j.optBoolean("burnInProtection", d.burnInProtection),
+            dayMode = when {
+                // Versions before the schedule stored a plain switch.
+                j.isBoolean("dayMode") -> if (j.optBoolean("dayMode", false)) DayMode.ON else DayMode.OFF
+                else -> enumOr(j.optString("dayMode"), d.dayMode)
+            },
+            dayModeStart = j.optInt("dayModeStart", d.dayModeStart).coerceIn(0, MINUTES_PER_DAY - 1),
+            dayModeEnd = j.optInt("dayModeEnd", d.dayModeEnd).coerceIn(0, MINUTES_PER_DAY - 1),
+            dayModeDays = j.optInt("dayModeDays", d.dayModeDays) and Alarm.ALL_DAYS,
+            dayModeOverrideUntil = j.optLong("dayModeOverrideUntil", d.dayModeOverrideUntil),
+            showCalendarEvents = j.optBoolean("showCalendarEvents", d.showCalendarEvents),
+            dayCalendarView = enumOr(j.optString("dayCalendarView"), d.dayCalendarView),
+            dayPhotoVersion = j.optLong("dayPhotoVersion", d.dayPhotoVersion),
+            autoStartOnCharge = j.optBoolean("autoStartOnCharge", d.autoStartOnCharge),
+            weatherUseDeviceLocation = j.optBoolean("weatherUseDeviceLocation", d.weatherUseDeviceLocation),
+            weatherCity = j.optString("weatherCity", d.weatherCity),
+            weatherLat = j.optDouble("weatherLat", Double.NaN),
+            weatherLon = j.optDouble("weatherLon", Double.NaN),
+            weatherFahrenheit = j.optBoolean("weatherFahrenheit", d.weatherFahrenheit),
+            snoozeMinutes = j.optInt("snoozeMinutes", d.snoozeMinutes),
+            alarmRampSeconds = j.optInt("alarmRampSeconds", d.alarmRampSeconds),
+            alarmVibrate = j.optBoolean("alarmVibrate", d.alarmVibrate),
+            stations = stations,
+            selectedStation = selected,
+        )
+    }
+
+    private const val MINUTES_PER_DAY = 24 * 60
+
+    private inline fun <reified E : Enum<E>> enumOr(name: String, fallback: E): E =
+        enumValues<E>().firstOrNull { it.name == name } ?: fallback
+}

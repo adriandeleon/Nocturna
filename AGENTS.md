@@ -47,8 +47,8 @@ The debug build installs as `com.adl.nocturna.debug`, beside a release build.
       parsing) is a plain function with a JVM unit test in `app/src/test`, or in `shared/src/commonTest`
       (`kotlin.test`, not JUnit) when the code is in `:shared`.
 - [ ] Tests do not sleep, touch the network, or depend on the machine's time zone: pass the clock and zone in.
-- [ ] A new setting has a default, survives the JSON round trip in `data/`, and old stored JSON without it
-      still loads.
+- [ ] A new setting has a default, survives the JSON round trip in `SettingsCodec` (`shared`, `data/`), and old
+      stored JSON without it still loads.
 - [ ] A new permission is in `AndroidManifest.xml` with the reason in a comment, and the app still works,
       with a degraded path, when the user refuses it.
 - [ ] A new dependency goes in `gradle/libs.versions.toml` and gets a `NOTICE` entry with its licence.
@@ -60,9 +60,19 @@ The debug build installs as `com.adl.nocturna.debug`, beside a release build.
 - `local.properties` is not committed; CI writes none, since the runner's `ANDROID_HOME` is enough.
 - Exact alarms: `USE_EXACT_ALARM` on API 33+, `SCHEDULE_EXACT_ALARM` below it. Alarms go through
   `AlarmManager.setAlarmClock` and are rescheduled after boot.
+- `SettingsStore` and `AlarmStore` live in `:shared` and keep their JSON in a `KeyValueStore`. On Android,
+  `Storage.loadStores` gives them SharedPreferences in **device-protected** storage, so alarms load before
+  the first unlock after a reboot; a store opened anywhere else breaks that. `AlarmStore` calls back into
+  `AlarmScheduler` through the `reschedule` it was loaded with.
 - `:shared` builds for iOS too, so `commonMain` takes only Kotlin and multiplatform libraries: no `java.*`
   (`Math`, `java.time`, `String.format`), no `android.*`, no `org.json`. Only the metadata compile above
-  catches a slip; the Android build alone does not. Its iOS targets build only on macOS and are skipped
-  elsewhere.
+  catches a slip; the Android build alone does not. Its iOS targets link only on macOS, but
+  `./gradlew :shared:compileKotlinIosSimulatorArm64` compiles them on Linux too.
+- Shared code uses kotlinx-datetime (`kotlin.time.Instant` plus a `TimeZone`, where the app used
+  `ZonedDateTime`) and reads stored JSON with the org.json-style helpers in `data/StoredJson.kt`, which keep
+  the old lenient reading of what's already on phones. The app's UI still uses java.time and reaches the
+  shared functions through `JavaTimeBridge.kt` overloads in each package; those go as the UI moves.
+- Text that depends on the language (`formatTime`, day names) takes a `PlatformLocale`: `java.util.Locale` on
+  Android, `NSLocale` on iOS. Tests use `testLocale`, British English, never the machine's.
 - Release builds are minified (`isMinifyEnabled`, `isShrinkResources`): check anything reached by reflection
   against `app/proguard-rules.pro`.

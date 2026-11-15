@@ -23,6 +23,13 @@ val LIBRARY_CREDITS = listOf(
         "https://github.com/JetBrains/compose-multiplatform",
     ),
     Credit("AndroidX Media3", "ExoPlayer, HLS and media session", "Apache License 2.0", "https://github.com/androidx/media"),
+    Credit("kotlinx-datetime", "Dates, times and time zones", "Apache License 2.0", "https://github.com/Kotlin/kotlinx-datetime"),
+    Credit(
+        "kotlinx.serialization", "JSON for the stored settings and alarms", "Apache License 2.0",
+        "https://github.com/Kotlin/kotlinx.serialization",
+    ),
+    Credit("kotlinx.coroutines", "Background work and live updates", "Apache License 2.0", "https://github.com/Kotlin/kotlinx.coroutines"),
+    Credit("atomicfu", "Safe changes to the settings", "Apache License 2.0", "https://github.com/Kotlin/kotlinx-atomicfu"),
     Credit("Kotlin standard library", "JetBrains and Kotlin contributors", "Apache License 2.0", "https://kotlinlang.org"),
 )
 

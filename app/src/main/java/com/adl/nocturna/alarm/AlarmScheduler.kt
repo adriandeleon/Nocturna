@@ -5,6 +5,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import com.adl.nocturna.data.AlarmStore
+import com.adl.nocturna.data.nextTrigger
 import com.adl.nocturna.settings.SettingsActivity
 import java.time.ZonedDateTime
 
