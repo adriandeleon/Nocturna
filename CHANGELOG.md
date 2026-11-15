@@ -140,9 +140,9 @@ one-line summary written for users.
 - **Groundwork for an iOS version:** the code that doesn't depend on Android now lives in a shared Kotlin
   Multiplatform module that can also build for iOS: the settings and alarms and how they are stored, when
   alarms ring, the Day mode schedule and calendar, the sky, the weather and its forecast, the Settings
-  summaries, the burn-in timings and the icons, and now the clock screen itself with Day mode's calendar
-  page, sticky note and scenes. The Android app works exactly as before, and your settings and alarms carry
-  over as they are. The About screen now credits Compose Multiplatform (with its Material 3),
+  summaries, the burn-in timings and the icons, and now every screen: the clock with Day mode's calendar
+  page, sticky note and scenes, all of Settings, and the alarm's wake-up screen. The Android app works
+  exactly as before, and your settings and alarms carry over as they are. The About screen now credits Compose Multiplatform (with its Material 3),
   kotlinx-datetime, kotlinx.serialization, kotlinx.coroutines and atomicfu.
 
 ### Fixed

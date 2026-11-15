@@ -1,22 +1,13 @@
 package com.adl.nocturna.settings
 
-import android.content.ActivityNotFoundException
-import android.content.Context
-import android.content.Intent
-import android.provider.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LifecycleEventEffect
-import com.adl.nocturna.clock.DndWhileShowing
 import com.adl.nocturna.clock.MORNING_HOUR
 import com.adl.nocturna.clock.NIGHT_START_HOUR
 import com.adl.nocturna.data.SettingsStore
@@ -27,11 +18,10 @@ import com.adl.nocturna.data.SettingsStore
  */
 @Composable
 fun DndRow(enabled: Boolean) {
-    val context = LocalContext.current
-    var refresh by remember { mutableIntStateOf(0) }
-    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { refresh++ }
-    val access = remember(refresh) { DndWhileShowing.hasAccess(context) }
-    val alarmsAllowed = remember(refresh) { access && DndWhileShowing.alarmsAllowed(context) }
+    val platform = LocalSettingsPlatform.current
+    val systemAccess = platform.access()
+    val access = systemAccess.dndAccess
+    val alarmsAllowed = systemAccess.dndAllowsAlarms
     var explain by remember { mutableStateOf(false) }
 
     val subtitle = when {
@@ -43,7 +33,8 @@ fun DndRow(enabled: Boolean) {
         if (v && !access) explain = true
         else SettingsStore.update { it.copy(dndWhileShowing = v) }
     }
-    if (enabled && !access) ActionButton("Allow Do Not Disturb access") { openDndAccessSettings(context) }
+    // Where the system has no such screen (some watches and TVs), the switch keeps saying it isn't allowed.
+    if (enabled && !access) ActionButton("Allow Do Not Disturb access") { platform.open(SystemPage.DND_ACCESS) }
     if (enabled && alarmsAllowed) {
         Hint(
             "From $NIGHT_START_HOUR:00 to ${MORNING_HOUR.toString().padStart(2, '0')}:00, or from when night mode " +
@@ -70,18 +61,10 @@ fun DndRow(enabled: Boolean) {
                 TextButton(onClick = {
                     explain = false
                     SettingsStore.update { it.copy(dndWhileShowing = true) }
-                    openDndAccessSettings(context)
+                    platform.open(SystemPage.DND_ACCESS)
                 }) { Text("Continue") }
             },
             dismissButton = { TextButton(onClick = { explain = false }) { Text("Cancel") } },
         )
-    }
-}
-
-private fun openDndAccessSettings(context: Context) {
-    try {
-        context.startActivity(Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
-    } catch (_: ActivityNotFoundException) {
-        // Some watches and TVs have no such screen; the switch keeps saying it isn't allowed.
     }
 }

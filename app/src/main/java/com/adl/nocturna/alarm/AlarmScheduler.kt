@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import com.adl.nocturna.data.AlarmStore
 import com.adl.nocturna.settings.SettingsActivity
+import com.adl.nocturna.settings.SettingsPages
 import kotlinx.datetime.TimeZone
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
@@ -42,7 +43,7 @@ object AlarmScheduler {
         }
         val show = PendingIntent.getActivity(
             context, 1,
-            Intent(context, SettingsActivity::class.java).putExtra(SettingsActivity.EXTRA_SCREEN, SettingsActivity.SCREEN_ALARMS),
+            Intent(context, SettingsActivity::class.java).putExtra(SettingsActivity.EXTRA_SCREEN, SettingsPages.ALARMS),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
         try {

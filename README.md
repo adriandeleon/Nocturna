@@ -84,6 +84,7 @@ the code that doesn't depend on Android, ready for an iOS app later. Both use th
 | `clock` | `ClockScreen` and the clock faces (`shared`), which reach the phone through `ClockPlatform`; `ClockActivity`, `AndroidClockPlatform` and its sensor/battery/alarm state (`app`); the brightness curve and the sunrise before alarms |
 | `day` | Day mode: the desk calendar page and sticky note, the monthly scenes and the focus timer (`shared`); the background photo and today's events from the calendar provider (`app`); the schedule |
 | `dream` | `NocturnaDream`, the screen saver |
+| `alarm` | The wake-up screen and the rules for skipping days off (`shared`); scheduling (`AlarmManager.setAlarmClock`), the ringing service and its activity, boot receiver, days off read from the calendar (`app`) |
 | `alarm` | Scheduling (`AlarmManager.setAlarmClock`), the ringing service, the wake-up screen, boot receiver; days off read from the calendar (`app`) and the rules for skipping them (`shared`); the bedtime reminder (`app`) and its timing and the countdown to the next alarm (`shared`) |
 | `radio` | Media3 `RadioService` and the `Radio` controller with the sleep timer |
 | `sound` | The sleep sounds: seeded noise, rain and surf generators that loop seamlessly, and the WAV encoder (`shared`); their cached WAV files (`app`, in `radio`) |
@@ -91,7 +92,7 @@ the code that doesn't depend on Android, ready for an iOS app later. Both use th
 | `notify` | Notification listener that mirrors notification icons |
 | `charging` | Foreground service that opens the clock when the charger is connected |
 | `widget` | Quick Settings tiles, the home-screen widget and its one-tap sleep radio (`app`); the widget's next-alarm text and clock size (`shared`) |
-| `settings` | The Settings hub and its pages: clock face, info line, brightness, day mode, weather, starting, alarms, stations, About |
+| `settings` | The Settings hub and its pages: clock face, info line, brightness, day mode, weather, starting, alarms, stations, About and backup (`shared`), which reach the phone through `SettingsPlatform`; `SettingsActivity`, its Material You theme and `AndroidSettingsPlatform` (`app`) |
 | `data` | Settings and alarms and their stores, kept as JSON in device-protected SharedPreferences on Android; the backup file format (`shared`) |
 | `text`, `ui` | Dates and names in the phone's language, the theme and the icons (`shared`) |
 
