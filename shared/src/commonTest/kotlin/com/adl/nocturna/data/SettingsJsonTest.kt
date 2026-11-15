@@ -131,4 +131,11 @@ class SettingsJsonTest {
         assertNull(loaded.currentSleepSound)
         assertEquals(Settings().stations[1], loaded.currentStation)
     }
+    @Test fun wakeWeatherSwitchSurvivesRoundTrip() {
+        val settings = Settings(alarmShowWeather = false)
+        assertEquals(settings, roundTrip(settings))
+    }
+
+    @Test fun settingsSavedBeforeTheWakeWeatherShowIt() =
+        assertEquals(true, SettingsCodec.decode(stored(remove = listOf("alarmShowWeather"))).alarmShowWeather)
 }

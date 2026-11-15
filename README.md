@@ -21,6 +21,7 @@ A bedside clock for Android: a big, dimmable clock for the nightstand while your
 - **Alarms**: repeat days, labels, snooze, a gentle volume ramp, vibration, and a full-screen wake-up screen over the lock screen. An alarm can wake you with a radio station, and falls back to the alarm tone if the station doesn't play. A repeating alarm can skip its next ring.
 - **Sunrise before alarms**: in the 10, 20 or 30 minutes before an alarm (not a snooze) the clock brightens to your brightest level and warms from night red through amber to a soft white.
 - **Sleep sounds**: white, pink and brown noise, rain and surf, made on the phone so they play offline; they loop seamlessly and play from the Radio button like a station, sleep timer included.
+- **Weather on waking**: the wake-up screen shows the current conditions and today's high and low under the time, refreshed in the background if they are old (Settings › Alarms › *Show weather*).
 - **Web radio**: any MP3/AAC/HLS stream, with a sleep timer that fades out (15/30/60/90 min).
 - **Backup**: export settings, radio stations and alarms to one JSON file and import them on this or another phone (Settings › About › Backup). The Day mode photo isn't included. No storage permission: you pick the file.
 - **Quick Settings tiles**: *Nocturna* opens the clock; *Sleep radio* plays your selected station with a 30-minute fading sleep timer, or stops it, and lights up while it plays. To add them, pull down Quick Settings, tap the pencil (Edit), and drag the tiles into place.

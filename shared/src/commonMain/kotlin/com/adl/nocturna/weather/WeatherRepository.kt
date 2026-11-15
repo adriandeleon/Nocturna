@@ -9,7 +9,6 @@ import kotlin.time.Clock
 
 /** Current conditions and a short daily forecast from the free Open-Meteo API (no key needed). */
 object WeatherRepository {
-    private const val MAX_AGE_MS = 30 * 60_000L
     private val state = MutableStateFlow<Weather?>(null)
     val weather: StateFlow<Weather?> = state.asStateFlow()
 
@@ -26,7 +25,7 @@ object WeatherRepository {
         val (lat, lon) = location(settings, deviceLocation) ?: return
         val cur = state.value
         val moved = cur == null || abs(cur.lat - lat) > 0.05 || abs(cur.lon - lon) > 0.05
-        if (!moved && clock.now().toEpochMilliseconds() - cur.fetchedAt < MAX_AGE_MS) return
+        if (!moved && cur.isFresh(clock.now())) return
         runCatching { parseWeather(get(forecastUrl(lat, lon)), lat, lon, fetchedAt = clock.now().toEpochMilliseconds()) }
             .onSuccess { state.value = it }
     }
