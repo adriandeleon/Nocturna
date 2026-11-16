@@ -27,7 +27,8 @@ gets English.
 - **Day mode**: a cheerful desk clock, calendar page and sticky note for a phone on a desk stand while you work. See [Day mode](#day-mode).
 - **Alarms**: repeat days, labels, snooze, a gentle volume ramp, vibration, and a full-screen wake-up screen over the lock screen. An alarm can wake you with a radio station, and falls back to the alarm tone if the station doesn't play. A repeating alarm can skip its next ring, and a one-time alarm can be set for a date (*Fri 21 Nov*). To stop an alarm you can just tap, solve one to three sums, or hold the button for 3 seconds; snooze is always one tap.
 - **Sunrise before alarms**: in the 10, 20 or 30 minutes before an alarm (not a snooze) the clock brightens to your brightest level and warms from night red through amber to a soft white.
-- **Sleep sounds**: white, pink and brown noise, rain and surf, made on the phone so they play offline; they loop seamlessly and play from the Radio button like a station, sleep timer included.
+- **Sleep sounds and ambient music**: white, pink and brown noise, rain and surf, and three pieces of ambient music (slow chords, night chimes, a deep drone), made on the phone so they play offline; they loop seamlessly and play from the Radio button like a station, sleep timer included.
+- **Music on your phone**: add your own audio files, or a folder of them, as stations, through the system's file picker (no storage permission). A file repeats; a folder plays in name order and starts again. Alarms can wake you with them too.
 - **Weather on waking**: the wake-up screen shows the current conditions and today's high and low under the time, refreshed in the background if they are old (Settings › Alarms › *Show weather*).
 - **Moon phase**: the info line can show the moon's phase on the night clock, a small drawing with its name (*Waxing gibbous*), worked out offline (*Show on the clock › Moon phase*, off by default).
 - **Time until the alarm**: within 12 hours of the next alarm the info line counts down to it (*06:30 · in 7 h 20 m*, in steps of 5 minutes), switchable under *Show on the clock*.
@@ -90,8 +91,8 @@ the code that doesn't depend on Android, ready for an iOS app later. Both use th
 | `day` | Day mode: the desk calendar page and sticky note, the monthly scenes, the focus timer and the world clock with its city list (`shared`); the background photo and today's events from the calendar provider (`app`); the schedule |
 | `dream` | `NocturnaDream`, the screen saver |
 | `alarm` | The wake-up screen, the rules for skipping days off, the bedtime reminder's timing and the countdown to the next alarm, when a dated one-time alarm rings, the dismiss challenges with their sums and screens, and wave to snooze (`shared`); scheduling (`AlarmManager.setAlarmClock`), the ringing service and its activity, boot receiver, days off read from the calendar and the bedtime reminder (`app`) |
-| `radio` | Media3 `RadioService` and the `Radio` controller with the sleep timer |
-| `sound` | The sleep sounds: seeded noise, rain and surf generators that loop seamlessly, and the WAV encoder (`shared`); their cached WAV files (`app`, in `radio`) |
+| `radio` | Media3 `RadioService` (streams, sleep sounds and music on the phone) and the `Radio` controller with the sleep timer |
+| `sound` | The sleep sounds: seeded noise, rain and surf generators that loop seamlessly, the ambient music synthesizer (`AmbientMusic`), the WAV encoder, and which files a folder of the user's music plays and in what order (`PhoneMusic`) (`shared`); their cached WAV files and the picked music's files (`PhoneMusicFiles`) (`app`, in `radio`) |
 | `weather` | Open-Meteo current conditions, daily and hourly forecast and city search; the phone's location (`app`) |
 | `notify` | Notification listener that mirrors notification icons |
 | `charging` | Foreground service that opens the clock when the charger is connected |

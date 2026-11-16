@@ -1,15 +1,18 @@
 package com.adl.nocturna.radio
 
 import android.content.Intent
+import androidx.annotation.OptIn
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
+import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -21,7 +24,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-/** Plays internet radio streams and the built-in sleep sounds in the background with a media notification. */
+/**
+ * Plays internet radio streams, the built-in sleep sounds and music on the phone in the background with a
+ * media notification.
+ */
 class RadioService : MediaSessionService() {
     private var session: MediaSession? = null
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -46,19 +52,31 @@ class RadioService : MediaSessionService() {
 
         session = MediaSession.Builder(this, player)
             .setCallback(object : MediaSession.Callback {
-                // Controllers send only request metadata across the binder; rebuild playable items from it.
-                // Sleep sounds become their cached loop, repeated seamlessly; streams play once.
                 override fun onAddMediaItems(
                     mediaSession: MediaSession,
                     controller: MediaSession.ControllerInfo,
                     mediaItems: MutableList<MediaItem>,
-                ): ListenableFuture<MutableList<MediaItem>> {
-                    val loops = mediaItems.any(SleepSoundFiles::isSleepSound)
-                    mediaSession.player.repeatMode = if (loops) Player.REPEAT_MODE_ONE else Player.REPEAT_MODE_OFF
-                    return if (loops) SleepSoundFiles.playable(this@RadioService, mediaItems) else Futures.immediateFuture(
-                        mediaItems.map { it.buildUpon().setUri(it.requestMetadata.mediaUri).build() }.toMutableList()
-                    )
-                }
+                ): ListenableFuture<MutableList<MediaItem>> = resolve(mediaSession.player, mediaItems)
+
+                // A folder on the phone becomes all its tracks, so the list that plays can be longer than the one asked for.
+                // MediaItemsWithStartPosition is still marked unstable, though onSetMediaItems is built on it.
+                @OptIn(UnstableApi::class)
+                override fun onSetMediaItems(
+                    mediaSession: MediaSession,
+                    controller: MediaSession.ControllerInfo,
+                    mediaItems: MutableList<MediaItem>,
+                    startIndex: Int,
+                    startPositionMs: Long,
+                ): ListenableFuture<MediaSession.MediaItemsWithStartPosition> = Futures.transform(
+                    resolve(mediaSession.player, mediaItems),
+                    { items ->
+                        val same = items.size == mediaItems.size
+                        MediaSession.MediaItemsWithStartPosition(
+                            items, if (same) startIndex else 0, if (same) startPositionMs else C.TIME_UNSET,
+                        )
+                    },
+                    MoreExecutors.directExecutor(),
+                )
             })
             .build()
 
@@ -80,6 +98,26 @@ class RadioService : MediaSessionService() {
                 }
                 Radio.sleepAt.value = null
             }
+        }
+    }
+
+    /**
+     * Controllers send only request metadata across the binder; rebuild playable items from it. Sleep sounds
+     * become their cached loop, repeated seamlessly; music on the phone repeats, a folder from its first track
+     * again; streams play once.
+     */
+    private fun resolve(player: Player, items: List<MediaItem>): ListenableFuture<MutableList<MediaItem>> = when {
+        items.any(SleepSoundFiles::isSleepSound) -> {
+            player.repeatMode = Player.REPEAT_MODE_ONE
+            SleepSoundFiles.playable(this, items)
+        }
+        items.any(PhoneMusicFiles::isOnPhone) -> {
+            player.repeatMode = Player.REPEAT_MODE_ALL
+            PhoneMusicFiles.playable(this, items)
+        }
+        else -> {
+            player.repeatMode = Player.REPEAT_MODE_OFF
+            Futures.immediateFuture(items.map { it.buildUpon().setUri(it.requestMetadata.mediaUri).build() }.toMutableList())
         }
     }
 

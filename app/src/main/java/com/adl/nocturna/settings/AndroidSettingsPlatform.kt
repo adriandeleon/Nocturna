@@ -27,9 +27,11 @@ import com.adl.nocturna.BuildConfig
 import com.adl.nocturna.alarm.AlarmScheduler
 import com.adl.nocturna.charging.ChargingService
 import com.adl.nocturna.clock.DndWhileShowing
+import com.adl.nocturna.data.Station
 import com.adl.nocturna.day.CalendarEvents
 import com.adl.nocturna.day.DayPhoto
 import com.adl.nocturna.notify.NotificationIconService
+import com.adl.nocturna.radio.PhoneMusicFiles
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
@@ -109,6 +111,28 @@ class AndroidSettingsPlatform(private val activity: Context) : SettingsPlatform 
     }
 
     override fun clearDayPhoto() = DayPhoto.clear(app)
+
+    @Composable
+    override fun rememberMusicPicker(folder: Boolean, onPicked: (List<Station>) -> Unit): () -> Unit {
+        val scope = rememberCoroutineScope()
+        // The system's file picker needs no storage permission; it grants access to what the user picks.
+        fun add(uris: List<Uri>) = scope.launch {
+            onPicked(withContext(Dispatchers.IO) { uris.filter { PhoneMusicFiles.keep(app, it) }.map { PhoneMusicFiles.station(app, it) } })
+        }
+        return if (folder) {
+            val launcher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+                if (uri != null) add(listOf(uri))
+            }
+            ({ launcher.launch(null) })
+        } else {
+            val launcher = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
+                if (uris.isNotEmpty()) add(uris)
+            }
+            ({ launcher.launch(arrayOf("audio/*", "application/ogg")) })
+        }
+    }
+
+    override fun forgetMusic(station: Station) = PhoneMusicFiles.forget(app, station.url)
 
     override fun setOpenOnCharge(on: Boolean) {
         if (on) ChargingService.start(app) else ChargingService.stop(app)

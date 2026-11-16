@@ -3,6 +3,7 @@ package com.adl.nocturna.sound
 import com.adl.nocturna.data.Station
 import kotlin.math.PI
 import kotlin.math.abs
+import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 import kotlin.test.Test
@@ -107,6 +108,55 @@ class SleepSoundSynthTest {
         val loop = SleepSoundSynth.render(SleepSound.SURF)
         assertEquals(SleepSound.SURF.loopSeconds * SleepSoundSynth.SAMPLE_RATE, loop.size)
         assertEquals(Wav.HEADER_BYTES + 2 * loop.size, Wav.encode(loop, SleepSoundSynth.SAMPLE_RATE).size)
+    }
+
+    @Test fun musicIsListedApartFromTheNoises() {
+        assertEquals(listOf(SleepSound.CHORDS, SleepSound.CHIMES, SleepSound.DRONE), SleepSound.entries.filter { it.isMusic })
+        assertEquals(SleepSound.entries.size, SleepSound.entries.map { it.id }.toSet().size)
+        assertEquals(SleepSound.entries.size, SleepSound.entries.map { it.seed }.toSet().size)
+    }
+
+    @Test fun noteRingingPastTheEndOfTheLoopCarriesOnAtItsStart() {
+        val loop = Loop(n = 1000, rate = 1000)
+        // A 0.3 s note starting 0.1 s before the end: its last 0.2 s land at the start.
+        loop.note(0.9, 0.3, 50.0, 1.0, listOf(Partial(1.0, 1.0)), attack = 0.01, release = 0.01, phase = SeededRandom(1))
+        assertTrue((0 until 190).any { abs(loop.buf[it]) > 0.5 }, "nothing at the start")
+        assertTrue((210 until 890).all { loop.buf[it] == 0.0 }, "sound in the middle")
+        // One continuous sine across the loop point: no bigger step there than anywhere else in the note.
+        val step = abs(loop.buf[0] - loop.buf[999])
+        assertTrue(step < 2 * PI * 50 / 1000 * 1.01, "step of $step at the loop point")
+    }
+
+    @Test fun humFitsWholeCyclesIntoTheLoop() {
+        val loop = Loop(n = 8000, rate = 8000)
+        val hz = loop.wholeCycles(110.3)
+        assertEquals(110.0, hz, 1e-9)
+        loop.hum(hz, 1.0, listOf(Partial(1.0, 1.0)), cycles = 1, depth = 0.5, lfoPhase = 0.0, phase = SeededRandom(2))
+        // Played on past the end it would go on exactly as the loop starts.
+        val seam = abs(loop.buf[0] - loop.buf[7999])
+        assertTrue(seam <= (1 until 8000).maxOf { abs(loop.buf[it] - loop.buf[it - 1]) } * 1.01)
+    }
+
+    @Test fun musicPlaysInItsKey() {
+        // Power at each pitch (Goertzel): notes of the piece's key sound, the semitone beside them doesn't.
+        fun power(x: FloatArray, rate: Int, hz: Double): Double {
+            val c = 2 * cos(2 * PI * hz / rate)
+            var s1 = 0.0
+            var s2 = 0.0
+            for (v in x) { val s0 = v + c * s1 - s2; s2 = s1; s1 = s0 }
+            return s1 * s1 + s2 * s2 - c * s1 * s2
+        }
+        val cases = mapOf(
+            SleepSound.CHORDS to (62 to 63), // D4 in D major, not D#4
+            SleepSound.CHIMES to (57 to 58), // the hum's A3, not A#3
+            SleepSound.DRONE to (48 to 49), // C3, not C#3
+        )
+        for ((sound, notes) in cases) {
+            val x = SleepSoundSynth.render(sound, rate, seconds = 8.0)
+            val inKey = power(x, rate, AmbientMusic.hz(notes.first))
+            val outOfKey = power(x, rate, AmbientMusic.hz(notes.second))
+            assertTrue(inKey > 10 * outOfKey, "${sound.name}: ${notes.first} at $inKey, ${notes.second} at $outOfKey")
+        }
     }
 
     @Test fun stationsKnowTheirSound() {

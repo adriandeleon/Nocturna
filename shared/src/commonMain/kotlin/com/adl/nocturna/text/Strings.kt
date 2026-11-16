@@ -160,6 +160,12 @@ interface Strings {
     val soundRainAbout: String
     val soundSurf: String
     val soundSurfAbout: String
+    val soundChords: String
+    val soundChordsAbout: String
+    val soundChimes: String
+    val soundChimesAbout: String
+    val soundDrone: String
+    val soundDroneAbout: String
 
     /** On the About page: "Version 0.1.0 (1)". */
     fun version(name: String, code: Int): String
@@ -289,6 +295,12 @@ object EnglishStrings : Strings {
     override val soundRainAbout = "Steady rain with drops pattering close by"
     override val soundSurf = "Surf"
     override val soundSurfAbout = "Slow waves rolling in to the shore"
+    override val soundChords = "Slow chords"
+    override val soundChordsAbout = "Warm chords that drift from one to the next, a soft note or two on top"
+    override val soundChimes = "Night chimes"
+    override val soundChimesAbout = "Bells struck here and there over a low hum"
+    override val soundDrone = "Deep drone"
+    override val soundDroneAbout = "A low hum that swells and fades, with no tune to follow"
 
     override fun version(name: String, code: Int) = "Version $name ($code)"
 

@@ -159,6 +159,14 @@ class SettingsJsonTest {
         assertEquals(Settings().stations, loaded.stations)
     }
 
+    @Test fun musicOnThePhoneSurvivesRoundTrip() {
+        val folder = Station("Sleep music", "content://com.android.externalstorage.documents/tree/primary%3AMusic%2FSleep")
+        val settings = Settings(stations = Settings().stations + folder, selectedStation = Settings().stations.size)
+        val loaded = roundTrip(settings)
+        assertEquals(settings, loaded)
+        assertEquals(folder, loaded.currentStation)
+    }
+
     @Test fun settingsSavedBeforeSleepSoundsKeepTheirStation() {
         val old = Settings(selectedStation = 3)
         val loaded = SettingsCodec.decode(stored(old, remove = listOf("selectedSound")))
