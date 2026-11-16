@@ -68,10 +68,26 @@ data class DeskFit(val worldLine: Boolean, val note: Boolean)
  * with a [gap] before the note. The note keeps the room it had before the world clock, so when only one
  * of them fits the line is the one left out; with no note the line shows whenever the clock still fits.
  */
-fun deskFit(withLine: Int, without: Int, gap: Int, noteMin: Int?, max: Int): DeskFit = when {
-    noteMin != null && noteFits(withLine, gap, noteMin, max) -> DeskFit(worldLine = true, note = true)
-    noteMin != null && noteFits(without, gap, noteMin, max) -> DeskFit(worldLine = false, note = true)
-    else -> DeskFit(worldLine = withLine <= max, note = false)
+fun deskFit(withLine: Int, without: Int, gap: Int, noteMin: Int?, max: Int): DeskFit =
+    deskClockFit(listOf(withLine, without), gap, noteMin, max).let { DeskFit(worldLine = it.level == 0, note = it.note) }
+
+/** Which of the desk clock's versions shows ([level], 0 the fullest) and whether the sticky note goes under it. */
+data class DeskClockFit(val level: Int, val note: Boolean)
+
+/**
+ * Landscape: the desk clock comes in versions [heights] tall, fullest first, each leaving out a little more
+ * (the world clock line, then most of the glance line, then all of it). The note keeps its place: the
+ * fullest version that leaves room for it ([noteMin] tall at its smallest, after a [gap]) shows with it.
+ * When none does, or there is no note ([noteMin] null), the fullest version that fits in [max] shows alone,
+ * or the barest when none fits.
+ */
+fun deskClockFit(heights: List<Int>, gap: Int, noteMin: Int?, max: Int): DeskClockFit {
+    if (noteMin != null) {
+        val withNote = heights.indexOfFirst { noteFits(it, gap, noteMin, max) }
+        if (withNote >= 0) return DeskClockFit(withNote, note = true)
+    }
+    val alone = heights.indexOfFirst { it <= max }
+    return DeskClockFit(if (alone >= 0) alone else heights.lastIndex, note = false)
 }
 
 /** The most of portrait day mode's height the desk clock may take with its world clock line. */

@@ -17,6 +17,7 @@ class WeatherRepositoryTest {
     private val fetched = mutableListOf<String>()
     private var temperature = 18.0
     private var fail = false
+    private var aqi = 42
 
     private val monterrey = Settings(weatherCity = "Monterrey", weatherLat = 25.6866, weatherLon = -100.3161)
 
@@ -28,7 +29,8 @@ class WeatherRepositoryTest {
         WeatherRepository.get = { url ->
             fetched += url
             if (fail) error("offline")
-            """{"current":{"temperature_2m":$temperature,"weather_code":3,"is_day":1}}"""
+            if (url.contains("air-quality")) """{"current":{"us_aqi":$aqi}}"""
+            else """{"current":{"temperature_2m":$temperature,"weather_code":3,"is_day":1}}"""
         }
     }
 
@@ -89,5 +91,26 @@ class WeatherRepositoryTest {
     @Test fun geocodeReadsTheBestMatch() = runTest {
         WeatherRepository.get = { """{"results":[{"name":"Monterrey","country":"México","latitude":25.67,"longitude":-100.31}]}""" }
         assertEquals(Place("Monterrey, México", 25.67, -100.31), WeatherRepository.geocode("monterrey", "es"))
+    }
+
+    @Test fun airQualityFetchesOnceAnHour() = runTest {
+        WeatherRepository.refreshAirQualityIfStale(monterrey) { null }
+        assertEquals(42, WeatherRepository.airQuality.value?.usAqi)
+        later(59.minutes)
+        aqi = 60
+        WeatherRepository.refreshAirQualityIfStale(monterrey) { null }
+        assertEquals(42, WeatherRepository.airQuality.value?.usAqi)
+        later(1.minutes)
+        WeatherRepository.refreshAirQualityIfStale(monterrey) { null }
+        assertEquals(60, WeatherRepository.airQuality.value?.usAqi)
+        assertEquals(listOf(airQualityUrl(25.6866, -100.3161), airQualityUrl(25.6866, -100.3161)), fetched)
+    }
+
+    @Test fun airQualityKeepsWhatItHadWhenOffline() = runTest {
+        WeatherRepository.refreshAirQualityIfStale(monterrey) { null }
+        later(120.minutes)
+        fail = true
+        WeatherRepository.refreshAirQualityIfStale(monterrey) { null }
+        assertEquals(42, WeatherRepository.airQuality.value?.usAqi)
     }
 }

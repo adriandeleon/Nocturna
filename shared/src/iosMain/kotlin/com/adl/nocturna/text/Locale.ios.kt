@@ -15,6 +15,7 @@ import platform.Foundation.NSDate
 import platform.Foundation.NSNumber
 import platform.Foundation.NSNumberFormatter
 import platform.Foundation.NSNumberFormatterDecimalStyle
+import platform.Foundation.countryCode
 import platform.Foundation.languageCode
 import platform.Foundation.dateWithTimeIntervalSince1970
 import platform.Foundation.NSDateComponents
@@ -52,6 +53,8 @@ actual fun DayOfWeek.shortName(locale: PlatformLocale): String {
 }
 
 actual val PlatformLocale.languageCode: String get() = languageCode
+
+actual val PlatformLocale.countryCode: String get() = countryCode ?: ""
 
 actual fun formatNumber(value: Double, fractionDigits: Int, locale: PlatformLocale): String {
     val formatter = NSNumberFormatter().apply {

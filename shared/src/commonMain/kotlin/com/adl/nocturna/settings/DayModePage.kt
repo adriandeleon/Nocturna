@@ -11,6 +11,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.adl.nocturna.clock.LocalClockPlatform
 import com.adl.nocturna.clock.Moment
 import com.adl.nocturna.clock.rememberNow
 import com.adl.nocturna.data.CalendarView
@@ -51,6 +52,9 @@ fun DayModePage(padding: PaddingValues) {
     }
     val askCalendar = platform.rememberPermissionRequest(Permission.CALENDAR) { granted ->
         set { it.copy(showCalendarEvents = granted) }
+    }
+    val askCalendarForDaysOff = platform.rememberPermissionRequest(Permission.CALENDAR) { granted ->
+        set { it.copy(countdownDaysOff = granted) }
     }
 
     var editingTime by remember { mutableStateOf<DayScheduleTime?>(null) }
@@ -119,6 +123,12 @@ fun DayModePage(padding: PaddingValues) {
                     stringResource(Res.string.daypage_chime_detail),
                     Modifier.padding(bottom = 6.dp),
                 )
+                SwitchRow(stringResource(Res.string.daypage_birthdays), s.dayBirthdays, stringResource(Res.string.daypage_birthdays_detail)) { v ->
+                    set { it.copy(dayBirthdays = v) }
+                }
+            }
+            SwitchRow(stringResource(Res.string.daypage_week_numbers), s.dayWeekNumbers, stringResource(Res.string.daypage_week_numbers_detail)) { v ->
+                set { it.copy(dayWeekNumbers = v) }
             }
         }
         // The strip needs the weather on and a place to fetch it for.
@@ -127,8 +137,28 @@ fun DayModePage(padding: PaddingValues) {
                 SwitchRow(stringResource(Res.string.daypage_next_hours), s.dayHourlyWeather, stringResource(Res.string.daypage_next_hours_detail)) { v ->
                     set { it.copy(dayHourlyWeather = v) }
                 }
+                SwitchRow(stringResource(Res.string.daypage_rain_alert), s.dayRainAlert, stringResource(Res.string.daypage_rain_alert_detail)) { v ->
+                    set { it.copy(dayRainAlert = v) }
+                }
+                SwitchRow(stringResource(Res.string.daypage_sun_times), s.daySunTimes, stringResource(Res.string.daypage_sun_times_detail)) { v ->
+                    set { it.copy(daySunTimes = v) }
+                }
+                SwitchRow(stringResource(Res.string.daypage_uv), s.dayUvIndex, stringResource(Res.string.daypage_uv_detail)) { v ->
+                    set { it.copy(dayUvIndex = v) }
+                }
+                SwitchRow(stringResource(Res.string.daypage_air), s.dayAirQuality, stringResource(Res.string.daypage_air_detail)) { v ->
+                    set { it.copy(dayAirQuality = v) }
+                }
+                if (s.dayPhotoVersion == 0L) {
+                    SwitchRow(stringResource(Res.string.daypage_weather_scene), s.dayWeatherScene, stringResource(Res.string.daypage_weather_scene_detail)) { v ->
+                        set { it.copy(dayWeatherScene = v) }
+                    }
+                }
             }
         }
+        CountdownsGroup(s, locale, access.calendar, askCalendarForDaysOff)
+        TodosGroup(s)
+        RemindersGroup(s, locale)
         SettingsGroup(stringResource(Res.string.daypage_focus_timer)) {
             ChoiceRow(stringResource(Res.string.daypage_focus), Settings.FOCUS_MINUTES, s.focusMinutes, { strings(locale).minutesShort(it) }) { v -> set { it.copy(focusMinutes = v) } }
             ChoiceRow(stringResource(Res.string.daypage_short_break), Settings.FOCUS_BREAK_MINUTES, s.focusBreakMinutes, { strings(locale).minutesShort(it) }) { v ->
@@ -141,6 +171,11 @@ fun DayModePage(padding: PaddingValues) {
                 stringResource(Res.string.daypage_focus_detail),
                 Modifier.padding(bottom = 6.dp),
             )
+            if (LocalClockPlatform.current.proximity != null) {
+                SwitchRow(stringResource(Res.string.daypage_wave_focus), s.waveForFocus, stringResource(Res.string.daypage_wave_focus_detail)) { v ->
+                    set { it.copy(waveForFocus = v) }
+                }
+            }
         }
         WorldZonesGroup(s.worldZones)
         SettingsGroup(stringResource(Res.string.brightness_screen_care)) {
@@ -172,6 +207,10 @@ fun DayModePage(padding: PaddingValues) {
                     set { it.copy(dayPhotoVersion = 0L) }
                 }
             }
+            SwitchRow(stringResource(Res.string.daypage_holidays), s.dayHolidays, stringResource(Res.string.daypage_holidays_detail)) { v ->
+                set { it.copy(dayHolidays = v) }
+            }
+            if (s.dayHolidays) BirthdayRows(s, locale)
         }
     }
 }

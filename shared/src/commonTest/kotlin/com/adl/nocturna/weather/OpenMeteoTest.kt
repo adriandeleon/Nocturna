@@ -21,10 +21,15 @@ class OpenMeteoTest {
 
     @Test fun forecastUrl() = assertEquals(
         "https://api.open-meteo.com/v1/forecast?latitude=25.6866&longitude=-100.3161" +
-            "&current=temperature_2m,weather_code,is_day" +
+            "&current=temperature_2m,weather_code,is_day,uv_index" +
             "&hourly=temperature_2m,weather_code,precipitation_probability,is_day" +
-            "&daily=weather_code,temperature_2m_max,temperature_2m_min&forecast_days=3&timezone=auto",
+            "&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset&forecast_days=3&timezone=auto",
         forecastUrl(25.6866, -100.3161),
+    )
+
+    @Test fun airQualityUrl() = assertEquals(
+        "https://air-quality-api.open-meteo.com/v1/air-quality?latitude=25.6866&longitude=-100.3161&current=us_aqi",
+        airQualityUrl(25.6866, -100.3161),
     )
 
     @Test fun geocodeUrlTrimsTheQuery() = assertEquals(

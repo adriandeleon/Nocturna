@@ -123,3 +123,10 @@ fun focusTimerFromSaved(saved: List<Long>): FocusTimer? {
     if (saved.size != 4) return null
     return FocusTimer(saved[0].toInt(), saved[1], saved[2].takeIf { it >= 0 }, saved[3].toInt())
 }
+
+/** What a wave does to the focus timer at [now]: starts one when none runs, otherwise pauses or resumes it. */
+fun waveFocus(timer: FocusTimer?, now: Long): FocusTimer = when {
+    timer == null -> FocusTimer.start(now)
+    timer.paused -> timer.resume(now)
+    else -> timer.pause(now)
+}

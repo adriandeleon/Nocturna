@@ -17,6 +17,9 @@ expect fun DayOfWeek.shortName(locale: PlatformLocale): String
 /** [locale]'s language as an ISO 639 code: "en", "es"… */
 expect val PlatformLocale.languageCode: String
 
+/** [locale]'s region as an ISO 3166 code: "MX", "GB"…, or blank when it has none. */
+expect val PlatformLocale.countryCode: String
+
 /** [value] with [fractionDigits] decimals, written the way [locale] writes numbers: "2.5", "2,5"… */
 expect fun formatNumber(value: Double, fractionDigits: Int, locale: PlatformLocale): String
 

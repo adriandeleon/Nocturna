@@ -68,10 +68,16 @@ https://www.apache.org/licenses/LICENSE-2.0
 Data shown by the app, not bundled with it:
 
 Weather data by Open-Meteo.com — https://open-meteo.com
-Current conditions and daily forecast (api.open-meteo.com) and city search
-(geocoding-api.open-meteo.com) are licensed under Creative Commons Attribution
-4.0 International (CC BY 4.0); the city search is based on GeoNames
+Current conditions, daily and hourly forecast with sunrise, sunset and the UV
+index (api.open-meteo.com), air quality (air-quality-api.open-meteo.com) and
+city search (geocoding-api.open-meteo.com) are licensed under Creative Commons
+Attribution 4.0 International (CC BY 4.0); the city search is based on GeoNames
 (https://www.geonames.org), also CC BY 4.0. Attribution is a condition of use.
+
+Air quality in Day mode — generated using Copernicus Atmosphere Monitoring
+Service information (https://atmosphere.copernicus.eu), served by Open-Meteo.
+Neither the European Commission nor ECMWF is responsible for any use that may be
+made of the information it contains.
 
 Radio streams are played from the stations' own servers; Nocturna carries none
 of their content.

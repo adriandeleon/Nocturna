@@ -8,12 +8,16 @@ import com.adl.nocturna.data.optArray
 import com.adl.nocturna.data.optInt
 import com.adl.nocturna.data.optObject
 import com.adl.nocturna.data.optString
+import com.adl.nocturna.data.primitive
 import com.adl.nocturna.data.primitiveAt
 import com.adl.nocturna.ui.Glyph
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.plus
+import kotlinx.datetime.toInstant
+import kotlinx.serialization.json.JsonArray
+import kotlin.time.Instant
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.doubleOrNull
@@ -32,14 +36,23 @@ data class Weather(
     val days: List<DayForecast> = emptyList(),
     /** Hourly forecasts, earliest first, for day mode's strip of the next few hours. */
     val hours: List<HourForecast> = emptyList(),
+    /** The UV index now, or null when Open-Meteo didn't send it. */
+    val uvIndex: Double? = null,
 ) {
     fun temperatureText(fahrenheit: Boolean): String = temperatureText(temperatureC, fahrenheit)
 
     val glyph: Glyph get() = weatherGlyph(code, isDay)
 }
 
-/** One day's forecast: WMO weather [code] and the high and low in °C. */
-data class DayForecast(val date: LocalDate, val code: Int, val highC: Double, val lowC: Double) {
+/** One day's forecast: WMO weather [code], the high and low in °C, and when the sun rises and sets, if known. */
+data class DayForecast(
+    val date: LocalDate,
+    val code: Int,
+    val highC: Double,
+    val lowC: Double,
+    val sunrise: Instant? = null,
+    val sunset: Instant? = null,
+) {
     val glyph: Glyph get() = weatherGlyph(code, isDay = true)
 
     /** "↑24° ↓12°" */
@@ -75,12 +88,14 @@ fun parseWeather(body: String, lat: Double, lon: Double, fetchedAt: Long): Weath
         lon = lon,
         days = parseDaily(response),
         hours = parseHourly(response),
+        uvIndex = current.primitive("uv_index")?.doubleOrNull,
     )
 }
 
 /**
  * Reads Open-Meteo's `daily` block: parallel arrays of dates, weather codes, highs and lows. Days with a
- * missing value (Open-Meteo sends null) are left out rather than shown wrong.
+ * missing value (Open-Meteo sends null) are left out rather than shown wrong. Sunrise and sunset are
+ * optional: local times placed by the response's one UTC offset, as the hours are (see [parseHourly]).
  */
 fun parseDaily(response: JsonObject): List<DayForecast> {
     val daily = response.optObject("daily") ?: return emptyList()
@@ -88,12 +103,19 @@ fun parseDaily(response: JsonObject): List<DayForecast> {
     val codes = daily.optArray("weather_code") ?: return emptyList()
     val highs = daily.optArray("temperature_2m_max") ?: return emptyList()
     val lows = daily.optArray("temperature_2m_min") ?: return emptyList()
+    val sunrises = daily.optArray("sunrise")
+    val sunsets = daily.optArray("sunset")
+    val offset = responseOffset(response)
+    fun at(array: JsonArray?, i: Int): Instant? {
+        val text = array?.primitiveAt(i)?.content ?: return null
+        return offset?.let { o -> runCatching { LocalDateTime.parse(text).toInstant(o) }.getOrNull() }
+    }
     return time.indices.mapNotNull { i ->
         val date = time.primitiveAt(i)?.content ?: return@mapNotNull null
         val code = codes.primitiveAt(i)?.asLong()?.toInt() ?: return@mapNotNull null
         val high = highs.primitiveAt(i)?.doubleOrNull ?: return@mapNotNull null
         val low = lows.primitiveAt(i)?.doubleOrNull ?: return@mapNotNull null
-        runCatching { DayForecast(LocalDate.parse(date), code, high, low) }.getOrNull()
+        runCatching { DayForecast(LocalDate.parse(date), code, high, low, at(sunrises, i), at(sunsets, i)) }.getOrNull()
     }
 }
 

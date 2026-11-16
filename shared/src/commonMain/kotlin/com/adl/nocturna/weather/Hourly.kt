@@ -46,8 +46,7 @@ data class HourSlot(val local: LocalDateTime, val forecast: HourForecast)
  * with a missing value are left out; without the offset there is nothing to place them by.
  */
 fun parseHourly(response: JsonObject): List<HourForecast> {
-    val offsetSeconds = response.primitive("utc_offset_seconds")?.asLong() ?: return emptyList()
-    val offset = runCatching { UtcOffset(seconds = offsetSeconds.toInt()) }.getOrNull() ?: return emptyList()
+    val offset = responseOffset(response) ?: return emptyList()
     val hourly = response.optObject("hourly") ?: return emptyList()
     val time = hourly.optArray("time") ?: return emptyList()
     val temps = hourly.optArray("temperature_2m") ?: return emptyList()
@@ -67,6 +66,12 @@ fun parseHourly(response: JsonObject): List<HourForecast> {
             precipitationPercent = rain?.primitiveAt(i)?.asLong()?.toInt(),
         )
     }
+}
+
+/** The one UTC offset Open-Meteo gives all of a response's local times, or null when it's missing. */
+internal fun responseOffset(response: JsonObject): UtcOffset? {
+    val seconds = response.primitive("utc_offset_seconds")?.asLong() ?: return null
+    return runCatching { UtcOffset(seconds = seconds.toInt()) }.getOrNull()
 }
 
 /**

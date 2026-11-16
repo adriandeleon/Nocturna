@@ -70,12 +70,16 @@ import com.adl.nocturna.day.DayLayout
 import com.adl.nocturna.day.FocusTimer
 import com.adl.nocturna.day.HourlyStrip
 import com.adl.nocturna.day.focusTimerFromSaved
+import com.adl.nocturna.day.holidayOn
+import com.adl.nocturna.day.sceneWeather
+import com.adl.nocturna.day.waveFocus
 import com.adl.nocturna.day.isDayModeActive
 import com.adl.nocturna.day.toSaved
 import com.adl.nocturna.day.withDayModeToggled
 import com.adl.nocturna.resources.*
 import com.adl.nocturna.text.DateTimePattern
 import com.adl.nocturna.text.bestDateTimePattern
+import com.adl.nocturna.text.countryCode
 import com.adl.nocturna.text.shortName
 import com.adl.nocturna.ui.DeskNavy
 import com.adl.nocturna.ui.Glyph
@@ -217,6 +221,10 @@ fun ClockScreen(
     WaveEffect(platform.proximity, enabled = settings.waveToPeek && settings.tapToPeek && !day) {
         if (clockWave(controlsVisible, peeking = peek > 0f, canPeek = peekAllowed)) peekMark = TimeSource.Monotonic.markNow()
     }
+    // Wave for focus: in day mode, a wave starts the focus timer, and pauses or resumes it once it runs.
+    WaveEffect(platform.proximity, enabled = settings.waveForFocus && day && interactive) {
+        focus = waveFocus(focus, Clock.System.now().toEpochMilliseconds())
+    }
 
     BoxWithConstraints(
         Modifier
@@ -238,7 +246,8 @@ fun ClockScreen(
             clockWidth * (if (landscape && !day) 0.62f else 0.85f) / (if (settings.showSeconds || !settings.use24h) 3.3f else 2.8f),
             maxHeight * when {
                 day && !landscape -> 0.15f
-                day -> if (settings.showCalendarEvents) 0.2f else 0.28f
+                // Smaller when the sticky note (the day's events or the to-do list) goes under it.
+                day -> if (settings.showCalendarEvents || settings.dayTodos) 0.2f else 0.28f
                 landscape -> 0.5f
                 else -> 0.3f
             },
@@ -250,7 +259,8 @@ fun ClockScreen(
         val clockSize = with(density) { clockFontDp.toSp() }
         val infoSize = with(density) { infoFontDp.toSp() }
 
-        val clock = @Composable {
+        // [compact] leaves out day mode's next hours, for when the sticky note needs the room.
+        val clock = @Composable { compact: Boolean ->
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.alpha(contentAlpha),
@@ -262,13 +272,21 @@ fun ClockScreen(
                 Spacer(Modifier.height(infoFontDp * 0.6f))
                 InfoBlock(
                     settings, now, color, infoSize, infoFontDp, shadow,
-                    hourlyWidth = if (day) clockWidth else null,
+                    hourlyWidth = if (day && !compact) clockWidth else null,
                     night = !day,
                 )
             }
         }
 
-        if (day) DayBackground(now, settings.dayPhotoVersion, Modifier.fillMaxSize())
+        if (day) {
+            val weather by WeatherRepository.weather.collectAsStateWithLifecycle()
+            val locale = currentLocale()
+            DayBackground(
+                now, settings.dayPhotoVersion, Modifier.fillMaxSize(),
+                weather = weather?.takeIf { settings.dayWeatherScene && settings.showWeather }?.let { sceneWeather(it.code) },
+                holiday = if (settings.dayHolidays) holidayOn(now.date, settings.birthday, locale.countryCode) else null,
+            )
+        }
 
         DriftLayout(enabled = settings.burnInProtection, modifier = Modifier.safeDrawingPadding().padding(16.dp)) {
             // Day mode fills the screen and stays up all day: with burn-in protection it leaves a tenth
@@ -281,7 +299,7 @@ fun ClockScreen(
                 onFocus = if (interactive) { f -> focus = f } else null,
                 clock = clock,
             )
-            else clock()
+            else clock(false)
         }
 
         if (interactive) {

@@ -42,6 +42,7 @@ val LIBRARY_CREDITS = listOf(
 val DATA_CREDITS = listOf(
     Credit("Open-Meteo", Res.string.credit_open_meteo, "CC BY 4.0", "https://open-meteo.com"),
     Credit("GeoNames", Res.string.credit_geonames, "CC BY 4.0", "https://www.geonames.org"),
+    Credit("Copernicus Atmosphere Monitoring Service", Res.string.credit_cams, "CC BY 4.0", "https://atmosphere.copernicus.eu"),
 )
 
 /** "Version 0.1.0 (1)", with "· debug" for a debug build. */

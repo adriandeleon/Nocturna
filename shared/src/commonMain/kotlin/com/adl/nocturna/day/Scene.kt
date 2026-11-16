@@ -110,18 +110,30 @@ private fun mix(a: Sky, b: Sky, t: Float) = Sky(
  * [skyMix]), and keeps everything moving so no pixel is lit the same all day (see BurnIn.kt): the sun
  * and the moon cross the sky, the stars turn, the clouds float along, the hills swell, scroll and
  * change shape, and the flowers and trees sway, wander, grow and shrink, and are replanted every hour.
+ * With [weather] the sky clouds over, greys and snows or fogs up to match (the rain itself falls in
+ * `DayOverlay`); a [holiday] can change the flowers or add pumpkins.
  */
 @Composable
-fun SceneBackground(theme: MonthTheme, time: LocalTime, seed: Int, modifier: Modifier = Modifier) {
+fun SceneBackground(
+    theme: MonthTheme,
+    time: LocalTime,
+    seed: Int,
+    modifier: Modifier = Modifier,
+    weather: SceneWeather? = null,
+    holiday: Holiday? = null,
+) {
     Canvas(modifier) {
         val w = size.width
         val h = size.height
         val seconds = time.toSecondOfDay().toFloat()
         val skyMix = skyMix(time)
-        val sky = mix(sky(skyMix.from, theme), sky(skyMix.to, theme), skyMix.t)
         val night = skyMix.weight(TimeOfDay.NIGHT)
+        val overcast = weather?.overcast() ?: 0f
+        val sky = mix(sky(skyMix.from, theme), sky(skyMix.to, theme), skyMix.t).overcast(overcast, night)
         drawRect(Brush.verticalGradient(listOf(sky.top, sky.bottom), endY = h * HORIZON))
 
+        // Behind cloud the stars, the sun and the moon fade.
+        val clear = if (weather == null || weather.showsSun()) 1f else 0.2f
         // Stars come out with the night, twinkle gently and turn slowly around a pole above the
         // screen, as the real sky does. They're scattered over the whole disc the screen sweeps
         // through, so new ones turn into view as others turn out of it.
@@ -138,7 +150,7 @@ fun SceneBackground(theme: MonthTheme, time: LocalTime, seed: Int, modifier: Mod
                 val twinkle = 0.55f + 0.45f * sin(seconds * (0.3f + stars.nextFloat()) + stars.nextFloat() * 6f)
                 val radius = minOf(w, h) * (0.002f + stars.nextFloat() * 0.003f)
                 val star = Offset(pole.x + r * cos(a).toFloat(), pole.y + r * sin(a).toFloat())
-                if (star.x in 0f..w && star.y in 0f..h * 0.6f) drawCircle(Color.White, radius, star, alpha = night * twinkle)
+                if (star.x in 0f..w && star.y in 0f..h * 0.6f) drawCircle(Color.White, radius, star, alpha = night * twinkle * clear)
             }
         }
 
@@ -151,7 +163,7 @@ fun SceneBackground(theme: MonthTheme, time: LocalTime, seed: Int, modifier: Mod
             return Offset(ax * w + wx * sunR, (ay + wy) * sunR)
         }
         val sun = body(SUNRISE, SUNSET)
-        val day = 1f - night
+        val day = (1f - night) * clear
         if (day > 0f) {
             drawCircle(Brush.radialGradient(listOf(sky.glow, Color.Transparent), sun, sunR * 2.6f), sunR * 2.6f, sun, alpha = day)
             rotate(seconds * 0.5f % 360f, sun) {
@@ -166,18 +178,20 @@ fun SceneBackground(theme: MonthTheme, time: LocalTime, seed: Int, modifier: Mod
         }
         if (night > 0f) {
             val moonAt = body(MOONRISE, MOONSET)
-            rotate(seconds / 20f % 360f, moonAt) { moon(moonAt, sunR * 0.85f, night) }
+            rotate(seconds / 20f % 360f, moonAt) { moon(moonAt, sunR * 0.85f, night * clear) }
         }
 
-        // Clouds cross the screen in about three hours, floating up and down as they go.
+        // Clouds cross the screen in about three hours, floating up and down as they go; the weather
+        // brings more of them, greyer.
         val cloudW = minOf(w, h) * 0.32f
-        listOf(Triple(0.1f, 0.16f, 1f), Triple(0.55f, 0.3f, 0.75f), Triple(0.8f, 0.1f, 0.6f)).forEachIndexed { i, (start, y, scale) ->
+        val cloudColor = lerp(sky.cloud, lerp(c(0xFFAEB5BF), c(0xFF3A4252), night), overcast)
+        CLOUDS.take(weather?.cloudCount() ?: 3).forEachIndexed { i, (start, y, scale) ->
             val span = w + cloudW * 2
             val x = ((start * span + seconds * span / 10_800f * scale) % span) - cloudW
-            cloud(x, (y + cloudBob(seconds, i)) * h, cloudW * scale, sky.cloud)
+            cloud(x, (y + cloudBob(seconds, i)) * h, cloudW * scale, cloudColor)
         }
 
-        if (theme.snow) {
+        if (theme.snow || weather == SceneWeather.SNOW) {
             val rnd = Random(seed)
             repeat(70) {
                 val fx = rnd.nextFloat()
@@ -209,6 +223,8 @@ fun SceneBackground(theme: MonthTheme, time: LocalTime, seed: Int, modifier: Mod
         // The flowers and trees ride along with the near hill, each also wandering around its spot,
         // swaying in the breeze and slowly growing and shrinking, and every hour a new field of them
         // grows in where the last one fades out, so none of them stays on the same spot for long.
+        // The Day of the Dead fills the hills with cempasúchil, the marigolds of the altars.
+        val flowers = if (holiday == Holiday.DAY_OF_THE_DEAD) MARIGOLDS else theme.flowers
         fun plant(arrangement: Int, alpha: Float) {
             val rnd = Random(seed * 31 + 7 + arrangement * 977)
             if (theme.trees) {
@@ -225,7 +241,18 @@ fun SceneBackground(theme: MonthTheme, time: LocalTime, seed: Int, modifier: Mod
                     }
                 }
             }
-            if (theme.flowers.isNotEmpty()) {
+            if (holiday == Holiday.HALLOWEEN) {
+                repeat(8) { i ->
+                    val id = arrangement * 7 + 200 + i
+                    val (dx, dy) = plantWander(seconds, id)
+                    val fx = travel(rnd.nextFloat() + dx, seconds)
+                    val top = nearHillY(fx, seconds)
+                    val depth = (rnd.nextFloat() + dy).coerceIn(0f, 1f)
+                    val fy = top + 0.03f + depth * (1f - top - 0.06f)
+                    pumpkin(Offset(fx * w, fy * h), minOf(w, h) * (0.018f + 0.018f * depth) * plantGrowth(seconds, id), alpha)
+                }
+            }
+            if (flowers.isNotEmpty()) {
                 repeat(55) { i ->
                     val id = arrangement * 7 + 100 + i
                     val (dx, dy) = plantWander(seconds, id)
@@ -235,7 +262,7 @@ fun SceneBackground(theme: MonthTheme, time: LocalTime, seed: Int, modifier: Mod
                     val fy = top + 0.015f + depth * (1f - top - 0.03f)
                     // Nearer (lower) flowers are bigger.
                     val r = minOf(w, h) * (0.006f + 0.012f * depth) * plantGrowth(seconds, id)
-                    flower(Offset(fx * w, fy * h), r, theme.flowers[rnd.nextInt(theme.flowers.size)], plantSway(seconds, id), alpha)
+                    flower(Offset(fx * w, fy * h), r, flowers[rnd.nextInt(flowers.size)], plantSway(seconds, id), alpha)
                 }
             }
         }
@@ -244,7 +271,42 @@ fun SceneBackground(theme: MonthTheme, time: LocalTime, seed: Int, modifier: Mod
         plant(planted.now, planted.grown)
         if (sky.shade.alpha > 0f) drawRect(sky.shade, blendMode = BlendMode.SrcAtop)
         drawIntoCanvas { it.restore() }
+
+        // Fog: soft bands of mist drifting slowly over the hills.
+        if (weather == SceneWeather.FOG) {
+            for (i in 0 until 4) {
+                val y = h * (0.55f + i * 0.1f) + sin(seconds / 600f + i) * h * 0.02f
+                drawRect(
+                    Brush.verticalGradient(listOf(Color.Transparent, Color.White.copy(alpha = 0.45f), Color.Transparent), y - h * 0.08f, y + h * 0.08f),
+                    Offset(0f, y - h * 0.08f), Size(w, h * 0.16f),
+                )
+            }
+        }
     }
+}
+
+/** Where the clouds start across the screen and down it, and their size: the first three are fair weather's. */
+private val CLOUDS = listOf(
+    Triple(0.1f, 0.16f, 1f), Triple(0.55f, 0.3f, 0.75f), Triple(0.8f, 0.1f, 0.6f),
+    Triple(0.33f, 0.06f, 0.9f), Triple(0.7f, 0.22f, 0.85f), Triple(0.95f, 0.34f, 0.7f),
+)
+
+private val MARIGOLDS = listOf(c(0xFFFF8C00), c(0xFFFFA726), c(0xFFFFC107))
+
+/** The sky clouded over by [amount] (0..1): greyer by day, darker grey by [night]. */
+private fun Sky.overcast(amount: Float, night: Float): Sky {
+    if (amount <= 0f) return this
+    val greyTop = lerp(c(0xFF8E99A6), c(0xFF161B26), night)
+    val greyBottom = lerp(c(0xFFC5CBD2), c(0xFF2A303C), night)
+    return Sky(lerp(top, greyTop, amount), lerp(bottom, greyBottom, amount), sun, glow, cloud, shade)
+}
+
+/** A pumpkin on the hill: ribbed orange with a little stem. */
+private fun DrawScope.pumpkin(base: Offset, r: Float, alpha: Float) {
+    val center = Offset(base.x, base.y - r * 0.8f)
+    for (i in -1..1) drawOval(c(0xFFE8731A), Offset(center.x - r * 0.55f + i * r * 0.4f, center.y - r * 0.8f), Size(r * 1.1f, r * 1.6f), alpha = alpha)
+    drawOval(c(0xFFF58A2A), Offset(center.x - r * 0.4f, center.y - r * 0.8f), Size(r * 0.8f, r * 1.6f), alpha = alpha)
+    drawRect(c(0xFF5B7A2E), Offset(center.x - r * 0.1f, center.y - r * 1.05f), Size(r * 0.2f, r * 0.35f), alpha = alpha)
 }
 
 /** A full moon with a soft glow and a couple of craters. */

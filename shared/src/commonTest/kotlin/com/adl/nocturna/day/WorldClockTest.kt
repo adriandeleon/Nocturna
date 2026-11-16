@@ -143,4 +143,17 @@ class WorldClockTest {
         assertTrue(worldLineFitsPortrait(withLine = 280, max = 700))
         assertFalse(worldLineFitsPortrait(withLine = 281, max = 700))
     }
+
+    @Test fun theClockShedsLinesUntilTheNoteFits() {
+        // Full, without the world line, with one glance item, with none.
+        val heights = listOf(420, 380, 330, 300)
+        assertEquals(DeskClockFit(0, note = true), deskClockFit(heights, 32, 100, 560))
+        assertEquals(DeskClockFit(2, note = true), deskClockFit(heights, 32, 100, 470))
+        assertEquals(DeskClockFit(3, note = true), deskClockFit(heights, 32, 100, 440))
+        // No room for the note at all: the fullest clock that fits shows alone.
+        assertEquals(DeskClockFit(1, note = false), deskClockFit(heights, 32, 100, 400))
+        assertEquals(DeskClockFit(0, note = false), deskClockFit(heights, 32, null, 430))
+        // Not even the barest fits: it shows anyway.
+        assertEquals(DeskClockFit(3, note = false), deskClockFit(heights, 32, null, 200))
+    }
 }
