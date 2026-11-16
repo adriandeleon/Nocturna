@@ -275,13 +275,10 @@
 
     <!-- The clock's buttons -->
     <string name="clock_clock_only">Solo reloj</string>
-    <string name="clock_focus_on">■  Concentración</string>
-    <string name="clock_radio_on">■  Radio</string>
-    <string name="clock_radio_off">▶  Radio</string>
+    <string name="clock_dimming">Atenuación</string>
+    <string name="clock_radio">Radio</string>
     <string name="clock_sleep_off">Dormir: no</string>
     <string name="clock_sleep_minutes">Dormir: %1$d min</string>
-    <string name="clock_dimming_on">Atenuación activada</string>
-    <string name="brightness_dimming_off">Atenuación desactivada</string>
 
     <!-- Alarm screen -->
     <string name="alarm_back">Volver</string>

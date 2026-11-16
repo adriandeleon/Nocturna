@@ -275,13 +275,10 @@
 
     <!-- The clock's buttons -->
     <string name="clock_clock_only">Clock only</string>
-    <string name="clock_focus_on">■  Focus</string>
-    <string name="clock_radio_on">■  Radio</string>
-    <string name="clock_radio_off">▶  Radio</string>
+    <string name="clock_dimming">Dimming</string>
+    <string name="clock_radio">Radio</string>
     <string name="clock_sleep_off">Sleep: off</string>
     <string name="clock_sleep_minutes">Sleep: %1$dm</string>
-    <string name="clock_dimming_on">Dimming on</string>
-    <string name="brightness_dimming_off">Dimming off</string>
 
     <!-- Alarm screen -->
     <string name="alarm_back">Back</string>

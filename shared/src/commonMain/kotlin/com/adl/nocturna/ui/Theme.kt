@@ -51,3 +51,7 @@ val NightRed = Color(0xFFC62828)
 
 /** The navy of day mode's desk clock and of the buttons over it. */
 val DeskNavy = Color(0xFF223049)
+
+/** The theme's warm yellow, which marks a day mode button that is on, and the dark ink drawn on it. */
+val DayGold = Color(0xFFFFD27A)
+val DayGoldInk = Color(0xFF3D2E00)

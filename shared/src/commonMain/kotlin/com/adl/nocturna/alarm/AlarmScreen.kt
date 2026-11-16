@@ -13,12 +13,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,6 +33,10 @@ import com.adl.nocturna.clock.rememberNow
 import com.adl.nocturna.data.SettingsStore
 import com.adl.nocturna.data.Station
 import com.adl.nocturna.resources.*
+import com.adl.nocturna.ui.ControlButton
+import com.adl.nocturna.ui.ControlColors
+import com.adl.nocturna.ui.ControlDefaults
+import com.adl.nocturna.ui.Glyph
 import com.adl.nocturna.ui.GlyphIcon
 import com.adl.nocturna.weather.WeatherRepository
 import com.adl.nocturna.weather.wakeWeather
@@ -78,11 +78,7 @@ fun AlarmScreen(
         if (challenge == DismissChallenge.SUM) solving = stop else stop()
     }
     val snooze = @Composable {
-        OutlinedButton(
-            onClick = onSnooze,
-            modifier = Modifier.size(width = 150.dp, height = 72.dp),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = accent),
-        ) { Text(stringResource(Res.string.alarm_snooze, settings.snoozeMinutes), fontSize = 18.sp) }
+        AlarmButton(stringResource(Res.string.alarm_snooze, settings.snoozeMinutes), Glyph.SLEEP, ControlDefaults.tonal(accent), onSnooze)
     }
 
     val afterSums = solving
@@ -103,9 +99,7 @@ fun AlarmScreen(
             Spacer(Modifier.height(24.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(24.dp), verticalAlignment = Alignment.CenterVertically) {
                 snooze()
-                TextButton(onClick = { solving = null }, colors = ButtonDefaults.textButtonColors(contentColor = accent)) {
-                    Text(stringResource(Res.string.alarm_back), fontSize = 18.sp)
-                }
+                ControlButton(stringResource(Res.string.alarm_back), ControlDefaults.night(accent), onClick = { solving = null }, fontSize = 18.sp)
             }
         }
     } else Column(
@@ -135,11 +129,7 @@ fun AlarmScreen(
             if (challenge == DismissChallenge.HOLD) {
                 HoldButton(stringResource(Res.string.alarm_hold_to_stop), accent, onDone = onDismiss)
             } else {
-                Button(
-                    onClick = { startStop(onDismiss) },
-                    modifier = Modifier.size(width = 150.dp, height = 72.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = accent, contentColor = Color.Black),
-                ) { Text(stringResource(Res.string.alarm_dismiss), fontSize = 18.sp) }
+                AlarmButton(stringResource(Res.string.alarm_dismiss), Glyph.ALARM_OFF, ControlDefaults.solid(accent)) { startStop(onDismiss) }
             }
         }
         station?.let {
@@ -147,11 +137,22 @@ fun AlarmScreen(
             if (challenge == DismissChallenge.HOLD) {
                 HoldButton(stringResource(Res.string.alarm_keep_listening), accent, onDone = { onKeepListening(it) }, width = 200.dp, height = 56.dp, filled = false)
             } else {
-                TextButton(
+                ControlButton(
+                    stringResource(Res.string.alarm_keep_listening), ControlDefaults.night(accent),
                     onClick = { startStop { onKeepListening(it) } },
-                    colors = ButtonDefaults.textButtonColors(contentColor = accent),
-                ) { Text(stringResource(Res.string.alarm_keep_listening), fontSize = 18.sp) }
+                    glyph = Glyph.RADIO, fontSize = 18.sp,
+                )
             }
         }
     }
+}
+
+/** Snooze and Dismiss: big enough to hit half asleep, with the icon above the words. */
+@Composable
+private fun AlarmButton(label: String, glyph: Glyph, colors: ControlColors, onClick: () -> Unit) {
+    ControlButton(
+        label, colors, onClick,
+        modifier = Modifier.size(width = ALARM_BUTTON_WIDTH, height = ALARM_BUTTON_HEIGHT),
+        glyph = glyph, stacked = true, shape = AlarmButtonShape, fontSize = 18.sp, glyphSize = 26.dp,
+    )
 }
