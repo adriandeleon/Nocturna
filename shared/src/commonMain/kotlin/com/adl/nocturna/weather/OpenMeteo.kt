@@ -4,7 +4,7 @@ import kotlin.math.abs
 import kotlin.math.roundToLong
 
 /*
- * Open-Meteo's two endpoints, free and without a key: the forecast and the city search.
+ * Open-Meteo's endpoints, free and without a key: the forecast, the air quality and the city search.
  */
 
 /**
@@ -13,9 +13,13 @@ import kotlin.math.roundToLong
  */
 internal fun forecastUrl(lat: Double, lon: Double): String =
     "https://api.open-meteo.com/v1/forecast?latitude=${fixed4(lat)}&longitude=${fixed4(lon)}" +
-        "&current=temperature_2m,weather_code,is_day" +
+        "&current=temperature_2m,weather_code,is_day,uv_index" +
         "&hourly=temperature_2m,weather_code,precipitation_probability,is_day" +
-        "&daily=weather_code,temperature_2m_max,temperature_2m_min&forecast_days=3&timezone=auto"
+        "&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset&forecast_days=3&timezone=auto"
+
+/** The current air quality as the US AQI, from Open-Meteo's air quality endpoint (CAMS data): day mode only. */
+internal fun airQualityUrl(lat: Double, lon: Double): String =
+    "https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${fixed4(lat)}&longitude=${fixed4(lon)}&current=us_aqi"
 
 /** The best match for [query], with place names in [language] (an ISO 639 code such as "es"). */
 internal fun geocodeUrl(query: String, language: String): String =

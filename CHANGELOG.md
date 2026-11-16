@@ -185,6 +185,41 @@ one-line summary written for users.
   and steps aside rather than crowd the clock. It comes in the same single weather request as before. Switch
   it off under Settings › Day mode › *Weather › Next hours*, which shows once the weather is on and has a
   place.
+- **Reminders to stretch and drink water in Day mode:** every 30 minutes to 2 hours, a soft chime and a yellow
+  note in the desk clock: *Time to stand up and stretch*, *Time for a glass of water*. Tap it away, or it
+  goes after five minutes. They wait during a focus block or a meeting and come right after. Settings › Day
+  mode › *Breaks and reminders*; off by default.
+- **A to-do list on the sticky note:** add a few things to do in Settings › Day mode › *To-do list* or with
+  *+ Add a to-do* on the note itself, and tap one to tick it off. Ticked items stay crossed off for the rest of
+  the day and are gone the next. The note shows it under today's events, and stays in the calendar's day view
+  just for the list; where only some items fit, it says how many more there are. Off by default; the list goes in your backups.
+- **Battery care:** with the phone charging on the stand, Day mode says *Charged to 85% · you can unplug* once
+  it reaches 80, 85 or 90%, whichever you pick under *Breaks and reminders › Battery care*. Off by default.
+- **A glance line under Day mode's desk clock:** each one switched on by itself in Settings › Day mode ›
+  *Weather*, all off by default. *Rain alert*: *Rain from 15:00* in the next six hours, or *Rain until 17:00*
+  while it rains, from the hourly forecast the clock already has. *Sunrise and sunset*: *Sunset 17:48 · 2 h
+  10 m of light*, and the next sunrise after dark. *UV index*: *UV 7 · High* while the sun is up. *Air
+  quality*: *Air: good (42)* on the US air quality index, from Copernicus through Open-Meteo, in one more
+  request an hour, made only while it's on. In landscape, where the sticky note needs the room, the desk clock
+  drops the glance line, and then the next hours, rather than the note.
+- **Countdowns:** Day mode counts down to up to three days you add in Settings › Day mode › *Countdowns*
+  (*Vacation in 12 days*, *Party tomorrow*), the nearest two at a time, and with *Count down to days off* to the
+  next all-day calendar event titled as a day off. Each goes once its day has passed.
+- **Week numbers and birthdays on the calendar page:** week numbers down the side of the month view, and a 🎂
+  on birthdays (all-day events with *birthday* or *cumpleaños* in the title, like your contacts' birthdays) on
+  the page and the note, instead of the dot. Settings › Day mode › *Calendar*; both off by default.
+- **The weather in Day mode's scene:** the monthly pictures cloud over, turn grey, rain, snow or fill with fog
+  to match the weather outside, by day and by night. On by default with the weather on; turn it off under
+  Settings › Day mode › *Weather › Weather in the scene*.
+- **Holiday touches in Day mode:** confetti on New Year's Eve and Day, hearts on Valentine's Day, bats and
+  pumpkins on Halloween, a garland of lights on Christmas Eve and Day, and the note greets you for the day
+  (*Merry Christmas!*). With the phone's region set to Mexico, papel picado for *¡Viva México!* on 15 and 16
+  September and for the Day of the Dead on 1 and 2 November, with the hills full of cempasúchil. Pick your
+  birthday for confetti and a *Happy birthday!* of your own. Settings › Day mode › *Background › Holidays*; on
+  by default.
+- **Wave to start or pause the focus timer:** on a phone with a proximity sensor, a wave over the top of the
+  phone starts Day mode's focus timer, and pauses or resumes it. Settings › Day mode › *Focus timer*; off by
+  default.
 
 ### Changed
 

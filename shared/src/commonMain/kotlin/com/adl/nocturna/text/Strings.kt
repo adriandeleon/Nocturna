@@ -96,6 +96,53 @@ interface Strings {
     /** "Focus · 18:42 left", "Break paused · 3:10 left". */
     fun focusLabel(phase: String, paused: Boolean, left: String): String
 
+    /** The rain alert under the desk clock: "Rain from 15:00". */
+    fun rainFrom(time: String): String
+    fun rainUntil(time: String): String
+    fun snowFrom(time: String): String
+    fun snowUntil(time: String): String
+
+    /** "Sunrise 07:02". */
+    fun sunrise(time: String): String
+
+    /** "Sunset 17:48 · 2 h 10 m of light". */
+    fun sunset(time: String, daylight: String): String
+
+    /** "Air: good (42)". */
+    fun airQuality(level: String, aqi: Int): String
+    val airGood: String
+    val airModerate: String
+    val airSensitive: String
+    val airUnhealthy: String
+    val airVeryUnhealthy: String
+    val airHazardous: String
+
+    /** "UV 7 · High". */
+    fun uvIndex(index: Int, level: String): String
+    val uvLow: String
+    val uvModerate: String
+    val uvHigh: String
+    val uvVeryHigh: String
+    val uvExtreme: String
+
+    /** A countdown: "Vacation in 12 days", "Vacation tomorrow", "Vacation today!". */
+    fun daysUntil(label: String, days: Int): String
+
+    val reminderStretch: String
+    val reminderWater: String
+    val reminderBoth: String
+
+    /** "Charged to 85% · you can unplug". */
+    fun batteryCare(percent: Int): String
+
+    val happyBirthday: String
+    val happyNewYear: String
+    val happyValentines: String
+    val vivaMexico: String
+    val happyHalloween: String
+    val happyDayOfTheDead: String
+    val merryChristmas: String
+
     // Settings summaries
 
     val styleDigital: String
@@ -243,6 +290,41 @@ object EnglishStrings : Strings {
     override val focusLongBreak = "Long break"
     override fun focusLabel(phase: String, paused: Boolean, left: String) =
         "$phase${if (paused) " paused" else ""} · $left left"
+    override fun rainFrom(time: String) = "Rain from $time"
+    override fun rainUntil(time: String) = "Rain until $time"
+    override fun snowFrom(time: String) = "Snow from $time"
+    override fun snowUntil(time: String) = "Snow until $time"
+    override fun sunrise(time: String) = "Sunrise $time"
+    override fun sunset(time: String, daylight: String) = "Sunset $time · $daylight of light"
+    override fun airQuality(level: String, aqi: Int) = "Air: $level ($aqi)"
+    override val airGood = "good"
+    override val airModerate = "moderate"
+    override val airSensitive = "unhealthy for some"
+    override val airUnhealthy = "unhealthy"
+    override val airVeryUnhealthy = "very unhealthy"
+    override val airHazardous = "hazardous"
+    override fun uvIndex(index: Int, level: String) = "UV $index · $level"
+    override val uvLow = "Low"
+    override val uvModerate = "Moderate"
+    override val uvHigh = "High"
+    override val uvVeryHigh = "Very high"
+    override val uvExtreme = "Extreme"
+    override fun daysUntil(label: String, days: Int) = when (days) {
+        0 -> "$label today!"
+        1 -> "$label tomorrow"
+        else -> "$label in $days days"
+    }
+    override val reminderStretch = "Time to stand up and stretch"
+    override val reminderWater = "Time for a glass of water"
+    override val reminderBoth = "Time to stretch and drink some water"
+    override fun batteryCare(percent: Int) = "Charged to $percent% · you can unplug"
+    override val happyBirthday = "Happy birthday!"
+    override val happyNewYear = "Happy New Year!"
+    override val happyValentines = "Happy Valentine's Day!"
+    override val vivaMexico = "¡Viva México!"
+    override val happyHalloween = "Happy Halloween!"
+    override val happyDayOfTheDead = "Happy Day of the Dead!"
+    override val merryChristmas = "Merry Christmas!"
 
     override val styleDigital = "Digital"
     override val styleAnalog = "Analog"

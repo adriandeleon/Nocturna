@@ -1,6 +1,7 @@
 package com.adl.nocturna.data
 
 import com.adl.nocturna.alarm.SUM_COUNTS
+import kotlinx.datetime.LocalDate
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -57,6 +58,27 @@ object SettingsCodec {
             s.worldZones.forEach { add(buildJsonObject { put("label", it.label); put("zone", it.zoneId) }) }
         })
         put("dayHourlyWeather", s.dayHourlyWeather)
+        put("dayRainAlert", s.dayRainAlert)
+        put("daySunTimes", s.daySunTimes)
+        put("dayUvIndex", s.dayUvIndex)
+        put("dayAirQuality", s.dayAirQuality)
+        put("dayWeatherScene", s.dayWeatherScene)
+        put("dayHolidays", s.dayHolidays)
+        put("birthday", s.birthday)
+        put("dayWeekNumbers", s.dayWeekNumbers)
+        put("dayBirthdays", s.dayBirthdays)
+        put("countdowns", buildJsonArray {
+            s.countdowns.forEach { add(buildJsonObject { put("label", it.label); put("date", it.date) }) }
+        })
+        put("countdownDaysOff", s.countdownDaysOff)
+        put("dayTodos", s.dayTodos)
+        put("todos", buildJsonArray {
+            s.todos.forEach { add(buildJsonObject { put("text", it.text); put("doneOn", it.doneOn) }) }
+        })
+        put("stretchReminderMinutes", s.stretchReminderMinutes)
+        put("waterReminderMinutes", s.waterReminderMinutes)
+        put("batteryCarePercent", s.batteryCarePercent)
+        put("waveForFocus", s.waveForFocus)
         put("autoStartOnCharge", s.autoStartOnCharge)
         put("dndWhileShowing", s.dndWhileShowing)
         put("weatherUseDeviceLocation", s.weatherUseDeviceLocation)
@@ -146,6 +168,26 @@ object SettingsCodec {
                 .let { if (it in Settings.FOCUS_LONG_BREAK_MINUTES) it else d.focusLongBreakMinutes },
             worldZones = j.optArray("worldZones")?.let(::decodeWorldZones) ?: d.worldZones,
             dayHourlyWeather = j.optBoolean("dayHourlyWeather", d.dayHourlyWeather),
+            dayRainAlert = j.optBoolean("dayRainAlert", d.dayRainAlert),
+            daySunTimes = j.optBoolean("daySunTimes", d.daySunTimes),
+            dayUvIndex = j.optBoolean("dayUvIndex", d.dayUvIndex),
+            dayAirQuality = j.optBoolean("dayAirQuality", d.dayAirQuality),
+            dayWeatherScene = j.optBoolean("dayWeatherScene", d.dayWeatherScene),
+            dayHolidays = j.optBoolean("dayHolidays", d.dayHolidays),
+            birthday = j.optInt("birthday", d.birthday).let { if (isMonthDay(it)) it else d.birthday },
+            dayWeekNumbers = j.optBoolean("dayWeekNumbers", d.dayWeekNumbers),
+            dayBirthdays = j.optBoolean("dayBirthdays", d.dayBirthdays),
+            countdowns = j.optArray("countdowns")?.let(::decodeCountdowns) ?: d.countdowns,
+            countdownDaysOff = j.optBoolean("countdownDaysOff", d.countdownDaysOff),
+            dayTodos = j.optBoolean("dayTodos", d.dayTodos),
+            todos = j.optArray("todos")?.let(::decodeTodos) ?: d.todos,
+            stretchReminderMinutes = j.optInt("stretchReminderMinutes", d.stretchReminderMinutes)
+                .let { if (it in Settings.REMINDER_MINUTES) it else d.stretchReminderMinutes },
+            waterReminderMinutes = j.optInt("waterReminderMinutes", d.waterReminderMinutes)
+                .let { if (it in Settings.REMINDER_MINUTES) it else d.waterReminderMinutes },
+            batteryCarePercent = j.optInt("batteryCarePercent", d.batteryCarePercent)
+                .let { if (it in Settings.BATTERY_CARE_PERCENT) it else d.batteryCarePercent },
+            waveForFocus = j.optBoolean("waveForFocus", d.waveForFocus),
             autoStartOnCharge = j.optBoolean("autoStartOnCharge", d.autoStartOnCharge),
             dndWhileShowing = j.optBoolean("dndWhileShowing", d.dndWhileShowing),
             weatherUseDeviceLocation = j.optBoolean("weatherUseDeviceLocation", d.weatherUseDeviceLocation),
@@ -180,6 +222,31 @@ object SettingsCodec {
         val zone = o.optString("zone").trim()
         if (label.isEmpty() || zone.isEmpty()) null else WorldZone(label, zone)
     }.take(Settings.MAX_WORLD_ZONES)
+
+    /** The countdowns with a label and a real date, at most [Settings.MAX_COUNTDOWNS]; damaged ones are skipped. */
+    private fun decodeCountdowns(array: JsonArray): List<Countdown> = array.mapNotNull { element ->
+        val o = element as? JsonObject ?: return@mapNotNull null
+        val label = o.optString("label").trim()
+        val date = o.optString("date").trim()
+        if (label.isEmpty() || runCatching { LocalDate.parse(date) }.isFailure) null else Countdown(label, date)
+    }.take(Settings.MAX_COUNTDOWNS)
+
+    /** The to-dos with some text, at most [Settings.MAX_TODOS]; a damaged done date reads as not done. */
+    private fun decodeTodos(array: JsonArray): List<TodoItem> = array.mapNotNull { element ->
+        val o = element as? JsonObject ?: return@mapNotNull null
+        val text = o.optString("text").trim().take(Settings.MAX_TODO_LENGTH)
+        val doneOn = o.optString("doneOn").trim().takeIf { runCatching { LocalDate.parse(it) }.isSuccess }.orEmpty()
+        if (text.isEmpty()) null else TodoItem(text, doneOn)
+    }.take(Settings.MAX_TODOS)
+
+    /** Whether [monthDay] (month * 100 + day) is a day of the year; 29 February counts. */
+    private fun isMonthDay(monthDay: Int): Boolean {
+        val month = monthDay / 100
+        val day = monthDay % 100
+        return month in 1..12 && day in 1..DAYS_IN_MONTH[month - 1]
+    }
+
+    private val DAYS_IN_MONTH = intArrayOf(31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
 
     private inline fun <reified E : Enum<E>> enumOr(name: String, fallback: E): E =
         enumValues<E>().firstOrNull { it.name == name } ?: fallback

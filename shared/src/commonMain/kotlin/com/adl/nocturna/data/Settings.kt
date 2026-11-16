@@ -19,6 +19,18 @@ data class Station(val name: String, val url: String)
 /** Another time zone on day mode's desk clock: a short city [label] and an IANA [zoneId], e.g. "Europe/London". */
 data class WorldZone(val label: String, val zoneId: String)
 
+/**
+ * A line of the to-do list on day mode's sticky note. [doneOn] is the day it was ticked off, as
+ * ISO "2026-11-16", or blank while it is still to do: a done item stays crossed off for the rest of that
+ * day and is dropped the next (see `todosForDay`).
+ */
+data class TodoItem(val text: String, val doneOn: String = "") {
+    val done: Boolean get() = doneOn.isNotEmpty()
+}
+
+/** A day day mode counts down to, e.g. "Vacation" on 2026-12-20, with [date] as ISO "2026-12-20". */
+data class Countdown(val label: String, val date: String)
+
 data class Settings(
     // Clock
     val style: ClockStyle = ClockStyle.DIGITAL,
@@ -91,6 +103,40 @@ data class Settings(
     val worldZones: List<WorldZone> = emptyList(),
     /** The next few hours' weather under day mode's weather line, when the weather shows. */
     val dayHourlyWeather: Boolean = true,
+    /** "Rain from 15:00" under day mode's desk clock when the next hours' forecast has rain. */
+    val dayRainAlert: Boolean = false,
+    /** "Sunset 17:48 · 2 h 10 m of light" under day mode's desk clock. */
+    val daySunTimes: Boolean = false,
+    /** The UV index under day mode's desk clock while the sun is up, e.g. "UV 7 · High". */
+    val dayUvIndex: Boolean = false,
+    /** The air quality under day mode's desk clock, e.g. "Air: good (42)"; one more Open-Meteo request. */
+    val dayAirQuality: Boolean = false,
+    /** Day mode's illustrated scene shows the weather: clouds, rain, snow, fog or a storm. */
+    val dayWeatherScene: Boolean = true,
+    /** Holiday touches in day mode's scene and greeting: confetti on New Year's Day, papel picado, lights. */
+    val dayHolidays: Boolean = true,
+    /** The user's birthday as month * 100 + day (1225 for 25 December), for confetti in day mode; 0 for none. */
+    val birthday: Int = 0,
+    /** Week numbers down the side of the calendar page's month view. */
+    val dayWeekNumbers: Boolean = false,
+    /** A cake on birthdays on the calendar page and the sticky note, from events titled as birthdays. */
+    val dayBirthdays: Boolean = false,
+    /** Up to [MAX_COUNTDOWNS] days the desk clock counts down to, e.g. "Vacation in 12 days". */
+    val countdowns: List<Countdown> = emptyList(),
+    /** Also count down to the next day off on the calendar (see [dayOffKeywords]). */
+    val countdownDaysOff: Boolean = false,
+    /** A to-do list on day mode's sticky note. */
+    val dayTodos: Boolean = false,
+    /** The to-do list's items, at most [MAX_TODOS]. */
+    val todos: List<TodoItem> = emptyList(),
+    /** Minutes between day mode's reminders to stand up and stretch: one of [REMINDER_MINUTES]; 0 is off. */
+    val stretchReminderMinutes: Int = 0,
+    /** Minutes between day mode's reminders to drink some water: one of [REMINDER_MINUTES]; 0 is off. */
+    val waterReminderMinutes: Int = 0,
+    /** Charge (%) at which day mode says the phone can come off the charger: one of [BATTERY_CARE_PERCENT]; 0 is off. */
+    val batteryCarePercent: Int = 0,
+    /** A wave over the top of the phone starts, pauses and resumes day mode's focus timer; needs a proximity sensor. */
+    val waveForFocus: Boolean = false,
     // Launching
     val autoStartOnCharge: Boolean = false,
     /** Priority-only Do Not Disturb while the clock shows at night; needs Do Not Disturb access. */
@@ -158,6 +204,16 @@ data class Settings(
         val FOCUS_LONG_BREAK_MINUTES = listOf(10, 15, 20, 30)
         /** How many [worldZones] the desk clock has room for. */
         const val MAX_WORLD_ZONES = 2
+        /** What [stretchReminderMinutes] and [waterReminderMinutes] may be set to; 0 is off. */
+        val REMINDER_MINUTES = listOf(0, 30, 45, 60, 90, 120)
+        /** What [batteryCarePercent] may be set to; 0 is off. */
+        val BATTERY_CARE_PERCENT = listOf(0, 80, 85, 90)
+        /** How many [todos] the list keeps. */
+        const val MAX_TODOS = 8
+        /** The longest a to-do may be, in characters. */
+        const val MAX_TODO_LENGTH = 80
+        /** How many [countdowns] the desk clock keeps. */
+        const val MAX_COUNTDOWNS = 3
 
         val DEFAULT_STATIONS = MONTERREY_STATIONS + listOf(
             Station("SomaFM Groove Salad", "https://ice1.somafm.com/groovesalad-128-mp3"),

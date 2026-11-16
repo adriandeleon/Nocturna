@@ -23,6 +23,8 @@ actual fun DayOfWeek.shortName(locale: PlatformLocale): String = toJavaDayOfWeek
 
 actual val PlatformLocale.languageCode: String get() = language
 
+actual val PlatformLocale.countryCode: String get() = country
+
 actual fun formatNumber(value: Double, fractionDigits: Int, locale: PlatformLocale): String =
     String.format(locale, "%.${fractionDigits}f", value)
 

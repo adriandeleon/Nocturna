@@ -54,6 +54,9 @@ interface ClockPlatform {
     /** The focus timer's chime as it switches between focus and a break: the meeting chime's soft tone. */
     fun playFocusChime() = playMeetingChime()
 
+    /** Day mode's reminders to stretch and drink some water: the meeting chime's soft tone. */
+    fun playReminderChime() = playMeetingChime()
+
     /**
      * A light accent from the phone's wallpaper palette (Material You) as ARGB, kept current as the
      * wallpaper changes; null where the phone has no such palette.

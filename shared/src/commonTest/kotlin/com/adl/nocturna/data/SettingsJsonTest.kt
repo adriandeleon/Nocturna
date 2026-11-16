@@ -288,4 +288,66 @@ class SettingsJsonTest {
         assertFalse(loaded.tapToPeek)
         assertFalse(loaded.alarmVibrate)
     }
+
+    @Test fun dayModeExtrasSurviveRoundTrip() {
+        val settings = Settings(
+            dayRainAlert = true,
+            daySunTimes = true,
+            dayUvIndex = true,
+            dayAirQuality = true,
+            dayWeatherScene = false,
+            dayHolidays = false,
+            birthday = 229,
+            dayWeekNumbers = true,
+            dayBirthdays = true,
+            countdowns = listOf(Countdown("Vacation", "2026-12-20"), Countdown("Trip", "2027-01-05")),
+            countdownDaysOff = true,
+            dayTodos = true,
+            todos = listOf(TodoItem("Call the bank"), TodoItem("Pay rent", doneOn = "2026-11-16")),
+            stretchReminderMinutes = 45,
+            waterReminderMinutes = 90,
+            batteryCarePercent = 85,
+            waveForFocus = true,
+        )
+        assertEquals(settings, roundTrip(settings))
+    }
+
+    @Test fun settingsSavedBeforeTheDayModeExtrasGetTheDefaults() {
+        val keys = listOf(
+            "dayRainAlert", "daySunTimes", "dayUvIndex", "dayAirQuality", "dayWeatherScene", "dayHolidays", "birthday",
+            "dayWeekNumbers", "dayBirthdays", "countdowns", "countdownDaysOff", "dayTodos", "todos",
+            "stretchReminderMinutes", "waterReminderMinutes", "batteryCarePercent", "waveForFocus",
+        )
+        assertEquals(Settings(), SettingsCodec.decode(stored(remove = keys)))
+    }
+
+    @Test fun damagedDayModeExtrasFallBackOrAreSkipped() {
+        val loaded = SettingsCodec.decode(
+            stored(
+                put = mapOf(
+                    "birthday" to JsonPrimitive(1340),
+                    "stretchReminderMinutes" to JsonPrimitive(7),
+                    "batteryCarePercent" to JsonPrimitive(50),
+                    "countdowns" to JsonArray(
+                        listOf(
+                            JsonObject(mapOf("label" to JsonPrimitive("Trip"), "date" to JsonPrimitive("2026-12-20"))),
+                            JsonObject(mapOf("label" to JsonPrimitive("Bad"), "date" to JsonPrimitive("someday"))),
+                            JsonPrimitive("not an object"),
+                        )
+                    ),
+                    "todos" to JsonArray(
+                        listOf(
+                            JsonObject(mapOf("text" to JsonPrimitive("  Milk "), "doneOn" to JsonPrimitive("yesterday"))),
+                            JsonObject(mapOf("text" to JsonPrimitive(" "))),
+                        )
+                    ),
+                )
+            )
+        )
+        assertEquals(0, loaded.birthday)
+        assertEquals(0, loaded.stretchReminderMinutes)
+        assertEquals(0, loaded.batteryCarePercent)
+        assertEquals(listOf(Countdown("Trip", "2026-12-20")), loaded.countdowns)
+        assertEquals(listOf(TodoItem("Milk")), loaded.todos)
+    }
 }

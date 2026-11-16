@@ -38,6 +38,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -75,8 +76,16 @@ import androidx.compose.ui.unit.constrainWidth
 import androidx.compose.ui.unit.dp
 import com.adl.nocturna.clock.LocalClockPlatform
 import com.adl.nocturna.clock.Moment
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.adl.nocturna.alarm.DAYS_OFF_LOOK_AHEAD
+import com.adl.nocturna.alarm.daysOff
+import com.adl.nocturna.alarm.parseDayOffKeywords
 import com.adl.nocturna.data.CalendarView
 import com.adl.nocturna.data.Settings
+import com.adl.nocturna.data.SettingsStore
+import com.adl.nocturna.data.TodoItem
+import com.adl.nocturna.text.countryCode
+import com.adl.nocturna.weather.WeatherRepository
 import com.adl.nocturna.resources.*
 import com.adl.nocturna.text.DateTimePattern
 import com.adl.nocturna.text.bestDateTimePattern
@@ -93,11 +102,13 @@ import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.atTime
 import kotlinx.datetime.number
+import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 
@@ -114,7 +125,15 @@ private val NoteInk = Color(0xFF4A3F1F)
  * illustrated scene. Falls back to the scene when the photo can't be read.
  */
 @Composable
-fun DayBackground(now: Moment, photoVersion: Long, modifier: Modifier = Modifier) {
+fun DayBackground(
+    now: Moment,
+    photoVersion: Long,
+    modifier: Modifier = Modifier,
+    /** The weather the illustrated scene shows; null for its own fair weather. */
+    weather: SceneWeather? = null,
+    /** The holiday whose decorations go over the background, or null. */
+    holiday: Holiday? = null,
+) {
     val platform = LocalClockPlatform.current
     val photo by produceState<ImageBitmap?>(null, photoVersion) {
         value = if (photoVersion == 0L) null else platform.loadDayPhoto()
@@ -142,8 +161,13 @@ fun DayBackground(now: Moment, photoVersion: Long, modifier: Modifier = Modifier
                 )
             )
         } else {
-            SceneBackground(monthTheme(now.local.month), now.time, seed = now.local.year * 12 + now.local.month.number, modifier = Modifier.fillMaxSize())
+            SceneBackground(
+                monthTheme(now.local.month), now.time, seed = now.local.year * 12 + now.local.month.number,
+                modifier = Modifier.fillMaxSize(), weather = weather, holiday = holiday,
+            )
         }
+        // Rain falls over the illustration only; a holiday's decorations go over a photo too.
+        DayOverlay(if (p == null) weather else null, holiday, Modifier.fillMaxSize())
     }
 }
 
@@ -164,14 +188,24 @@ fun DayLayout(
     focus: FocusTimer? = null,
     /** Changes or (with null) stops the focus timer; null where it can't be tapped. */
     onFocus: ((FocusTimer?) -> Unit)? = null,
-    clock: @Composable () -> Unit,
+    /** Draws the clock and its info line; with `true`, without the next hours' weather, to make room. */
+    clock: @Composable (compact: Boolean) -> Unit,
 ) {
     val today = now.date
     val locale = currentLocale()
+    val platform = LocalClockPlatform.current
     val firstDay = firstDayOfWeek(locale)
     val weeks = remember(today.year, today.month, firstDay) { monthGrid(YearMonth(today.year, today.month), firstDay) }
-    val events = LocalClockPlatform.current.calendarEvents(settings.showCalendarEvents, weeks.first().first(), weeks.last().last(), now.zone)
+    val calendarEvents = platform.calendarEvents(settings.showCalendarEvents, weeks.first().first(), weeks.last().last(), now.zone)
+    // Birthdays get a cake: before their titles, and in place of the month view's dot.
+    val events = remember(calendarEvents, settings.dayBirthdays) {
+        if (!settings.dayBirthdays) calendarEvents
+        else calendarEvents?.map { if (isBirthday(it)) it.copy(title = "$CAKE ${it.title}") else it }
+    }
     val dots = remember(events, weeks, now.zone) { events?.let { daysWithEvents(it, weeks.flatten(), now.zone) } ?: emptySet() }
+    val cakes = remember(calendarEvents, weeks, now.zone, settings.dayBirthdays) {
+        if (!settings.dayBirthdays) emptySet() else calendarEvents?.let { daysWithEvents(it.filter(::isBirthday), weeks.flatten(), now.zone) } ?: emptySet()
+    }
     val theme = monthTheme(now.local.month)
     val openDay: ((LocalDate) -> Unit)? = onOpen?.let { open -> { day -> open(CalendarLink.Day(dayOpenTime(day, now.instant, now.zone))) } }
     val openEvent: ((CalendarEvent) -> Unit)? = onOpen?.let { open -> { event -> open(CalendarLink.Event(event)) } }
@@ -186,12 +220,67 @@ fun DayLayout(
     val focusLengths = FocusLengths(settings.focusMinutes, settings.focusBreakMinutes, settings.focusLongBreakMinutes)
     FocusChime(focus, now.epochMillis, focusLengths, onFocus)
 
+    // Reminders to stretch and drink some water, held during focus blocks and meetings. Two coming due
+    // together chime once.
+    val held = remindersHeld(
+        focus?.status(now.epochMillis, focusLengths),
+        inMeeting = settings.showCalendarEvents && events?.any { it.isOngoing(now.instant) } == true,
+    )
+    var lastNudgeChime by remember { mutableLongStateOf(0L) }
+    val nudgeChime = {
+        val t = Clock.System.now().toEpochMilliseconds()
+        if (t - lastNudgeChime > 10_000L) {
+            lastNudgeChime = t
+            platform.playReminderChime()
+        }
+    }
+    val stretch = rememberReminder(settings.stretchReminderMinutes, held, now.epochMillis, nudgeChime)
+    val water = rememberReminder(settings.waterReminderMinutes, held, now.epochMillis, nudgeChime)
+    val reminders = buildList {
+        if (stretch.showing) add(ReminderKind.STRETCH)
+        if (water.showing) add(ReminderKind.WATER)
+    }
+    // Battery care: once charged far enough, until it's unplugged or the tag is tapped away.
+    val battery = platform.battery()
+    var batteryCareDismissed by remember { mutableStateOf(false) }
+    LaunchedEffect(battery?.charging) { if (battery?.charging != true) batteryCareDismissed = false }
+    val batteryCare = battery?.takeIf { batteryCareDue(it, settings.batteryCarePercent) && !batteryCareDismissed }
+
+    // The glance line: rain on the way, the sun, the UV index, the air quality and the countdowns.
+    val weather by WeatherRepository.weather.collectAsStateWithLifecycle()
+    val air by WeatherRepository.airQuality.collectAsStateWithLifecycle()
+    LaunchedEffect(settings.dayAirQuality, settings.showWeather, settings.weatherUseDeviceLocation, settings.weatherLat, settings.weatherLon) {
+        if (!settings.dayAirQuality || !settings.showWeather) return@LaunchedEffect
+        while (true) {
+            WeatherRepository.refreshAirQualityIfStale(settings) { platform.deviceLocation() }
+            delay(10 * 60_000L)
+        }
+    }
+    val lookAhead = today.plus(DAYS_OFF_LOOK_AHEAD, DateTimeUnit.DAY)
+    val aheadEvents = platform.calendarEvents(settings.countdownDaysOff, today, lookAhead, now.zone)
+    val daysOff = remember(aheadEvents, today, settings.dayOffKeywords) {
+        aheadEvents?.let { daysOff(it, parseDayOffKeywords(settings.dayOffKeywords), today, lookAhead) }
+    }
+    val timeFormat = rememberTimeFormat(settings.use24h)
+    val glance = remember(minute, weather, air, daysOff, settings, locale, now.zone) {
+        glanceItems(settings, weather, air, daysOff, Instant.fromEpochMilliseconds(minute * 60_000L), now.zone, timeFormat, locale)
+    }
+
+    // The to-do list on the note, and the holiday's greeting over it.
+    val todos = remember(settings.dayTodos, settings.todos, today) { if (settings.dayTodos) todosForDay(settings.todos, today) else null }
+    val onTodo: ((Int) -> Unit)? = onOpen?.let { { i -> SettingsStore.update { s -> s.copy(todos = toggleTodo(todosForDay(s.todos, today), i, today)) } } }
+    val onAddTodo: ((String) -> Unit)? = onOpen?.let { { text -> SettingsStore.update { s -> s.copy(todos = addTodo(s.todos, text, today)) } } }
+    val holiday = if (settings.dayHolidays) holidayOn(today, settings.birthday, locale.countryCode) else null
+    val greetingText = holiday?.let { holidayGreeting(it, locale) } ?: greeting(now.hour, locale)
+
     // The page starts on the view chosen in Settings; a swipe (or the switch under the page)
     // changes it for as long as the clock stays open. The screen saver can't be swiped.
     var view by rememberSaveable(settings.dayCalendarView) { mutableStateOf(settings.dayCalendarView) }
     val onView: ((CalendarView) -> Unit)? = if (onOpen != null) { v -> view = v } else null
-    // The day view lists the whole day on the page itself, so the sticky note would only repeat it.
-    val showNote = settings.showCalendarEvents && view != CalendarView.DAY
+    // The day view lists the whole day on the page itself, so the sticky note would only repeat it; with
+    // the to-do list, the note stays for that (and the next meeting's countdown).
+    val agendaOnNote = settings.showCalendarEvents && view != CalendarView.DAY
+    val showNote = agendaOnNote || todos != null
     // Burn-in protection: besides the whole layout's drift, the clock, the page and the note each
     // drift on their own, at different moments, so their edges don't keep the same distance all day.
     // Kept out here so swapping sides doesn't send them back to the middle.
@@ -204,7 +293,7 @@ fun DayLayout(
     val minutesShown = (now.epochMillis - shownSince) / 60_000f
     val paper = if (burnIn) lerp(Paper, DimPaper, paperDim(minutesShown)) else Paper
     val page: @Composable (Modifier) -> Unit = { m ->
-        DeskPage(view, now, weeks, dots, events, settings.showCalendarEvents, settings.use24h, theme, paper, openDay, openEvent, onView, m)
+        DeskPage(view, now, weeks, dots, cakes, settings.dayWeekNumbers, events, settings.showCalendarEvents, settings.use24h, theme, paper, openDay, openEvent, onView, m)
     }
 
     // Other time zones under the desk clock's time, worked out once a minute.
@@ -215,10 +304,24 @@ fun DayLayout(
     BoxWithConstraints(modifier) {
         val noteFont = with(LocalDensity.current) { (minOf(maxWidth, maxHeight) * 0.042f).coerceIn(14.dp, 22.dp).toSp() }
         val worldLine: (@Composable () -> Unit)? = worldText?.let { text -> { WorldLine(text, noteFont) } }
-        // The focus timer sits in the desk clock under its info line, so it drifts with it and never
-        // takes the meeting countdown's place under the clock or on the note.
-        val focusLine: (@Composable () -> Unit)? = focus?.let { timer ->
-            { FocusLine(timer, timer.status(now.epochMillis, focusLengths), focusLengths, noteFont, onFocus) }
+        // The glance line, the focus timer and the nudges sit in the desk clock under its info line, so
+        // they drift with it and never take the meeting countdown's place under the clock or on the note.
+        // [glanceShown] items of the glance line: fewer where the note needs the room (see deskClockFit).
+        fun extras(glanceShown: Int): (@Composable () -> Unit)? =
+            if (glance.size.coerceAtMost(glanceShown) == 0 && focus == null && reminders.isEmpty() && batteryCare == null) null else {
+            {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    if (glanceShown > 0 && glance.isNotEmpty()) GlanceLine(glance.take(glanceShown), noteFont)
+                    focus?.let { timer -> FocusLine(timer, timer.status(now.epochMillis, focusLengths), focusLengths, noteFont, onFocus) }
+                    if (reminders.isNotEmpty()) {
+                        NudgeTag(reminderText(reminders, locale), noteFont, onOpen?.let { { stretch.dismiss(); water.dismiss() } })
+                    }
+                    batteryCare?.let { b -> NudgeTag(batteryCareText(b, locale), noteFont, onOpen?.let { { batteryCareDismissed = true } }) }
+                }
+            }
+        }
+        val note: @Composable (Modifier) -> Unit = { m ->
+            StickyNote(now, events, upcoming, agendaOnNote, greetingText, todos, onTodo, onAddTodo, settings.use24h, theme, noteFont, openDay, openEvent, m)
         }
         if (landscape) {
             // Every other hour the clock and the page trade places, so the bright page and the dark
@@ -230,18 +333,20 @@ fun DayLayout(
                         // when its greeting and at least one event fit under it.
                         ClockOverNote(
                             gap = 32.dp,
-                            clock = { ClockPanel(clock, focusLine, Modifier.drift(clockDrift, 28.dp, 14.dp), worldLine) },
-                            // Without the world clock line, for when it leaves no room for the note.
-                            bareClock = worldLine?.let { { ClockPanel(clock, focusLine, Modifier.drift(clockDrift, 28.dp, 14.dp)) } },
-                            note = if (!showNote) null else {
-                                {
-                                    StickyNote(
-                                        now, events, upcoming, settings.use24h, theme, noteFont, openDay, openEvent,
-                                        Modifier.widthIn(max = 380.dp).drift(noteDrift, 28.dp, 14.dp),
-                                    )
-                                }
+                            // Fullest first: without the world clock line, then with one glance item, then none,
+                            // then without the next hours, for when they leave no room for the note.
+                            clocks = buildList {
+                                add { ClockPanel(clock, extras(glance.size), Modifier.drift(clockDrift, 28.dp, 14.dp), worldLine) }
+                                if (worldLine != null) add { ClockPanel(clock, extras(glance.size), Modifier.drift(clockDrift, 28.dp, 14.dp)) }
+                                if (glance.size > 1) add { ClockPanel(clock, extras(1), Modifier.drift(clockDrift, 28.dp, 14.dp)) }
+                                if (glance.isNotEmpty()) add { ClockPanel(clock, extras(0), Modifier.drift(clockDrift, 28.dp, 14.dp)) }
+                                // Last of all, the next hours' weather.
+                                add { ClockPanel(clock, extras(0), Modifier.drift(clockDrift, 28.dp, 14.dp), compact = true) }
                             },
-                            smallestNote = { SmallestNote(now, noteFont, Modifier.widthIn(max = 380.dp)) },
+                            note = if (!showNote) null else {
+                                { note(Modifier.widthIn(max = 380.dp).drift(noteDrift, 28.dp, 14.dp)) }
+                            },
+                            smallestNote = { SmallestNote(greetingText, noteFont, Modifier.widthIn(max = 380.dp)) },
                             // Without the note, the countdown hangs under the desk clock instead.
                             countdown = upcoming?.let { e ->
                                 { CountdownTag(countdownLine(e, now.instant, currentLocale()), noteFont, openEvent?.let { open -> { open(e) } }, Modifier.drift(clockDrift, 28.dp, 14.dp)) }
@@ -263,8 +368,8 @@ fun DayLayout(
                     val clockEnd = @Composable {
                         Column(Modifier.padding(vertical = 16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                             PortraitDeskClock(
-                                full = { ClockPanel(clock, focusLine, Modifier.drift(clockDrift, 24.dp, 8.dp), worldLine) },
-                                bare = worldLine?.let { { ClockPanel(clock, focusLine, Modifier.drift(clockDrift, 24.dp, 8.dp)) } },
+                                full = { ClockPanel(clock, extras(glance.size), Modifier.drift(clockDrift, 24.dp, 8.dp), worldLine) },
+                                bare = worldLine?.let { { ClockPanel(clock, extras(glance.size), Modifier.drift(clockDrift, 24.dp, 8.dp)) } },
                             )
                             // Without the note (the day view), the countdown hangs under the desk clock.
                             if (!showNote && upcoming != null) {
@@ -280,10 +385,7 @@ fun DayLayout(
                     page(Modifier.fillMaxWidth().weight(1.6f).drift(pageDrift, 16.dp, 8.dp))
                     if (showNote) {
                         Spacer(Modifier.height(20.dp))
-                        StickyNote(
-                            now, events, upcoming, settings.use24h, theme, noteFont, openDay, openEvent,
-                            Modifier.fillMaxWidth(0.9f).weight(1f, fill = false).drift(noteDrift, 20.dp, 8.dp),
-                        )
+                        note(Modifier.fillMaxWidth(0.9f).weight(1f, fill = false).drift(noteDrift, 20.dp, 8.dp))
                     }
                     if (swapped) clockEnd()
                 }
@@ -293,17 +395,16 @@ fun DayLayout(
 }
 
 /**
- * The clock with the sticky note under it, the pair centred in the space. [note] is left out when
- * [smallestNote] (the note with its greeting and one event) doesn't fit under the clock, and
- * otherwise gets all the height the clock leaves. When the note is left out, [countdown] (if any)
- * goes under the clock instead, no wider than it, and only if it fits too. [bareClock] is the clock
- * without its world clock line, used when the line leaves no room for the note or doesn't fit at all.
+ * The clock with the sticky note under it, the pair centred in the space. [clocks] are the desk clock's
+ * versions, fullest first, each leaving out a little more (see [deskClockFit]): the fullest that leaves
+ * room for [smallestNote] (the note with its greeting and one event) shows with [note], which gets all
+ * the height the clock leaves. When even the barest leaves no room, the note is left out and [countdown]
+ * (if any) goes under the clock instead, no wider than it, and only if it fits too.
  */
 @Composable
 private fun ClockOverNote(
     gap: Dp,
-    clock: @Composable () -> Unit,
-    bareClock: (@Composable () -> Unit)?,
+    clocks: List<@Composable () -> Unit>,
     note: (@Composable () -> Unit)?,
     smallestNote: @Composable () -> Unit,
     countdown: (@Composable () -> Unit)?,
@@ -312,14 +413,17 @@ private fun ClockOverNote(
     SubcomposeLayout(modifier) { constraints ->
         val loose = constraints.copy(minWidth = 0, minHeight = 0)
         val gapPx = gap.roundToPx()
-        val fullClock = subcompose("clock", clock).map { it.measure(loose) }
-        val fullHeight = fullClock.maxOfOrNull { it.height } ?: 0
         val noteMin = note?.let { subcompose("smallest", smallestNote).maxOfOrNull { it.measure(loose).height } ?: 0 }
-        // The clock without its world clock line is only composed when the full one leaves no room.
-        val fullFits = if (noteMin != null) noteFits(fullHeight, gapPx, noteMin, constraints.maxHeight) else fullHeight <= constraints.maxHeight
-        val bare = if (fullFits) null else bareClock?.let { b -> subcompose("bare", b).map { it.measure(loose) } }
-        val fit = deskFit(fullHeight, bare?.maxOfOrNull { it.height } ?: fullHeight, gapPx, noteMin, constraints.maxHeight)
-        val clockPlaceables = if (fit.worldLine || bare == null) fullClock else bare
+        // The versions are measured one by one, and only as far as needed: the fullest usually fits.
+        val measured = mutableListOf<List<androidx.compose.ui.layout.Placeable>>()
+        fun fits(height: Int) = if (noteMin != null) noteFits(height, gapPx, noteMin, constraints.maxHeight) else height <= constraints.maxHeight
+        for ((i, version) in clocks.withIndex()) {
+            val placeables = subcompose("clock$i", version).map { it.measure(loose) }
+            measured += placeables
+            if (fits(placeables.maxOfOrNull { it.height } ?: 0)) break
+        }
+        val fit = deskClockFit(measured.map { p -> p.maxOfOrNull { it.height } ?: 0 }, gapPx, noteMin, constraints.maxHeight)
+        val clockPlaceables = measured[fit.level]
         val clockHeight = clockPlaceables.maxOfOrNull { it.height } ?: 0
         val notePlaceables = if (note == null || !fit.note) emptyList() else {
             subcompose("note", note).map { it.measure(loose.copy(maxHeight = constraints.maxHeight - clockHeight - gapPx)) }
@@ -354,10 +458,11 @@ private fun ClockOverNote(
  */
 @Composable
 private fun ClockPanel(
-    clock: @Composable () -> Unit,
+    clock: @Composable (compact: Boolean) -> Unit,
     below: (@Composable () -> Unit)?,
     modifier: Modifier = Modifier,
     world: (@Composable () -> Unit)? = null,
+    compact: Boolean = false,
 ) {
     val shape = RoundedCornerShape(28.dp)
     Box(
@@ -368,7 +473,7 @@ private fun ClockPanel(
             .padding(horizontal = 28.dp, vertical = 12.dp)
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            clock()
+            clock(compact)
             world?.invoke()
             below?.invoke()
         }
@@ -599,6 +704,8 @@ private fun DeskPage(
     now: Moment,
     weeks: List<List<LocalDate>>,
     dots: Set<LocalDate>,
+    cakes: Set<LocalDate>,
+    weekNumbers: Boolean,
     events: List<CalendarEvent>?,
     showEvents: Boolean,
     use24h: Boolean,
@@ -635,12 +742,14 @@ private fun DeskPage(
         // Heights in cells: rings, header, the body (as tall as the month's weekday row and weeks, so
         // the page keeps its size in every view), the view switch and the bottom margin.
         val bodyCells = 0.7f + weeks.size * ROW
-        val cell = minOf(maxWidth / PAGE_WIDTH, maxHeight / (0.3f + 1.6f + 0.1f + bodyCells + SWITCH + 0.15f), 72.dp)
+        // Week numbers take a narrow column of their own down the month's side.
+        val pageWidth = PAGE_WIDTH + if (weekNumbers) WEEK_NUMBER_WIDTH else 0f
+        val cell = minOf(maxWidth / pageWidth, maxHeight / (0.3f + 1.6f + 0.1f + bodyCells + SWITCH + 0.15f), 72.dp)
         val font = with(LocalDensity.current) { (cell * 0.4f).toSp() }
         val shape = RoundedCornerShape(cell * 0.28f)
         val base = TextStyle(color = Ink, fontSize = font, fontFeatureSettings = "tnum")
 
-        Box(Modifier.width(cell * PAGE_WIDTH)) {
+        Box(Modifier.width(cell * pageWidth)) {
             Column(
                 Modifier
                     .padding(top = cell * 0.3f)
@@ -678,7 +787,7 @@ private fun DeskPage(
                         .height(cell * bodyCells),
                 ) { v ->
                     when (v) {
-                        CalendarView.MONTH -> MonthBody(today, weeks, dots, theme.accent, cell, base, onOpenDay)
+                        CalendarView.MONTH -> MonthBody(today, weeks, dots, cakes, weekNumbers, theme.accent, cell, base, onOpenDay)
                         CalendarView.WEEK ->
                             WeekBody(now, weekOf(today, firstDayOfWeek(locale)), events, showEvents, use24h, theme.accent, cell, base, onOpenDay, onOpenEvent)
                         CalendarView.DAY -> DayBody(now, events, showEvents, use24h, theme.accent, cell, base, onOpenDay, onOpenEvent)
@@ -686,7 +795,7 @@ private fun DeskPage(
                 }
                 ViewSwitch(view, theme.accent, cell, base, onView)
             }
-            Rings(Modifier.width(cell * PAGE_WIDTH).height(cell * 0.75f), cell)
+            Rings(Modifier.width(cell * pageWidth).height(cell * 0.75f), cell)
         }
     }
 }
@@ -696,14 +805,18 @@ private fun MonthBody(
     today: LocalDate,
     weeks: List<List<LocalDate>>,
     dots: Set<LocalDate>,
+    cakes: Set<LocalDate>,
+    weekNumbers: Boolean,
     accent: Color,
     cell: Dp,
     base: TextStyle,
     onOpenDay: ((LocalDate) -> Unit)?,
 ) {
     val locale = currentLocale()
-    Column {
+    val numberStyle = base.copy(color = Ink.copy(alpha = 0.35f), fontSize = base.fontSize * 0.6f, fontWeight = FontWeight.Bold)
+    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         Row {
+            if (weekNumbers) Spacer(Modifier.width(cell * WEEK_NUMBER_WIDTH))
             weeks.first().forEach { d ->
                 Box(Modifier.size(cell, cell * 0.7f), contentAlignment = Alignment.Center) {
                     Text(
@@ -719,7 +832,12 @@ private fun MonthBody(
         }
         weeks.forEach { week ->
             Row {
-                week.forEach { d -> DayCell(d, today, d in dots, accent, cell, base, onOpenDay) }
+                if (weekNumbers) {
+                    Box(Modifier.size(cell * WEEK_NUMBER_WIDTH, cell * ROW), contentAlignment = Alignment.Center) {
+                        Text(weekOfYear(week.first(), locale).toString(), style = numberStyle, maxLines = 1)
+                    }
+                }
+                week.forEach { d -> DayCell(d, today, d in dots, d in cakes, accent, cell, base, onOpenDay) }
             }
         }
     }
@@ -944,6 +1062,7 @@ private fun DayCell(
     day: LocalDate,
     today: LocalDate,
     hasEvents: Boolean,
+    birthday: Boolean,
     accent: Color,
     cell: Dp,
     base: TextStyle,
@@ -968,7 +1087,13 @@ private fun DayCell(
                 else -> base
             },
         )
-        if (hasEvents && inMonth) {
+        if (birthday && inMonth) {
+            Text(
+                CAKE,
+                style = TextStyle(fontSize = base.fontSize * 0.42f),
+                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = cell * 0.01f),
+            )
+        } else if (hasEvents && inMonth) {
             Box(
                 Modifier
                     .align(Alignment.BottomCenter)
@@ -1002,12 +1127,21 @@ private fun Rings(modifier: Modifier, cell: Dp) {
     }
 }
 
-/** A yellow sticky note with a hello and the rest of today's events. */
+/**
+ * A yellow sticky note with a hello, the rest of today's events ([showAgenda]) and the to-do list
+ * ([todos], null when it's off). Without the agenda, the next meeting's countdown ([upcoming]) still
+ * goes at the top.
+ */
 @Composable
 private fun StickyNote(
     now: Moment,
     events: List<CalendarEvent>?,
     upcoming: CalendarEvent?,
+    showAgenda: Boolean,
+    greeting: String,
+    todos: List<TodoItem>?,
+    onTodo: ((Int) -> Unit)?,
+    onAddTodo: ((String) -> Unit)?,
     use24h: Boolean,
     theme: MonthTheme,
     fontSize: TextUnit,
@@ -1015,26 +1149,40 @@ private fun StickyNote(
     onOpenEvent: ((CalendarEvent) -> Unit)?,
     modifier: Modifier,
 ) {
-    // Anywhere on the note but an event opens today; an event opens itself.
+    // Anywhere on the note but an event or a to-do opens today; an event opens itself.
     NotePaper(onOpenDay?.let { open -> { open(now.date) } }, modifier) {
-        Greeting(now, fontSize)
-        Agenda(now, events, upcoming, use24h, theme.accent, fontSize, onOpenEvent, Modifier.weight(1f, fill = false))
+        Greeting(greeting, fontSize)
+        if (showAgenda) {
+            Agenda(now, events, upcoming, use24h, theme.accent, fontSize, onOpenEvent, Modifier.weight(1f, fill = false))
+        } else if (upcoming != null) {
+            val time = rememberTimeFormat(use24h)
+            EventRow(
+                upcoming.title, countdownLabel(upcoming, now.instant, now.zone, time, currentLocale()), upcoming.color?.let { Color(it) } ?: theme.accent,
+                fontSize, emphasised = true, onClick = onOpenEvent?.let { open -> { open(upcoming) } },
+            )
+        }
+        if (todos != null) {
+            if (showAgenda || upcoming != null) {
+                Box(Modifier.padding(vertical = 8.dp).fillMaxWidth().height(1.dp).background(NoteInk.copy(alpha = 0.15f)))
+            }
+            TodoList(todos, NoteInk, theme.accent, fontSize, onTodo, onAddTodo, Modifier.weight(1f, fill = false))
+        }
     }
 }
 
 /** The sticky note at its smallest: its greeting and one event. Only measured, never drawn. */
 @Composable
-private fun SmallestNote(now: Moment, fontSize: TextUnit, modifier: Modifier) {
+private fun SmallestNote(greeting: String, fontSize: TextUnit, modifier: Modifier) {
     NotePaper(null, modifier) {
-        Greeting(now, fontSize)
+        Greeting(greeting, fontSize)
         EventRow(stringResource(Res.string.day_event_placeholder), "00:00 – 00:00", NoteInk, fontSize, emphasised = false, onClick = null)
     }
 }
 
 @Composable
-private fun Greeting(now: Moment, fontSize: TextUnit) {
+private fun Greeting(text: String, fontSize: TextUnit) {
     Text(
-        greeting(now.hour, currentLocale()),
+        text,
         style = TextStyle(color = NoteInk, fontSize = fontSize * 1.6f, fontFamily = FontFamily.Cursive, fontWeight = FontWeight.Bold),
     )
     Spacer(Modifier.height(6.dp))
@@ -1161,6 +1309,12 @@ private val WEEKEND = setOf(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY)
 /** The page is seven day cells wide plus its side margins. */
 private const val PAGE_WIDTH = 7.6f
 
+/** The month view's column of week numbers, in cells. */
+private const val WEEK_NUMBER_WIDTH = 0.6f
+
+/** Marks a birthday on the page and the note. */
+private const val CAKE = "🎂"
+
 /** Height of the Month · Week · Day switch under the page, in cells. */
 private const val SWITCH = 0.75f
 
@@ -1172,7 +1326,7 @@ private const val ROW = 0.82f
  * when some are left out, [more] says how many.
  */
 @Composable
-private fun FitColumn(gap: Dp, modifier: Modifier, more: @Composable (Int) -> Unit, content: @Composable () -> Unit) {
+internal fun FitColumn(gap: Dp, modifier: Modifier, more: @Composable (Int) -> Unit, content: @Composable () -> Unit) {
     SubcomposeLayout(modifier) { constraints ->
         val loose = constraints.copy(minWidth = 0, minHeight = 0)
         val gapPx = gap.roundToPx()

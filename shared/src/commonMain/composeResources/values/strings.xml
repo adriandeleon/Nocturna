@@ -139,6 +139,49 @@
     <string name="daypage_focus_detail">Tap the clock and pick Focus to start. After every fourth focus block the break is a long one. A soft chime marks each switch, at the notification volume. Leaving day mode stops the timer</string>
     <string name="daypage_brightest_detail">Day mode follows the room's light up to this, never above the clock's own brightest. A dimmer screen wears much more slowly</string>
     <string name="daypage_phone_brightness">Day mode uses the phone's own brightness. To keep it lower, turn on Adjust to room light in Brightness and night mode</string>
+    <string name="daypage_week_numbers">Week numbers</string>
+    <string name="daypage_week_numbers_detail">Down the side of the month view</string>
+    <string name="daypage_birthdays">Birthdays</string>
+    <string name="daypage_birthdays_detail">A cake on birthdays, from all-day events with birthday in their title, like your contacts' birthdays</string>
+    <string name="daypage_rain_alert">Rain alert</string>
+    <string name="daypage_rain_alert_detail">Under the desk clock: Rain from 15:00, or until when if it's raining, in the next six hours</string>
+    <string name="daypage_sun_times">Sunrise and sunset</string>
+    <string name="daypage_sun_times_detail">Sunset 17:48 · 2 h 10 m of light, and the next sunrise after dark</string>
+    <string name="daypage_uv">UV index</string>
+    <string name="daypage_uv_detail">While the sun is up, e.g. UV 7 · High</string>
+    <string name="daypage_air">Air quality</string>
+    <string name="daypage_air_detail">The US air quality index, from Copernicus (CAMS) through Open-Meteo: one more request every hour</string>
+    <string name="daypage_weather_scene">Weather in the scene</string>
+    <string name="daypage_weather_scene_detail">The monthly pictures cloud over, rain, snow or fog up with the weather outside</string>
+    <string name="daypage_countdowns">Countdowns</string>
+    <string name="daypage_countdown_add">Add a countdown</string>
+    <string name="daypage_countdown_add_another">Add another</string>
+    <string name="daypage_countdown_hint">Under the desk clock, the nearest two: Vacation in 12 days. Up to %1$d; each goes once its day has passed</string>
+    <string name="daypage_countdown_days_off">Count down to days off</string>
+    <string name="daypage_countdown_days_off_detail">The next all-day event titled as a day off, like Vacation or Holiday, with the words in the alarms' Days off</string>
+    <string name="daypage_countdown_new">New countdown</string>
+    <string name="daypage_countdown_label">What's the day?</string>
+    <string name="daypage_countdown_placeholder">Vacation</string>
+    <string name="daypage_countdown_pick_date">Pick the date</string>
+    <string name="daypage_remove">Remove</string>
+    <string name="daypage_todos">To-do list</string>
+    <string name="daypage_todos_switch">To-do list on the sticky note</string>
+    <string name="daypage_todos_detail">Tap an item on the note to tick it off; ticked items go the next day</string>
+    <string name="daypage_todo_add">Add a to-do</string>
+    <string name="daypage_todos_hint">Up to %1$d items. You can also add them on the note</string>
+    <string name="daypage_reminders">Breaks and reminders</string>
+    <string name="daypage_stretch">Stand up and stretch</string>
+    <string name="daypage_water">Drink some water</string>
+    <string name="daypage_reminders_hint">A soft chime and a note in the desk clock; tap it away. Reminders wait during focus blocks and meetings, and only come while day mode is showing</string>
+    <string name="daypage_battery_care">Battery care</string>
+    <string name="daypage_battery_care_hint">A note when the phone on the stand has charged this far. Unplugging around 80% is kinder to the battery</string>
+    <string name="daypage_wave_focus">Wave to start or pause</string>
+    <string name="daypage_wave_focus_detail">A wave over the top of the phone starts the focus timer, and pauses or resumes it</string>
+    <string name="daypage_holidays">Holidays</string>
+    <string name="daypage_holidays_detail">Confetti, hearts, papel picado, lights and a greeting on a few days of the year</string>
+    <string name="daypage_birthday">Your birthday</string>
+    <string name="daypage_birthday_not_set">Not set. Tap to pick it for confetti on the day</string>
+    <string name="daypage_birthday_clear">Clear your birthday</string>
 
     <!-- Settings screen -->
     <string name="settings_title">Settings</string>
@@ -178,6 +221,7 @@
     <string name="credit_atomicfu">Safe changes to the settings</string>
     <string name="credit_kotlin">JetBrains and Kotlin contributors</string>
     <string name="credit_open_meteo">Weather and city search</string>
+    <string name="credit_cams">Day mode's air quality, through Open-Meteo</string>
     <string name="credit_geonames">Place names behind the city search</string>
 
     <!-- Do Not Disturb at night -->
@@ -333,4 +377,12 @@
     <string name="day_more_today">+%1$d more today</string>
     <string name="day_now_until">Now · until %1$s</string>
     <string name="day_show_view">Show the %1$s</string>
+    <string name="day_dismiss">Put away</string>
+    <string name="day_todo_empty">Nothing on your list</string>
+    <string name="day_todo_tick">Tick off</string>
+    <string name="day_todo_untick">Mark as not done</string>
+    <string name="day_todo_add">+ Add a to-do</string>
+    <string name="day_todo_new">New to-do</string>
+    <string name="day_todo_placeholder">Call the bank</string>
+    <string name="day_todo_add_button">Add</string>
 </resources>
