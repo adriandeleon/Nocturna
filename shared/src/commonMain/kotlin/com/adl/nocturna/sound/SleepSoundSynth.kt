@@ -11,7 +11,8 @@ import kotlin.math.sqrt
 import kotlin.math.tanh
 
 /**
- * Makes the [SleepSound]s: a few tens of seconds of mono audio that loop without a click. Pure Kotlin, so the
+ * Makes the [SleepSound]s: a few tens of seconds of mono audio that loop without a click. The music comes
+ * from [AmbientMusic]; the rest of this file makes the noises. Pure Kotlin, so the
  * same seed gives the same samples on every platform.
  *
  * Each sound is a noise generator run for one loop plus [FADE_SECONDS] more; the extra tail is crossfaded
@@ -53,6 +54,7 @@ object SleepSoundSynth {
                 val rumble = loop(brown(random, sampleRate, cutoffHz = 150.0)).normalized()
                 FloatArray(n) { hiss[it] + 0.7f * drops[it] + 0.4f * rumble[it] }
             }
+            SleepSound.CHORDS, SleepSound.CHIMES, SleepSound.DRONE -> AmbientMusic.render(sound, sampleRate, n, random)
             SleepSound.SURF -> {
                 // Brown noise swells with each wave; a brighter wash of foam comes in at the crest.
                 val body = loop(brown(random, sampleRate, cutoffHz = 90.0)).normalized()
@@ -75,6 +77,10 @@ object SleepSoundSynth {
             SleepSound.BROWN -> 0.16f
             SleepSound.RAIN -> 0.12f
             SleepSound.SURF -> 0.15f
+            // Music has peaks well above its average, so it sits lower to sound as loud as the noises.
+            SleepSound.CHORDS -> 0.11f
+            SleepSound.CHIMES -> 0.07f
+            SleepSound.DRONE -> 0.12f
         }
 
     /**

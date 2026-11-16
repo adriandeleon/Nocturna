@@ -35,7 +35,10 @@ import com.adl.nocturna.R
 import com.adl.nocturna.data.AlarmStore
 import com.adl.nocturna.data.SettingsStore
 import com.adl.nocturna.data.Station
+import com.adl.nocturna.radio.PhoneMusicFiles
 import com.adl.nocturna.sound.displayName
+import com.adl.nocturna.sound.isOnPhone
+import java.io.IOException
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -250,7 +253,18 @@ class AlarmService : Service() {
             }
         })
         p.volume = volume
-        p.setMediaItem(MediaItem.fromUri(station.url))
+        if (station.isOnPhone) {
+            // Music on the phone repeats, so it can't end and hand over to the tone; an empty folder rings the tone.
+            val tracks = PhoneMusicFiles.tracks(this, station.url.toUri())
+            if (tracks.isEmpty()) {
+                p.release()
+                throw IOException("No music in ${station.url}")
+            }
+            p.setMediaItems(tracks.map(MediaItem::fromUri))
+            p.repeatMode = Player.REPEAT_MODE_ALL
+        } else {
+            p.setMediaItem(MediaItem.fromUri(station.url))
+        }
         p.prepare()
         p.play()
         stream = p

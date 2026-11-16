@@ -10,6 +10,15 @@ one-line summary written for users.
 
 ### Added
 
+- **Ambient music and your own music for falling asleep, all without the internet:** Settings › Radio
+  stations has three pieces of *Ambient music*: *Slow chords* (warm chords drifting from one to the next),
+  *Night chimes* (bells here and there over a low hum) and *Deep drone* (a low hum that swells and fades).
+  Like the sleep sounds, Nocturna makes them on your phone, so they add nothing to the app's size, and they loop
+  without a break. Under *Music on your phone*, *Add files* or *Add a folder* to play your own audio: a file
+  repeats, a folder plays its tracks (subfolders too) in name order and starts again. No storage permission is
+  needed: you pick what Nocturna may play. Both play from the Radio button with the sleep timer fading them
+  out, and an alarm can wake you with your own music. A backup keeps your music stations, but on another phone
+  you need to add the files again.
 - **Choose how long the radio and sleep sounds play:** Settings › Radio stations › *Sleep timer* sets how long
   the clock's Radio button, the *Sleep radio* tile and the widget play before fading out: off, or 15 minutes
   to 2 hours. It starts at 30 minutes, so the Radio button now stops on its own too; pick *Off* to have it play
