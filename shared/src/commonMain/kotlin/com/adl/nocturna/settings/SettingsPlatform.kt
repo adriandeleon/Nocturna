@@ -2,11 +2,12 @@ package com.adl.nocturna.settings
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.staticCompositionLocalOf
+import com.adl.nocturna.data.Station
 
 /**
  * What the Settings pages need from the phone beyond what the clock does ([com.adl.nocturna.clock.ClockPlatform],
  * which they use too): what the system allows, asking for permissions, the system's own settings pages,
- * the Day mode photo, backup files and starting the clock on charge. Each app provides one through [LocalSettingsPlatform].
+ * the Day mode photo, music on the phone, backup files and starting the clock on charge. Each app provides one through [LocalSettingsPlatform].
  */
 interface SettingsPlatform {
     /** What the system lets Nocturna do; read again whenever the screen comes back to the front. */
@@ -35,6 +36,17 @@ interface SettingsPlatform {
 
     /** Deletes the copy of Day mode's photo. */
     fun clearDayPhoto()
+
+    /**
+     * A function that lets the user pick music on the phone: audio files, or with [folder] a folder of them.
+     * Nocturna keeps access to what was picked and calls [onPicked] with a station for each file, or one for
+     * the folder; an empty list when it couldn't keep access. Nothing happens when the user picks nothing.
+     */
+    @Composable
+    fun rememberMusicPicker(folder: Boolean, onPicked: (List<Station>) -> Unit): () -> Unit
+
+    /** Gives up access to the music a removed station played. */
+    fun forgetMusic(station: Station)
 
     /** Starts or stops opening the clock when the charger is connected. */
     fun setOpenOnCharge(on: Boolean)

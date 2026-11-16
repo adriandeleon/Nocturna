@@ -494,7 +494,7 @@ private fun Controls(
             ControlButton(
                 stringResource(Res.string.clock_radio), colors,
                 glyph = Glyph.RADIO, checked = radioOn,
-                onClick = { onInteract(); radio.toggle(settings.currentStation) },
+                onClick = { onInteract(); radio.toggle(settings.currentStation, settings.radioSleepMinutes) },
             )
             if (radioOn) {
                 val remaining = sleepAt?.let { ((it - Clock.System.now().toEpochMilliseconds()) / 60_000L).coerceAtLeast(0) + 1 }

@@ -40,7 +40,7 @@ class ClockTileService : TileService() {
 
 /**
  * Quick Settings tile *Sleep radio*: shows the selected station and lights up while the radio plays.
- * A tap plays the station with a [SleepRadio.MINUTES]-minute sleep timer; another tap stops it.
+ * A tap plays the station with the sleep timer from Settings; another tap stops it.
  */
 class SleepRadioTileService : TileService() {
     private var scope: CoroutineScope? = null

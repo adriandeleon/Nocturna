@@ -81,6 +81,7 @@ object SettingsCodec {
         })
         put("selectedStation", s.selectedStation)
         put("selectedSound", s.selectedSound)
+        put("radioSleepMinutes", s.radioSleepMinutes)
         put("stationsVersion", Settings.STATIONS_VERSION)
     }
 
@@ -165,6 +166,8 @@ object SettingsCodec {
             stations = stations,
             selectedStation = selected,
             selectedSound = j.optString("selectedSound", d.selectedSound),
+            radioSleepMinutes = j.optInt("radioSleepMinutes", d.radioSleepMinutes)
+                .let { if (it in Settings.RADIO_SLEEP_MINUTES) it else d.radioSleepMinutes },
         )
     }
 

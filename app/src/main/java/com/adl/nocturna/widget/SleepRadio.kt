@@ -11,16 +11,17 @@ import com.adl.nocturna.radio.RadioService
 
 /** The one-tap sleep radio behind the Quick Settings tile and the widget's button. */
 object SleepRadio {
-    /** How long the sleep radio plays before it fades out. */
-    const val MINUTES = 30
-
-    /** Stops the radio if it's on; otherwise plays the selected station with a [MINUTES]-minute sleep timer. */
+    /**
+     * Stops the radio if it's on; otherwise plays the selected station with the sleep timer set in Settings ›
+     * Radio stations ([com.adl.nocturna.data.Settings.radioSleepMinutes]).
+     */
     fun toggle(context: Context) {
         if (RadioService.nowPlaying.value != null) {
             Radio.stop(context)
         } else {
-            val station = SettingsStore.current.currentStation ?: return
-            Radio.play(context, station, sleepMinutes = MINUTES)
+            val s = SettingsStore.current
+            val station = s.currentStation ?: return
+            Radio.play(context, station, sleepMinutes = s.radioSleepMinutes)
         }
     }
 }

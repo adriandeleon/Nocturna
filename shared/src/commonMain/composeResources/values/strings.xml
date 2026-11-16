@@ -222,12 +222,22 @@
     <string name="stations_sleep_sounds">Sleep sounds</string>
     <string name="stations_play">▶  Play</string>
     <string name="stations_stop">■  Stop</string>
+    <string name="stations_sleep_timer">Sleep timer</string>
+    <string name="stations_sleep_timer_hint">How long the Radio button, the Sleep radio tile and the widget play before fading out. Tap Sleep on the clock to change it for what's playing.</string>
     <string name="stations_add_title">Add a station</string>
     <string name="stations_name">Name</string>
     <string name="stations_url">Stream URL</string>
     <string name="stations_add">Add</string>
-    <string name="stations_hint">Pick what the clock's Radio button plays: a web station (any MP3, AAC or HLS stream URL works) or one of the sleep sounds below.</string>
+    <string name="stations_hint">Pick what the clock's Radio button plays: a web station (any MP3, AAC or HLS stream URL works), music from your phone, or one of the sleep sounds or ambient music below.</string>
     <string name="stations_sounds_hint">Made on your phone, so they play without the internet. They loop for as long as you like, and the sleep timer fades them out like a station.</string>
+    <string name="stations_ambient_music">Ambient music</string>
+    <string name="stations_music_hint">Slow, quiet music with no beat, made on your phone like the sleep sounds. It plays without the internet and loops without a break.</string>
+    <string name="stations_phone_music">Music on your phone</string>
+    <string name="stations_phone_music_hint">Your own audio files, played without the internet. A file repeats; a folder plays its tracks in name order, then starts again. The sleep timer fades them out like a station.</string>
+    <string name="stations_add_files">Add files</string>
+    <string name="stations_add_folder">Add a folder</string>
+    <string name="stations_on_phone">On this phone</string>
+    <string name="stations_music_failed">Nocturna couldn't keep access to that music</string>
 
     <!-- Alarms page -->
     <string name="alarms_add">+  Add alarm</string>

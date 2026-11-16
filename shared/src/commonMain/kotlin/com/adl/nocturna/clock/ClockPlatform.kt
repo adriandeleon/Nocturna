@@ -83,14 +83,14 @@ interface RadioControl {
     /** Epoch millis at which playback fades out and stops, or null. */
     val sleepAt: StateFlow<Long?>
 
-    /** Plays [station], replacing whatever was playing. */
-    fun play(station: Station)
+    /** Plays [station], replacing whatever was playing; with [sleepMinutes] it fades out and stops after that long. */
+    fun play(station: Station, sleepMinutes: Int = 0)
 
     fun stop()
 
-    /** Stops the radio, or starts [station] when it's off. */
-    fun toggle(station: Station?) {
-        if (isOn.value) stop() else if (station != null) play(station)
+    /** Stops the radio, or starts [station] when it's off, with a [sleepMinutes] sleep timer (0 for none). */
+    fun toggle(station: Station?, sleepMinutes: Int = 0) {
+        if (isOn.value) stop() else if (station != null) play(station, sleepMinutes)
     }
 
     /** Stops the radio in [minutes]; 0 turns the timer off. */
