@@ -33,9 +33,9 @@ gets English.
 - **Time until the alarm**: within 12 hours of the next alarm the info line counts down to it (*06:30 · in 7 h 20 m*, in steps of 5 minutes), switchable under *Show on the clock*.
 - **Bedtime reminder**: a quiet notification the evening before a morning alarm, 15 minutes before you'd need to sleep to get 6 to 9 hours (Settings › Alarms › *Bedtime reminder*, off by default). Not sent while the clock is showing; needs notifications.
 - **Skip on days off**: a repeating alarm can stay quiet on days with an all-day calendar event titled as a day off (holiday, vacation, PTO, día libre…, editable), and says which ring it skips. Needs calendar access; without it the alarm rings as usual.
-- **Web radio**: any MP3/AAC/HLS stream, with a sleep timer that fades out (15/30/60/90 min).
+- **Web radio**: any MP3/AAC/HLS stream, with a sleep timer that fades out. The Radio button starts it with the timer set in Settings › Radio stations › *Sleep timer* (off, or 15 minutes to 2 hours; 30 minutes by default), and the clock's *Sleep* button changes it while it plays.
 - **Backup**: export settings, radio stations and alarms to one JSON file and import them on this or another phone (Settings › About › Backup). The Day mode photo isn't included. No storage permission: you pick the file.
-- **Quick Settings tiles**: *Nocturna* opens the clock; *Sleep radio* plays your selected station with a 30-minute fading sleep timer, or stops it, and lights up while it plays. To add them, pull down Quick Settings, tap the pencil (Edit), and drag the tiles into place.
+- **Quick Settings tiles**: *Nocturna* opens the clock; *Sleep radio* plays your selected station with your fading sleep timer, or stops it, and lights up while it plays. To add them, pull down Quick Settings, tap the pencil (Edit), and drag the tiles into place.
 - **Home-screen widget**: the time and your next alarm in the app's dark colours, with *Clock* and *Sleep radio* buttons. Long-press the home screen, tap *Widgets*, find Nocturna and drag *Nocturna clock* onto the screen; long-press it to resize.
 - **Starts on its own**:
   - as the Android screen saver (Settings › Display › Screen saver › Nocturna, "while charging"), or

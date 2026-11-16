@@ -187,6 +187,16 @@ class SettingsJsonTest {
     @Test fun settingsSavedBeforeDayOffKeywordsGetTheDefaults() =
         assertEquals(DEFAULT_DAY_OFF_KEYWORDS, SettingsCodec.decode(stored(remove = listOf("dayOffKeywords"))).dayOffKeywords)
 
+    @Test fun radioSleepTimerSurvivesRoundTrip() {
+        for (minutes in Settings.RADIO_SLEEP_MINUTES) assertEquals(minutes, roundTrip(Settings(radioSleepMinutes = minutes)).radioSleepMinutes)
+    }
+
+    @Test fun settingsSavedBeforeTheRadioSleepTimerGetHalfAnHour() =
+        assertEquals(30, SettingsCodec.decode(stored(remove = listOf("radioSleepMinutes"))).radioSleepMinutes)
+
+    @Test fun anUnknownRadioSleepTimerFallsBackToTheDefault() =
+        assertEquals(30, SettingsCodec.decode(stored(put = mapOf("radioSleepMinutes" to JsonPrimitive(37)))).radioSleepMinutes)
+
     @Test fun alarmCountdownAndBedtimeSurviveRoundTrip() {
         val settings = Settings(showTimeToAlarm = false, bedtimeSleepHours = 7.5f)
         assertEquals(settings, roundTrip(settings))
