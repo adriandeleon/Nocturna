@@ -10,6 +10,19 @@ one-line summary written for users.
 
 ### Added
 
+- **Ambient music and your own music for falling asleep, all without the internet:** Settings › Radio
+  stations has three pieces of *Ambient music*: *Slow chords* (warm chords drifting from one to the next),
+  *Night chimes* (bells here and there over a low hum) and *Deep drone* (a low hum that swells and fades).
+  Like the sleep sounds, Nocturna makes them on your phone, so they add nothing to the app's size, and they loop
+  without a break. Under *Music on your phone*, *Add files* or *Add a folder* to play your own audio: a file
+  repeats, a folder plays its tracks (subfolders too) in name order and starts again. No storage permission is
+  needed: you pick what Nocturna may play. Both play from the Radio button with the sleep timer fading them
+  out, and an alarm can wake you with your own music. A backup keeps your music stations, but on another phone
+  you need to add the files again.
+- **Choose how long the radio and sleep sounds play:** Settings › Radio stations › *Sleep timer* sets how long
+  the clock's Radio button, the *Sleep radio* tile and the widget play before fading out: off, or 15 minutes
+  to 2 hours. It starts at 30 minutes, so the Radio button now stops on its own too; pick *Off* to have it play
+  until you stop it. The clock's *Sleep* button still changes the timer for what's playing.
 - **Nocturna habla español:** with your phone in Spanish, the clock, Day mode, Settings, the wake-up screen,
   the notifications, the tiles and the widget are all in Mexican Spanish (*alarma*, *posponer*, *modo noche*,
   *No molestar*…). Dates and times follow your phone's region as before, and any other language stays in
@@ -210,6 +223,11 @@ one-line summary written for users.
 
 ### Changed
 
+- **Clearer buttons on the clock and the wake-up screen:** each button on the clock has an icon beside its
+  name and is taller, so it's easier to hit in the dark. Dimming, the radio, the sleep timer and Day mode's
+  focus timer light up while they're on, instead of changing their wording, and TalkBack reads them as
+  switches. In Day mode the buttons are navy, and turn warm yellow while on. Snooze and Dismiss are larger,
+  with an icon above the words, and the sums keypad has rounded square keys.
 - **Groundwork for an iOS version:** the code that doesn't depend on Android now lives in a shared Kotlin
   Multiplatform module that can also build for iOS: the settings and alarms and how they are stored, when
   alarms ring, the Day mode schedule and calendar, the sky, the weather and its forecast, the Settings

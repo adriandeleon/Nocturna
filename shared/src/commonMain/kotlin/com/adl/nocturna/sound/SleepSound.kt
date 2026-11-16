@@ -7,8 +7,8 @@ import com.adl.nocturna.text.EnglishStrings
 import com.adl.nocturna.text.strings
 
 /**
- * The built-in sleep sounds. They are made on the phone by [SleepSoundSynth], so they play offline and the
- * app carries no recordings. Each one plays as a [Station] whose URL starts with [URL_PREFIX]; the radio
+ * The built-in sleep sounds: noises, and a few pieces of ambient music ([isMusic]). They are made on the phone
+ * by [SleepSoundSynth], so they play offline and the app carries no recordings. Each one plays as a [Station] whose URL starts with [URL_PREFIX]; the radio
  * service turns that URL into a looping WAV file.
  */
 enum class SleepSound(
@@ -19,12 +19,17 @@ enum class SleepSound(
     val loopSeconds: Int,
     /** Fixed, so the sound is the same on every phone and every time it is made. */
     val seed: Long,
+    /** Ambient music ([AmbientMusic]) rather than a noise; the two are listed apart. */
+    val isMusic: Boolean = false,
 ) {
     WHITE("white", Strings::soundWhite, Strings::soundWhiteAbout, 30, 0x5EED_0001),
     PINK("pink", Strings::soundPink, Strings::soundPinkAbout, 30, 0x5EED_0002),
     BROWN("brown", Strings::soundBrown, Strings::soundBrownAbout, 30, 0x5EED_0003),
     RAIN("rain", Strings::soundRain, Strings::soundRainAbout, 30, 0x5EED_0004),
     SURF("surf", Strings::soundSurf, Strings::soundSurfAbout, 44, 0x5EED_0005),
+    CHORDS("chords", Strings::soundChords, Strings::soundChordsAbout, 64, 0x5EED_0006, isMusic = true),
+    CHIMES("chimes", Strings::soundChimes, Strings::soundChimesAbout, 48, 0x5EED_0007, isMusic = true),
+    DRONE("drone", Strings::soundDrone, Strings::soundDroneAbout, 60, 0x5EED_0008, isMusic = true),
     ;
 
     /** Its name, e.g. "Pink noise". */

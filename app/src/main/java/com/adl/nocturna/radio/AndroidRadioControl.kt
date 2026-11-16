@@ -13,7 +13,7 @@ class AndroidRadioControl(context: Context) : RadioControl {
     override val error = Radio.error
     override val sleepAt = Radio.sleepAt
 
-    override fun play(station: Station) = Radio.play(app, station)
+    override fun play(station: Station, sleepMinutes: Int) = Radio.play(app, station, sleepMinutes)
 
     override fun stop() = Radio.stop(app)
 

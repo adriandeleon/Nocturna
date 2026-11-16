@@ -24,7 +24,7 @@ import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
 
-enum class Glyph { SUN, MOON, CLOUD, PARTLY_DAY, PARTLY_NIGHT, RAIN, SNOW, STORM, FOG, BATTERY, BOLT, ALARM, CLOCK, LIST, RADIO, INFO, MOON_PHASE }
+enum class Glyph { SUN, MOON, CLOUD, PARTLY_DAY, PARTLY_NIGHT, RAIN, SNOW, STORM, FOG, BATTERY, BOLT, ALARM, ALARM_OFF, CLOCK, LIST, RADIO, INFO, MOON_PHASE, GEAR, SLEEP, HOURGLASS }
 
 /**
  * Small line icons drawn with Canvas so they can take any tint (including night-mode red)
@@ -86,13 +86,10 @@ fun GlyphIcon(glyph: Glyph, color: Color, size: Dp, modifier: Modifier = Modifie
                 }
                 drawPath(p, color)
             }
-            Glyph.ALARM -> {
-                val c = Offset(s / 2, s * 0.55f)
-                drawCircle(color, s * 0.32f, c, style = stroke)
-                drawLine(color, c, Offset(c.x, c.y - s * 0.18f), stroke.width, StrokeCap.Round)
-                drawLine(color, c, Offset(c.x + s * 0.13f, c.y + s * 0.06f), stroke.width, StrokeCap.Round)
-                drawLine(color, Offset(s * 0.12f, s * 0.22f), Offset(s * 0.26f, s * 0.1f), stroke.width, StrokeCap.Round)
-                drawLine(color, Offset(s * 0.88f, s * 0.22f), Offset(s * 0.74f, s * 0.1f), stroke.width, StrokeCap.Round)
+            Glyph.ALARM -> alarm(color, stroke, s)
+            Glyph.ALARM_OFF -> {
+                alarm(color, stroke, s)
+                drawLine(color, Offset(s * 0.12f, s * 0.12f), Offset(s * 0.88f, s * 0.92f), stroke.width, StrokeCap.Round)
             }
             Glyph.CLOCK -> {
                 val c = Offset(s / 2, s / 2)
@@ -119,6 +116,39 @@ fun GlyphIcon(glyph: Glyph, color: Color, size: Dp, modifier: Modifier = Modifie
                 drawLine(color, Offset(s / 2, s * 0.46f), Offset(s / 2, s * 0.7f), stroke.width, StrokeCap.Round)
             }
             Glyph.MOON_PHASE -> moonPhase(color, stroke, Offset(s / 2, s / 2), s * 0.38f, level.toDouble())
+            Glyph.GEAR -> {
+                val c = Offset(s / 2, s / 2)
+                drawCircle(color, s * 0.25f, c, style = stroke)
+                drawCircle(color, s * 0.09f, c, style = stroke)
+                for (i in 0 until 8) {
+                    val a = i * PI / 4 // a tooth every 45°
+                    val dx = cos(a).toFloat()
+                    val dy = sin(a).toFloat()
+                    drawLine(color, Offset(c.x + s * 0.29f * dx, c.y + s * 0.29f * dy), Offset(c.x + s * 0.39f * dx, c.y + s * 0.39f * dy), stroke.width * 1.6f, StrokeCap.Round)
+                }
+            }
+            Glyph.SLEEP -> {
+                // A large Z and a small one, rising to the right.
+                fun z(left: Float, top: Float, w: Float) = Path().apply {
+                    moveTo(s * left, s * top); lineTo(s * (left + w), s * top)
+                    lineTo(s * left, s * (top + w)); lineTo(s * (left + w), s * (top + w))
+                }
+                drawPath(z(0.14f, 0.44f, 0.4f), color, style = stroke)
+                drawPath(z(0.62f, 0.14f, 0.24f), color, style = stroke)
+            }
+            Glyph.HOURGLASS -> {
+                drawLine(color, Offset(s * 0.22f, s * 0.12f), Offset(s * 0.78f, s * 0.12f), stroke.width, StrokeCap.Round)
+                drawLine(color, Offset(s * 0.22f, s * 0.88f), Offset(s * 0.78f, s * 0.88f), stroke.width, StrokeCap.Round)
+                val glass = Path().apply {
+                    moveTo(s * 0.3f, s * 0.12f); lineTo(s * 0.3f, s * 0.26f); lineTo(s * 0.46f, s * 0.5f)
+                    lineTo(s * 0.3f, s * 0.74f); lineTo(s * 0.3f, s * 0.88f)
+                    moveTo(s * 0.7f, s * 0.12f); lineTo(s * 0.7f, s * 0.26f); lineTo(s * 0.54f, s * 0.5f)
+                    lineTo(s * 0.7f, s * 0.74f); lineTo(s * 0.7f, s * 0.88f)
+                }
+                drawPath(glass, color, style = stroke)
+                val sand = Path().apply { moveTo(s * 0.5f, s * 0.66f); lineTo(s * 0.64f, s * 0.84f); lineTo(s * 0.36f, s * 0.84f); close() }
+                drawPath(sand, color)
+            }
         }
     }
 }
@@ -136,6 +166,15 @@ private fun DrawScope.sun(color: Color, stroke: Stroke, c: Offset, r: Float, s: 
             stroke.width, StrokeCap.Round,
         )
     }
+}
+
+private fun DrawScope.alarm(color: Color, stroke: Stroke, s: Float) {
+    val c = Offset(s / 2, s * 0.55f)
+    drawCircle(color, s * 0.32f, c, style = stroke)
+    drawLine(color, c, Offset(c.x, c.y - s * 0.18f), stroke.width, StrokeCap.Round)
+    drawLine(color, c, Offset(c.x + s * 0.13f, c.y + s * 0.06f), stroke.width, StrokeCap.Round)
+    drawLine(color, Offset(s * 0.12f, s * 0.22f), Offset(s * 0.26f, s * 0.1f), stroke.width, StrokeCap.Round)
+    drawLine(color, Offset(s * 0.88f, s * 0.22f), Offset(s * 0.74f, s * 0.1f), stroke.width, StrokeCap.Round)
 }
 
 private fun DrawScope.moon(color: Color, c: Offset, r: Float) {

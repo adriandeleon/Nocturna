@@ -150,6 +150,12 @@ object SpanishStrings : Strings {
     override val soundRainAbout = "Lluvia constante con gotas que caen cerca"
     override val soundSurf = "Oleaje"
     override val soundSurfAbout = "Olas lentas que llegan a la orilla"
+    override val soundChords = "Acordes lentos"
+    override val soundChordsAbout = "Acordes cálidos que pasan de uno a otro, con una o dos notas suaves encima"
+    override val soundChimes = "Campanas nocturnas"
+    override val soundChimesAbout = "Campanas que suenan aquí y allá sobre un zumbido grave"
+    override val soundDrone = "Dron profundo"
+    override val soundDroneAbout = "Un zumbido grave que crece y se apaga, sin melodía que seguir"
 
     override fun version(name: String, code: Int) = "Versión $name ($code)"
 

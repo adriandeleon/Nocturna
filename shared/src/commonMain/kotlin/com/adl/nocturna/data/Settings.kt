@@ -168,6 +168,11 @@ data class Settings(
     val selectedStation: Int = 0,
     /** Id of the [SleepSound] the Radio button plays instead of [selectedStation]; blank for a web station. */
     val selectedSound: String = "",
+    /**
+     * Minutes the radio or sleep sound plays before it fades out and stops, when started from the clock's Radio
+     * button, the *Sleep radio* tile or the widget: one of [RADIO_SLEEP_MINUTES]; 0 plays until stopped.
+     */
+    val radioSleepMinutes: Int = 30,
 ) {
     val hasWeatherLocation: Boolean get() = !weatherLat.isNaN() && !weatherLon.isNaN()
     val currentSleepSound: SleepSound? get() = SleepSound.byId(selectedSound)
@@ -189,6 +194,8 @@ data class Settings(
         val SUNRISE_CHOICES = listOf(0, 10, 20, 30)
         /** What [meetingChimeMinutes] may be set to; 0 is off. */
         val MEETING_CHIME_MINUTES = listOf(0, 1, 2, 5)
+        /** What [radioSleepMinutes] may be set to; 0 is off. */
+        val RADIO_SLEEP_MINUTES = listOf(0, 15, 30, 45, 60, 90, 120)
         /** What [bedtimeSleepHours] may be set to; 0 is off. */
         val BEDTIME_SLEEP_HOURS = listOf(0f, 6f, 6.5f, 7f, 7.5f, 8f, 8.5f, 9f)
         /** What [focusMinutes], [focusBreakMinutes] and [focusLongBreakMinutes] may be set to. */

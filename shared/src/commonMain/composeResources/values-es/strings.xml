@@ -266,12 +266,22 @@
     <string name="stations_sleep_sounds">Sonidos para dormir</string>
     <string name="stations_play">▶  Reproducir</string>
     <string name="stations_stop">■  Detener</string>
+    <string name="stations_sleep_timer">Temporizador para dormir</string>
+    <string name="stations_sleep_timer_hint">Cuánto tiempo suenan el botón Radio, el mosaico Radio para dormir y el widget antes de apagarse poco a poco. Toca Dormir en el reloj para cambiarlo mientras suena.</string>
     <string name="stations_add_title">Agregar una estación</string>
     <string name="stations_name">Nombre</string>
     <string name="stations_url">URL de la transmisión</string>
     <string name="stations_add">Agregar</string>
-    <string name="stations_hint">Elige qué reproduce el botón Radio del reloj: una estación en línea (sirve cualquier URL de transmisión MP3, AAC o HLS) o uno de los sonidos para dormir de abajo.</string>
+    <string name="stations_hint">Elige qué reproduce el botón Radio del reloj: una estación en línea (sirve cualquier URL de transmisión MP3, AAC o HLS), música de tu teléfono, o uno de los sonidos para dormir o de la música ambiental de abajo.</string>
     <string name="stations_sounds_hint">Se generan en tu teléfono, así que suenan sin internet. Se repiten el tiempo que quieras, y el temporizador para dormir los apaga poco a poco, como a una estación.</string>
+    <string name="stations_ambient_music">Música ambiental</string>
+    <string name="stations_music_hint">Música lenta y tranquila, sin ritmo, que se genera en tu teléfono como los sonidos para dormir. Suena sin internet y se repite sin cortes.</string>
+    <string name="stations_phone_music">Música de tu teléfono</string>
+    <string name="stations_phone_music_hint">Tus propios archivos de audio, sin internet. Un archivo se repite; una carpeta reproduce sus pistas en orden por nombre y vuelve a empezar. El temporizador para dormir las apaga poco a poco, como a una estación.</string>
+    <string name="stations_add_files">Agregar archivos</string>
+    <string name="stations_add_folder">Agregar una carpeta</string>
+    <string name="stations_on_phone">En este teléfono</string>
+    <string name="stations_music_failed">Nocturna no pudo conservar el acceso a esa música</string>
 
     <!-- Alarms page -->
     <string name="alarms_add">+  Agregar alarma</string>
@@ -319,13 +329,10 @@
 
     <!-- The clock's buttons -->
     <string name="clock_clock_only">Solo reloj</string>
-    <string name="clock_focus_on">■  Concentración</string>
-    <string name="clock_radio_on">■  Radio</string>
-    <string name="clock_radio_off">▶  Radio</string>
+    <string name="clock_dimming">Atenuación</string>
+    <string name="clock_radio">Radio</string>
     <string name="clock_sleep_off">Dormir: no</string>
     <string name="clock_sleep_minutes">Dormir: %1$d min</string>
-    <string name="clock_dimming_on">Atenuación activada</string>
-    <string name="brightness_dimming_off">Atenuación desactivada</string>
 
     <!-- Alarm screen -->
     <string name="alarm_back">Volver</string>
