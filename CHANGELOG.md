@@ -10,6 +10,10 @@ one-line summary written for users.
 
 ### Added
 
+- **Choose how long the radio and sleep sounds play:** Settings › Radio stations › *Sleep timer* sets how long
+  the clock's Radio button, the *Sleep radio* tile and the widget play before fading out: off, or 15 minutes
+  to 2 hours. It starts at 30 minutes, so the Radio button now stops on its own too; pick *Off* to have it play
+  until you stop it. The clock's *Sleep* button still changes the timer for what's playing.
 - **Nocturna habla español:** with your phone in Spanish, the clock, Day mode, Settings, the wake-up screen,
   the notifications, the tiles and the widget are all in Mexican Spanish (*alarma*, *posponer*, *modo noche*,
   *No molestar*…). Dates and times follow your phone's region as before, and any other language stays in

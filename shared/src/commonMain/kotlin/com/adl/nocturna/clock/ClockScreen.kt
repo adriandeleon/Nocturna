@@ -502,7 +502,7 @@ private fun Controls(
             }
             OutlinedButton(onClick = onOpenAlarms, colors = buttonColors, border = border) { Text(stringResource(Res.string.settings_alarms)) }
             OutlinedButton(
-                onClick = { onInteract(); radio.toggle(settings.currentStation) },
+                onClick = { onInteract(); radio.toggle(settings.currentStation, settings.radioSleepMinutes) },
                 colors = buttonColors, border = border,
             ) { Text(if (radioOn) stringResource(Res.string.clock_radio_on) else stringResource(Res.string.clock_radio_off)) }
             if (radioOn) {

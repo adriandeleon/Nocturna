@@ -222,6 +222,8 @@
     <string name="stations_sleep_sounds">Sleep sounds</string>
     <string name="stations_play">▶  Play</string>
     <string name="stations_stop">■  Stop</string>
+    <string name="stations_sleep_timer">Sleep timer</string>
+    <string name="stations_sleep_timer_hint">How long the Radio button, the Sleep radio tile and the widget play before fading out. Tap Sleep on the clock to change it for what's playing.</string>
     <string name="stations_add_title">Add a station</string>
     <string name="stations_name">Name</string>
     <string name="stations_url">Stream URL</string>

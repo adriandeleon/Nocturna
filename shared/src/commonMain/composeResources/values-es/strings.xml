@@ -222,6 +222,8 @@
     <string name="stations_sleep_sounds">Sonidos para dormir</string>
     <string name="stations_play">▶  Reproducir</string>
     <string name="stations_stop">■  Detener</string>
+    <string name="stations_sleep_timer">Temporizador para dormir</string>
+    <string name="stations_sleep_timer_hint">Cuánto tiempo suenan el botón Radio, el mosaico Radio para dormir y el widget antes de apagarse poco a poco. Toca Dormir en el reloj para cambiarlo mientras suena.</string>
     <string name="stations_add_title">Agregar una estación</string>
     <string name="stations_name">Nombre</string>
     <string name="stations_url">URL de la transmisión</string>

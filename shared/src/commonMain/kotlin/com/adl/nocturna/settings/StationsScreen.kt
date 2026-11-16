@@ -28,10 +28,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.adl.nocturna.clock.LocalClockPlatform
 import com.adl.nocturna.clock.RadioControl
+import com.adl.nocturna.data.Settings
 import com.adl.nocturna.data.SettingsStore
 import com.adl.nocturna.data.Station
 import com.adl.nocturna.resources.*
 import com.adl.nocturna.sound.SleepSound
+import com.adl.nocturna.text.strings
 import com.adl.nocturna.ui.currentLocale
 import org.jetbrains.compose.resources.stringResource
 
@@ -105,11 +107,22 @@ fun StationsScreen(padding: PaddingValues) {
         }
         item {
             Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                TextButton(onClick = { radio.play(s.currentStation ?: return@TextButton) }, enabled = !radioOn && s.currentStation != null) {
+                TextButton(onClick = { radio.play(s.currentStation ?: return@TextButton, s.radioSleepMinutes) }, enabled = !radioOn && s.currentStation != null) {
                     Text(stringResource(Res.string.stations_play))
                 }
                 TextButton(onClick = { radio.stop() }, enabled = radioOn) { Text(stringResource(Res.string.stations_stop)) }
             }
+        }
+        item {
+            ChoiceRow(
+                stringResource(Res.string.stations_sleep_timer), Settings.RADIO_SLEEP_MINUTES, s.radioSleepMinutes,
+                { if (it == 0) strings(locale).off else strings(locale).minutesShort(it) },
+            ) { v -> SettingsStore.update { it.copy(radioSleepMinutes = v) } }
+            Text(
+                stringResource(Res.string.stations_sleep_timer_hint),
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+            )
         }
         item { SectionHeader(stringResource(Res.string.stations_add_title)) }
         item {
