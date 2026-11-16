@@ -5,7 +5,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,7 +13,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,10 +22,7 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -49,8 +44,6 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
@@ -77,6 +70,8 @@ import com.adl.nocturna.resources.*
 import com.adl.nocturna.text.DateTimePattern
 import com.adl.nocturna.text.bestDateTimePattern
 import com.adl.nocturna.text.shortName
+import com.adl.nocturna.ui.ControlButton
+import com.adl.nocturna.ui.ControlDefaults
 import com.adl.nocturna.ui.DeskNavy
 import com.adl.nocturna.ui.Glyph
 import com.adl.nocturna.ui.GlyphIcon
@@ -454,12 +449,7 @@ private fun Controls(
     val radioOn by radio.isOn.collectAsStateWithLifecycle()
     val sleepAt by radio.sleepAt.collectAsStateWithLifecycle()
     val error by radio.error.collectAsStateWithLifecycle()
-    // Over day mode's bright background, see-through buttons vanish: fill them in the desk clock's navy.
-    val buttonColors = if (day) ButtonDefaults.outlinedButtonColors(containerColor = DeskNavy, contentColor = Color.White)
-    else ButtonDefaults.outlinedButtonColors(contentColor = color)
-    val border = if (day) BorderStroke(1.dp, Color.White.copy(alpha = 0.35f)) else BorderStroke(1.dp, color.copy(alpha = 0.5f))
-
-    val dimmingDescription = stringResource(if (settings.dimEnabled) Res.string.clock_dimming_on else Res.string.brightness_dimming_off)
+    val colors = if (day) ControlDefaults.Day else ControlDefaults.night(color)
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         error?.let {
@@ -474,50 +464,52 @@ private fun Controls(
         }
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
             itemVerticalAlignment = Alignment.CenterVertically,
         ) {
             // Quick dimming switch: moon = dims with the room and goes red at night; sun = normal brightness.
-            OutlinedButton(
+            ControlButton(
+                stringResource(Res.string.clock_dimming), colors,
+                glyph = if (settings.dimEnabled) Glyph.MOON else Glyph.SUN,
+                checked = settings.dimEnabled,
                 onClick = {
                     onInteract()
                     SettingsStore.update { it.copy(dimEnabled = !it.dimEnabled) }
                 },
-                colors = buttonColors,
-                border = border,
-                shape = CircleShape,
-                contentPadding = PaddingValues(0.dp),
-                modifier = Modifier
-                    .size(40.dp)
-                    .semantics { contentDescription = dimmingDescription },
-            ) { GlyphIcon(if (settings.dimEnabled) Glyph.MOON else Glyph.SUN, color, 24.dp) }
-            OutlinedButton(
+            )
+            ControlButton(
+                if (day) stringResource(Res.string.clock_clock_only) else stringResource(Res.string.settings_day_mode), colors,
+                glyph = if (day) Glyph.CLOCK else Glyph.SUN,
                 // On a schedule this overrides it until the next start or end.
                 onClick = { onInteract(); SettingsStore.update { it.withDayModeToggled(Clock.System.now(), TimeZone.currentSystemDefault()) } },
-                colors = buttonColors, border = border,
-            ) { Text(if (day) stringResource(Res.string.clock_clock_only) else stringResource(Res.string.settings_day_mode)) }
+            )
             if (day) {
-                OutlinedButton(onClick = { onInteract(); onFocus() }, colors = buttonColors, border = border) {
-                    Text(if (focusOn) stringResource(Res.string.clock_focus_on) else stringResource(Res.string.daypage_focus))
-                }
+                ControlButton(
+                    stringResource(Res.string.daypage_focus), colors,
+                    glyph = Glyph.HOURGLASS, checked = focusOn,
+                    onClick = { onInteract(); onFocus() },
+                )
             }
-            OutlinedButton(onClick = onOpenAlarms, colors = buttonColors, border = border) { Text(stringResource(Res.string.settings_alarms)) }
-            OutlinedButton(
+            ControlButton(stringResource(Res.string.settings_alarms), colors, glyph = Glyph.ALARM, onClick = onOpenAlarms)
+            ControlButton(
+                stringResource(Res.string.clock_radio), colors,
+                glyph = Glyph.RADIO, checked = radioOn,
                 onClick = { onInteract(); radio.toggle(settings.currentStation, settings.radioSleepMinutes) },
-                colors = buttonColors, border = border,
-            ) { Text(if (radioOn) stringResource(Res.string.clock_radio_on) else stringResource(Res.string.clock_radio_off)) }
+            )
             if (radioOn) {
                 val remaining = sleepAt?.let { ((it - Clock.System.now().toEpochMilliseconds()) / 60_000L).coerceAtLeast(0) + 1 }
-                OutlinedButton(
+                ControlButton(
+                    if (remaining == null) stringResource(Res.string.clock_sleep_off) else stringResource(Res.string.clock_sleep_minutes, remaining), colors,
+                    glyph = Glyph.SLEEP, checked = remaining != null,
                     onClick = {
                         onInteract()
                         // Cycle off -> 15 -> 30 -> 60 -> 90 -> off.
                         val idx = remaining?.let { r -> SLEEP_STEPS.indexOfFirst { it >= r } } ?: 0
                         radio.setSleepTimer(SLEEP_STEPS[(idx + 1) % SLEEP_STEPS.size])
                     },
-                    colors = buttonColors, border = border,
-                ) { Text(if (remaining == null) stringResource(Res.string.clock_sleep_off) else stringResource(Res.string.clock_sleep_minutes, remaining)) }
+                )
             }
-            OutlinedButton(onClick = onOpenSettings, colors = buttonColors, border = border) { Text(stringResource(Res.string.settings_title)) }
+            ControlButton(stringResource(Res.string.settings_title), colors, glyph = Glyph.GEAR, onClick = onOpenSettings)
         }
     }
 }

@@ -188,6 +188,11 @@ one-line summary written for users.
 
 ### Changed
 
+- **Clearer buttons on the clock and the wake-up screen:** each button on the clock has an icon beside its
+  name and is taller, so it's easier to hit in the dark. Dimming, the radio, the sleep timer and Day mode's
+  focus timer light up while they're on, instead of changing their wording, and TalkBack reads them as
+  switches. In Day mode the buttons are navy, and turn warm yellow while on. Snooze and Dismiss are larger,
+  with an icon above the words, and the sums keypad has rounded square keys.
 - **Groundwork for an iOS version:** the code that doesn't depend on Android now lives in a shared Kotlin
   Multiplatform module that can also build for iOS: the settings and alarms and how they are stored, when
   alarms ring, the Day mode schedule and calendar, the sky, the weather and its forecast, the Settings

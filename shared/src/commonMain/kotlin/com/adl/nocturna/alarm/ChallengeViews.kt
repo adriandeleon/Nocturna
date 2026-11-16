@@ -13,9 +13,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -47,6 +45,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.adl.nocturna.resources.*
+import com.adl.nocturna.ui.ControlButton
+import com.adl.nocturna.ui.ControlDefaults
 import com.adl.nocturna.ui.currentLocale
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
@@ -135,14 +135,20 @@ private const val MAX_DIGITS = 3
 
 @Composable
 private fun Key(text: String, accent: Color, description: String? = null, enabled: Boolean = true, onClick: () -> Unit) {
-    OutlinedButton(
-        onClick = onClick,
-        enabled = enabled,
+    ControlButton(
+        text, ControlDefaults.night(accent), onClick,
         modifier = Modifier.size(width = 88.dp, height = 60.dp)
             .then(if (description != null) Modifier.semantics { contentDescription = description } else Modifier),
-        colors = ButtonDefaults.outlinedButtonColors(contentColor = accent),
-    ) { Text(text, fontSize = 24.sp) }
+        enabled = enabled,
+        shape = RoundedCornerShape(16.dp),
+        fontSize = 24.sp,
+    )
 }
+
+/** The size and shape of the alarm screen's main buttons: Snooze, Dismiss and Hold to stop. */
+internal val ALARM_BUTTON_WIDTH = 150.dp
+internal val ALARM_BUTTON_HEIGHT = 80.dp
+internal val AlarmButtonShape = RoundedCornerShape(20.dp)
 
 /**
  * *Hold the button*: a button that fills up while it is held and calls [onDone] once it has been held for
@@ -154,8 +160,8 @@ fun HoldButton(
     accent: Color,
     onDone: () -> Unit,
     modifier: Modifier = Modifier,
-    width: Dp = 150.dp,
-    height: Dp = 72.dp,
+    width: Dp = ALARM_BUTTON_WIDTH,
+    height: Dp = ALARM_BUTTON_HEIGHT,
     filled: Boolean = true,
 ) {
     var holding by remember { mutableStateOf(false) }
@@ -180,7 +186,7 @@ fun HoldButton(
             }
         }
     }
-    val shape = RoundedCornerShape(height / 2)
+    val shape = AlarmButtonShape
     val textColor = if (filled) Color.Black else accent
     Box(
         modifier.size(width = width, height = height).clip(shape)
