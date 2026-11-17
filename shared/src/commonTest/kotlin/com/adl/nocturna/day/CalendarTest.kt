@@ -161,6 +161,53 @@ class CalendarTest {
         assertEquals(listOf("Holiday", "Stand-up", "Lunch"), eventsOnDay(events, today, monterrey).map { it.title })
     }
 
+    private fun timed(title: String, from: Int, until: Int) = CalendarEvent(title, at(from), at(until), allDay = false)
+
+    private val busyDay = listOf(
+        allDay("Holiday", today),
+        timed("A", 8, 9),
+        timed("B", 9, 10),
+        timed("C", 10, 11),
+        timed("D", 11, 12),
+        timed("E", 13, 14),
+        timed("F", 15, 16),
+        timed("G", 17, 18),
+    )
+
+    private fun dayView(events: List<CalendarEvent>, hour: Int, minute: Int = 0) =
+        dayViewEvents(events, today, monterrey, Instant.fromEpochMilliseconds(at(hour, minute))).map { it.title }
+
+    @Test fun dayViewShowsTheLastFinishedEventAndTheNextThree() {
+        assertEquals(listOf("Holiday", "B", "C", "D", "E"), dayView(busyDay, 10))
+        assertEquals(listOf("Holiday", "D", "E", "F", "G"), dayView(busyDay, 12, 30))
+    }
+
+    @Test fun dayViewCountsAnEventInProgressAsComingUp() {
+        assertEquals(listOf("Holiday", "A", "B", "C", "D"), dayView(busyDay, 9, 30))
+    }
+
+    @Test fun dayViewFillsWithUpcomingEventsBeforeAnyHasFinished() {
+        assertEquals(listOf("Holiday", "A", "B", "C", "D"), dayView(busyDay, 7))
+    }
+
+    @Test fun dayViewFillsWithFinishedEventsLateInTheDay() {
+        assertEquals(listOf("Holiday", "D", "E", "F", "G"), dayView(busyDay, 16, 30))
+        assertEquals(listOf("Holiday", "D", "E", "F", "G"), dayView(busyDay, 20))
+    }
+
+    @Test fun dayViewKeepsShortDaysWhole() {
+        val day = listOf(timed("Stand-up", 9, 10), timed("Lunch", 13, 14))
+        assertEquals(listOf("Stand-up", "Lunch"), dayView(day, 11))
+        assertEquals(listOf("Stand-up", "Lunch"), dayView(day, 20))
+    }
+
+    @Test fun dayViewPicksTheEventThatFinishedLastAsThePreviousOne() {
+        // The long meeting started first but finished after the short one.
+        val day = listOf(timed("Long", 8, 11), timed("Short", 9, 10), timed("Next", 12, 13))
+        assertEquals(listOf("Long", "Short", "Next"), dayView(day, 11, 30))
+        assertEquals(listOf("Long", "Next"), dayViewEvents(day, today, monterrey, Instant.fromEpochMilliseconds(at(11, 30)), timed = 2).map { it.title })
+    }
+
     @Test fun swipesMoveThroughTheViewsAndStopAtTheEnds() {
         assertEquals(CalendarView.WEEK, swipeView(CalendarView.MONTH, towardsDetail = true))
         assertEquals(CalendarView.DAY, swipeView(CalendarView.WEEK, towardsDetail = true))
