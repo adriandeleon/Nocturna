@@ -168,10 +168,14 @@ fun DayBackground(
             SceneBackground(
                 monthTheme(now.local.month), now.time, seed = now.local.year * 12 + now.local.month.number,
                 modifier = Modifier.fillMaxSize(), weather = weather, holiday = holiday?.holiday, cold = cold, skyDay = skyDay,
+                moonPhase = moonPhase(now.instant),
             )
         }
-        // Rain falls over the illustration only; a holiday's decorations go over a photo too.
-        DayOverlay(if (p == null) weather else null, holiday, Modifier.fillMaxSize())
+        // Rain and shooting stars go over the illustration only; a holiday's decorations go over a photo too,
+        // with fireworks once the sky is dark.
+        val night = skyMix(now.time, skyDay).weight(TimeOfDay.NIGHT)
+        val meteors = p == null && (weather == null || weather.showsSun()) && meteorNight(now.date, now.time)
+        DayOverlay(if (p == null) weather else null, holiday, Modifier.fillMaxSize(), night, meteors)
     }
 }
 

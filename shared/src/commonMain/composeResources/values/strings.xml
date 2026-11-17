@@ -180,7 +180,7 @@
     <string name="daypage_wave_focus">Wave to start or pause</string>
     <string name="daypage_wave_focus_detail">A wave over the top of the phone starts the focus timer, and pauses or resumes it</string>
     <string name="daypage_holidays">Holidays</string>
-    <string name="daypage_holidays_detail">Confetti, hearts, papel picado, bats, lights and a greeting on a few days of the year, and lighter touches in the days before</string>
+    <string name="daypage_holidays_detail">Decorations and a greeting on holidays (some only in your region), with fireworks after dark and lighter touches in the days before</string>
     <string name="daypage_birthday">Your birthday</string>
     <string name="daypage_birthday_not_set">Not set. Tap to pick it for confetti on the day</string>
     <string name="daypage_birthday_clear">Clear your birthday</string>
