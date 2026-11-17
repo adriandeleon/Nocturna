@@ -949,7 +949,7 @@ private fun WeekEventLine(
     }
 }
 
-/** Today, like a tear-off calendar: the big date beside the whole day's schedule. */
+/** Today, like a tear-off calendar: the big date beside the day's schedule ([dayViewEvents]). */
 @Composable
 private fun DayBody(
     now: Moment,
@@ -967,7 +967,10 @@ private fun DayBody(
     val today = now.date
     val time = rememberTimeFormat(use24h)
     val access = remember(events) { platform.hasCalendarAccess() }
-    val dayEvents = remember(events, today) { events?.let { eventsOnDay(it, today, now.zone) } }
+    val minute = now.epochMillis / 60_000L
+    val dayEvents = remember(events, today, minute) {
+        events?.let { dayViewEvents(it, today, now.zone, Instant.fromEpochMilliseconds(minute * 60_000L)) }
+    }
     val faint = TextStyle(color = Ink.copy(alpha = 0.55f), fontSize = base.fontSize * 0.7f)
     val instant = now.instant
     fun fmt(millis: Long) = time.format(Instant.fromEpochMilliseconds(millis).toLocalDateTime(now.zone))
