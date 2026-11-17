@@ -24,4 +24,15 @@ class SceneWeatherTest {
         assertFalse(SceneWeather.RAIN.showsSun())
         assertTrue(SceneWeather.STORM.overcast() > SceneWeather.CLOUDY.overcast())
     }
+
+    @Test fun coldFrostsTheSceneOverGradually() {
+        assertEquals(0f, sceneCold(28.0))
+        assertEquals(0f, sceneCold(CHILLY_FROM_C))
+        // A third of the way down (15 °C) already shows more than half the cold.
+        assertEquals(5f / 9f, sceneCold(15.0), 1e-6f)
+        assertEquals(1f, sceneCold(FROSTED_AT_C))
+        assertEquals(1f, sceneCold(-12.0))
+        assertTrue(sceneCold(8.0) > sceneCold(12.0))
+        assertEquals(0f, sceneCold(Double.NaN))
+    }
 }

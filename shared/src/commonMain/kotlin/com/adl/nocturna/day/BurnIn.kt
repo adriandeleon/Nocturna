@@ -48,7 +48,7 @@ fun sunWobble(seconds: Float): Pair<Float, Float> {
 
 private const val DAY = 86_400f
 
-/** The sun is up from dawn (05:30) to dusk (20:00), as the sky's looks have it (see [skyMix]). */
+/** Without the real sunrise and sunset, the sun is up from dawn (05:30) to dusk (20:00) (see [FIXED_SKY_DAY]). */
 const val SUNRISE = 5.5f * 3600
 const val SUNSET = 20f * 3600
 

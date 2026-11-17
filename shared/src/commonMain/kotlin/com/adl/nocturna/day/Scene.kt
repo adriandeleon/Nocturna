@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.Month
@@ -106,12 +107,13 @@ private fun mix(a: Sky, b: Sky, t: Float) = Sky(
 
 /**
  * A cheerful, flat illustration for day mode: sky, sun, drifting clouds and rolling hills in [theme]'s
- * colours. [time] sets the look of the sky: dawn, midday, golden afternoon or a starry night (see
- * [skyMix]), and keeps everything moving so no pixel is lit the same all day (see BurnIn.kt): the sun
+ * colours. [time] sets the look of the sky: dawn, midday, golden afternoon or a starry night, on the
+ * times [skyDay] gives (the real sunrise and sunset when known, see [skyMix]), and keeps everything moving so no pixel is lit the same all day (see BurnIn.kt): the sun
  * and the moon cross the sky, the stars turn, the clouds float along, the hills swell, scroll and
  * change shape, and the flowers and trees sway, wander, grow and shrink, and are replanted every hour.
  * With [weather] the sky clouds over, greys and snows or fogs up to match (the rain itself falls in
- * `DayOverlay`); a [holiday] can change the flowers or add pumpkins.
+ * `DayOverlay`), and [cold] (0..1, see [sceneCold]) frosts the hills over, turns the sky icy and thins
+ * out the flowers; a [holiday] can change the flowers or add pumpkins.
  */
 @Composable
 fun SceneBackground(
@@ -121,15 +123,17 @@ fun SceneBackground(
     modifier: Modifier = Modifier,
     weather: SceneWeather? = null,
     holiday: Holiday? = null,
+    cold: Float = 0f,
+    skyDay: SkyDay = FIXED_SKY_DAY,
 ) {
     Canvas(modifier) {
         val w = size.width
         val h = size.height
         val seconds = time.toSecondOfDay().toFloat()
-        val skyMix = skyMix(time)
+        val skyMix = skyMix(time, skyDay)
         val night = skyMix.weight(TimeOfDay.NIGHT)
         val overcast = weather?.overcast() ?: 0f
-        val sky = mix(sky(skyMix.from, theme), sky(skyMix.to, theme), skyMix.t).overcast(overcast, night)
+        val sky = mix(sky(skyMix.from, theme), sky(skyMix.to, theme), skyMix.t).chill(cold, night).overcast(overcast, night)
         drawRect(Brush.verticalGradient(listOf(sky.top, sky.bottom), endY = h * HORIZON))
 
         // Behind cloud the stars, the sun and the moon fade.
@@ -162,7 +166,7 @@ fun SceneBackground(
             val (ax, ay) = skyArc(skyTrip(seconds, rise, set))
             return Offset(ax * w + wx * sunR, (ay + wy) * sunR)
         }
-        val sun = body(SUNRISE, SUNSET)
+        val sun = body(skyDay.sunUp, skyDay.sunDown)
         val day = (1f - night) * clear
         if (day > 0f) {
             drawCircle(Brush.radialGradient(listOf(sky.glow, Color.Transparent), sun, sunR * 2.6f), sunR * 2.6f, sun, alpha = day)
@@ -177,7 +181,7 @@ fun SceneBackground(
             drawCircle(sky.sun, sunR, sun, alpha = day)
         }
         if (night > 0f) {
-            val moonAt = body(MOONRISE, MOONSET)
+            val moonAt = body(skyDay.moonUp, skyDay.moonDown)
             rotate(seconds / 20f % 360f, moonAt) { moon(moonAt, sunR * 0.85f, night * clear) }
         }
 
@@ -205,6 +209,7 @@ fun SceneBackground(
         // just them (SrcAtop) and not the sky.
         drawIntoCanvas { it.saveLayer(Rect(0f, 0f, w, h), Paint()) }
         HILLS.forEachIndexed { i, hill ->
+            val ridge = Path()
             val path = Path().apply {
                 moveTo(0f, h)
                 val steps = 64
@@ -212,12 +217,16 @@ fun SceneBackground(
                     val fx = s / steps.toFloat()
                     // The hills scroll slowly, swell up and down and change shape, so their edges never
                     // sit on the same pixels for long.
-                    lineTo(fx * w, hillY(hill, fx + hillShift(seconds, i), hillRise(seconds, i), hillMorph(seconds, i)) * h)
+                    val y = hillY(hill, fx + hillShift(seconds, i), hillRise(seconds, i), hillMorph(seconds, i)) * h
+                    lineTo(fx * w, y)
+                    if (s == 0) ridge.moveTo(0f, y) else ridge.lineTo(fx * w, y)
                 }
                 lineTo(w, h)
                 close()
             }
-            drawPath(path, theme.hills[i])
+            // In the cold the hills frost over, with a white rime along their tops.
+            drawPath(path, lerp(theme.hills[i], FROST[i], cold * 0.85f))
+            if (cold > 0f) drawPath(ridge, Color.White, alpha = cold * 0.8f, style = Stroke(minOf(w, h) * 0.012f, cap = StrokeCap.Round))
         }
 
         // The flowers and trees ride along with the near hill, each also wandering around its spot,
@@ -253,7 +262,8 @@ fun SceneBackground(
                 }
             }
             if (flowers.isNotEmpty()) {
-                repeat(55) { i ->
+                // The cold leaves fewer of them: the same ones, less the last few.
+                repeat((55 * (1f - cold * 0.6f)).toInt()) { i ->
                     val id = arrangement * 7 + 100 + i
                     val (dx, dy) = plantWander(seconds, id)
                     val fx = travel(rnd.nextFloat() + dx, seconds)
@@ -264,6 +274,17 @@ fun SceneBackground(
                     val r = minOf(w, h) * (0.006f + 0.012f * depth) * plantGrowth(seconds, id)
                     flower(Offset(fx * w, fy * h), r, flowers[rnd.nextInt(flowers.size)], plantSway(seconds, id), alpha)
                 }
+            }
+        }
+        // Frost glints on the near hill, each twinkling now and then.
+        if (cold > 0f) {
+            val rnd = Random(seed * 13 + 5)
+            repeat((40 * cold).toInt()) { i ->
+                val fx = travel(rnd.nextFloat(), seconds)
+                val top = nearHillY(fx, seconds)
+                val glint = Offset(fx * w, (top + 0.01f + rnd.nextFloat() * (1f - top - 0.02f)) * h)
+                val twinkle = sin(seconds * (0.4f + rnd.nextFloat() * 0.6f) + i).coerceAtLeast(0f)
+                sparkle(glint, minOf(w, h) * (0.006f + rnd.nextFloat() * 0.006f), twinkle * cold)
             }
         }
         val planted = planting(seconds)
@@ -293,6 +314,19 @@ private val CLOUDS = listOf(
 
 private val MARIGOLDS = listOf(c(0xFFFF8C00), c(0xFFFFA726), c(0xFFFFC107))
 
+/** The hills frosted over, far to near: a bluer white far off, whiter close by. */
+private val FROST = listOf(c(0xFFC9DAEA), c(0xFFDCE7F2), c(0xFFF0F5FA))
+
+/** The sky gone icy with [cold] (0..1): a paler, colder blue, by day more than by [night]. */
+private fun Sky.chill(cold: Float, night: Float): Sky {
+    if (cold <= 0f) return this
+    val amount = cold * 0.6f * (1f - night * 0.6f)
+    return Sky(
+        lerp(top, c(0xFF7FB2DC), amount), lerp(bottom, c(0xFFE6F0F8), amount), lerp(sun, c(0xFFFFE9A8), amount),
+        glow, lerp(cloud, c(0xFFF2F7FC), amount), shade,
+    )
+}
+
 /** The sky clouded over by [amount] (0..1): greyer by day, darker grey by [night]. */
 private fun Sky.overcast(amount: Float, night: Float): Sky {
     if (amount <= 0f) return this
@@ -307,6 +341,14 @@ private fun DrawScope.pumpkin(base: Offset, r: Float, alpha: Float) {
     for (i in -1..1) drawOval(c(0xFFE8731A), Offset(center.x - r * 0.55f + i * r * 0.4f, center.y - r * 0.8f), Size(r * 1.1f, r * 1.6f), alpha = alpha)
     drawOval(c(0xFFF58A2A), Offset(center.x - r * 0.4f, center.y - r * 0.8f), Size(r * 0.8f, r * 1.6f), alpha = alpha)
     drawRect(c(0xFF5B7A2E), Offset(center.x - r * 0.1f, center.y - r * 1.05f), Size(r * 0.2f, r * 0.35f), alpha = alpha)
+}
+
+/** A four-pointed glint of frost, [alpha] of the way lit. */
+private fun DrawScope.sparkle(center: Offset, r: Float, alpha: Float) {
+    if (alpha <= 0f) return
+    drawLine(Color.White, Offset(center.x - r, center.y), Offset(center.x + r, center.y), r * 0.25f, StrokeCap.Round, alpha = alpha)
+    drawLine(Color.White, Offset(center.x, center.y - r), Offset(center.x, center.y + r), r * 0.25f, StrokeCap.Round, alpha = alpha)
+    drawCircle(Color.White, r * 0.22f, center, alpha = alpha)
 }
 
 /** A full moon with a soft glow and a couple of craters. */

@@ -10,31 +10,57 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class HolidaysTest {
+    private fun on(month: Int, day: Int, country: String = "GB") = holidayOn(LocalDate(2026, month, day), 0, country)
+
+    @Test fun holidaysAreDecoratedOnTheDaysLeadingUpToThem() {
+        assertEquals(HolidayDay(Holiday.VALENTINES, false), on(2, 10))
+        assertEquals(HolidayDay(Holiday.VALENTINES, false), on(2, 13))
+        assertNull(on(2, 9))
+        assertNull(on(2, 15))
+        assertEquals(HolidayDay(Holiday.HALLOWEEN, false), on(10, 24))
+        assertEquals(HolidayDay(Holiday.HALLOWEEN, false), on(10, 30))
+        assertNull(on(10, 23))
+        assertEquals(HolidayDay(Holiday.MEXICAN_INDEPENDENCE, false), on(9, 1, "MX"))
+        assertNull(on(9, 1, "GB"))
+    }
+
+    @Test fun christmasLastsAllDecemberUntilNewYearsEve() {
+        assertEquals(HolidayDay(Holiday.CHRISTMAS, false), on(12, 1))
+        assertEquals(HolidayDay(Holiday.CHRISTMAS, false), on(12, 23))
+        assertEquals(HolidayDay(Holiday.CHRISTMAS, true), on(12, 24))
+        assertEquals(HolidayDay(Holiday.CHRISTMAS, false), on(12, 26))
+        assertEquals(HolidayDay(Holiday.CHRISTMAS, false), on(12, 30))
+        assertEquals(HolidayDay(Holiday.NEW_YEAR, true), on(12, 31))
+        assertNull(on(11, 30))
+    }
+
+    @Test fun aBirthdayBeatsTheDaysAroundAHoliday() =
+        assertEquals(HolidayDay(Holiday.BIRTHDAY, true), holidayOn(LocalDate(2026, 12, 10), 1210, "GB"))
     @Test fun holidaysEveryoneGets() {
-        assertEquals(Holiday.NEW_YEAR, holidayOn(LocalDate(2027, 1, 1), 0, "GB"))
-        assertEquals(Holiday.NEW_YEAR, holidayOn(LocalDate(2026, 12, 31), 0, "GB"))
-        assertEquals(Holiday.VALENTINES, holidayOn(LocalDate(2026, 2, 14), 0, "GB"))
-        assertEquals(Holiday.HALLOWEEN, holidayOn(LocalDate(2026, 10, 31), 0, "US"))
-        assertEquals(Holiday.CHRISTMAS, holidayOn(LocalDate(2026, 12, 24), 0, "GB"))
+        assertEquals(HolidayDay(Holiday.NEW_YEAR, true), holidayOn(LocalDate(2027, 1, 1), 0, "GB"))
+        assertEquals(HolidayDay(Holiday.NEW_YEAR, true), holidayOn(LocalDate(2026, 12, 31), 0, "GB"))
+        assertEquals(HolidayDay(Holiday.VALENTINES, true), holidayOn(LocalDate(2026, 2, 14), 0, "GB"))
+        assertEquals(HolidayDay(Holiday.HALLOWEEN, true), holidayOn(LocalDate(2026, 10, 31), 0, "US"))
+        assertEquals(HolidayDay(Holiday.CHRISTMAS, true), holidayOn(LocalDate(2026, 12, 24), 0, "GB"))
         assertNull(holidayOn(LocalDate(2026, 11, 16), 0, "GB"))
     }
 
     @Test fun mexicosOwnOnlyWithAMexicanRegion() {
-        assertEquals(Holiday.DAY_OF_THE_DEAD, holidayOn(LocalDate(2026, 11, 2), 0, "MX"))
-        assertEquals(Holiday.MEXICAN_INDEPENDENCE, holidayOn(LocalDate(2026, 9, 16), 0, "mx"))
+        assertEquals(HolidayDay(Holiday.DAY_OF_THE_DEAD, true), holidayOn(LocalDate(2026, 11, 2), 0, "MX"))
+        assertEquals(HolidayDay(Holiday.MEXICAN_INDEPENDENCE, true), holidayOn(LocalDate(2026, 9, 16), 0, "mx"))
         assertNull(holidayOn(LocalDate(2026, 11, 2), 0, "GB"))
         assertNull(holidayOn(LocalDate(2026, 9, 16), 0, ""))
     }
 
     @Test fun yourBirthdayComesFirst() {
-        assertEquals(Holiday.BIRTHDAY, holidayOn(LocalDate(2026, 12, 25), 1225, "GB"))
-        assertEquals(Holiday.BIRTHDAY, holidayOn(LocalDate(2026, 3, 7), 307, "GB"))
+        assertEquals(HolidayDay(Holiday.BIRTHDAY, true), holidayOn(LocalDate(2026, 12, 25), 1225, "GB"))
+        assertEquals(HolidayDay(Holiday.BIRTHDAY, true), holidayOn(LocalDate(2026, 3, 7), 307, "GB"))
     }
 
     @Test fun aLeapDayBirthdayIsKeptOnThe28thInOtherYears() {
-        assertEquals(Holiday.BIRTHDAY, holidayOn(LocalDate(2027, 2, 28), 229, "GB"))
+        assertEquals(HolidayDay(Holiday.BIRTHDAY, true), holidayOn(LocalDate(2027, 2, 28), 229, "GB"))
         assertNull(holidayOn(LocalDate(2028, 2, 28), 229, "GB"))
-        assertEquals(Holiday.BIRTHDAY, holidayOn(LocalDate(2028, 2, 29), 229, "GB"))
+        assertEquals(HolidayDay(Holiday.BIRTHDAY, true), holidayOn(LocalDate(2028, 2, 29), 229, "GB"))
     }
 
     @Test fun greetings() {

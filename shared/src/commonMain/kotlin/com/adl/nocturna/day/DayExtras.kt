@@ -241,13 +241,15 @@ internal fun AddTodoDialog(onDismiss: () -> Unit, onAdd: (String) -> Unit) {
 
 /**
  * What moves over day mode's background, behind the clock and the page: rain for the scene's weather,
- * and the holiday's confetti, hearts, papel picado or lights. Drawn on a canvas of its own, so the scene
+ * and the holiday's confetti, hearts, papel picado, bats or lights (fewer hearts and bats on the days around
+ * the holiday than on the day itself). Drawn on a canvas of its own, so the scene
  * under it isn't redrawn every frame; nothing is drawn, and no frames run, when there is nothing to show.
  */
 @Composable
-internal fun DayOverlay(weather: SceneWeather?, holiday: Holiday?, modifier: Modifier = Modifier) {
+internal fun DayOverlay(weather: SceneWeather?, holiday: HolidayDay?, modifier: Modifier = Modifier) {
     val rain = weather == SceneWeather.RAIN || weather == SceneWeather.STORM
-    val decoration = holiday?.decoration()
+    val decoration = holiday?.holiday?.decoration()
+    val full = holiday?.theDay ?: true
     if (!rain && decoration == null) return
     val transition = rememberInfiniteTransition(label = "overlay")
     // One slow clock for everything: a minute round, in seconds.
@@ -256,11 +258,11 @@ internal fun DayOverlay(weather: SceneWeather?, holiday: Holiday?, modifier: Mod
         if (rain) rain(t, heavy = weather == SceneWeather.STORM)
         when (decoration) {
             Decoration.CONFETTI -> confetti(t)
-            Decoration.HEARTS -> hearts(t)
+            Decoration.HEARTS -> hearts(t, if (full) 18 else 7)
             Decoration.PAPEL_PICADO_MEXICO -> papelPicado(t, listOf(Color(0xFF006847), Color.White, Color(0xFFCE1126)))
             Decoration.PAPEL_PICADO_MUERTOS -> papelPicado(t, listOf(Color(0xFFE6007E), Color(0xFFFF8C00), Color(0xFF7B2CBF), Color(0xFFFFD000), Color(0xFF00A86B)))
             Decoration.LIGHTS -> lights(t)
-            Decoration.BATS -> bats(t)
+            Decoration.BATS -> bats(t, if (full) 6 else 2)
             null -> Unit
         }
     }
@@ -317,10 +319,10 @@ private fun DrawScope.confetti(t: Float) {
     }
 }
 
-/** Hearts floating up slowly from the bottom. */
-private fun DrawScope.hearts(t: Float) {
+/** [count] hearts floating up slowly from the bottom. */
+private fun DrawScope.hearts(t: Float, count: Int) {
     val rnd = Random(37)
-    repeat(18) {
+    repeat(count) {
         val x0 = rnd.nextFloat()
         val phase = rnd.nextFloat()
         val r = size.minDimension * (0.012f + rnd.nextFloat() * 0.012f)
@@ -409,10 +411,10 @@ private fun DrawScope.lights(t: Float) {
     }
 }
 
-/** A few bats flapping across the sky. */
-private fun DrawScope.bats(t: Float) {
+/** [count] bats flapping across the sky. */
+private fun DrawScope.bats(t: Float, count: Int) {
     val rnd = Random(53)
-    repeat(6) {
+    repeat(count) {
         val phase = rnd.nextFloat()
         val y0 = size.height * (0.08f + rnd.nextFloat() * 0.3f)
         val w = size.minDimension * (0.03f + rnd.nextFloat() * 0.02f)
