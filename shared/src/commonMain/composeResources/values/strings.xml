@@ -146,7 +146,7 @@
     <string name="daypage_birthdays">Birthdays</string>
     <string name="daypage_birthdays_detail">A cake on birthdays, from all-day events with birthday in their title, like your contacts' birthdays</string>
     <string name="daypage_rain_alert">Rain alert</string>
-    <string name="daypage_rain_alert_detail">Under the desk clock: Rain from 15:00, or until when if it's raining, in the next six hours</string>
+    <string name="daypage_rain_alert_detail">With the weather, over the desk clock: Rain from 15:00, or until when if it's raining, in the next six hours</string>
     <string name="daypage_sun_times">Sunrise and sunset</string>
     <string name="daypage_sun_times_detail">Sunset 17:48 · 2 h 10 m of light, and the next sunrise after dark</string>
     <string name="daypage_uv">UV index</string>

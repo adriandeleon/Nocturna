@@ -188,8 +188,8 @@ fun DayLayout(
     focus: FocusTimer? = null,
     /** Changes or (with null) stops the focus timer; null where it can't be tapped. */
     onFocus: ((FocusTimer?) -> Unit)? = null,
-    /** Draws the clock and its info line; with `true`, without the next hours' weather, to make room. */
-    clock: @Composable (compact: Boolean) -> Unit,
+    /** Draws the clock and its info line. */
+    clock: @Composable () -> Unit,
 ) {
     val today = now.date
     val locale = currentLocale()
@@ -246,7 +246,8 @@ fun DayLayout(
     LaunchedEffect(battery?.charging) { if (battery?.charging != true) batteryCareDismissed = false }
     val batteryCare = battery?.takeIf { batteryCareDue(it, settings.batteryCarePercent) && !batteryCareDismissed }
 
-    // The glance line: rain on the way, the sun, the UV index, the air quality and the countdowns.
+    // The weather's details over the sky (rain on the way, the sun, the UV index, the air quality), and
+    // the countdowns in the desk clock.
     val weather by WeatherRepository.weather.collectAsStateWithLifecycle()
     val air by WeatherRepository.airQuality.collectAsStateWithLifecycle()
     LaunchedEffect(settings.dayAirQuality, settings.showWeather, settings.weatherUseDeviceLocation, settings.weatherLat, settings.weatherLon) {
@@ -262,9 +263,13 @@ fun DayLayout(
         aheadEvents?.let { daysOff(it, parseDayOffKeywords(settings.dayOffKeywords), today, lookAhead) }
     }
     val timeFormat = rememberTimeFormat(settings.use24h)
-    val glance = remember(minute, weather, air, daysOff, settings, locale, now.zone) {
-        glanceItems(settings, weather, air, daysOff, Instant.fromEpochMilliseconds(minute * 60_000L), now.zone, timeFormat, locale)
+    val details = remember(minute, weather, air, settings, locale, now.zone) {
+        weatherGlanceItems(settings, weather, air, Instant.fromEpochMilliseconds(minute * 60_000L), now.zone, timeFormat, locale)
     }
+    val glance = remember(minute, daysOff, settings, locale, now.zone) {
+        countdownItems(settings, daysOff, Instant.fromEpochMilliseconds(minute * 60_000L), now.zone, locale)
+    }
+    val skyWeather = weather?.takeIf { settings.showWeather }
 
     // The to-do list on the note, and the holiday's greeting over it.
     val todos = remember(settings.dayTodos, settings.todos, today) { if (settings.dayTodos) todosForDay(settings.todos, today) else null }
@@ -304,9 +309,9 @@ fun DayLayout(
     BoxWithConstraints(modifier) {
         val noteFont = with(LocalDensity.current) { (minOf(maxWidth, maxHeight) * 0.042f).coerceIn(14.dp, 22.dp).toSp() }
         val worldLine: (@Composable () -> Unit)? = worldText?.let { text -> { WorldLine(text, noteFont) } }
-        // The glance line, the focus timer and the nudges sit in the desk clock under its info line, so
+        // The countdowns, the focus timer and the nudges sit in the desk clock under its info line, so
         // they drift with it and never take the meeting countdown's place under the clock or on the note.
-        // [glanceShown] items of the glance line: fewer where the note needs the room (see deskClockFit).
+        // [glanceShown] of the countdowns: fewer where the note needs the room (see deskClockFit).
         fun extras(glanceShown: Int): (@Composable () -> Unit)? =
             if (glance.size.coerceAtMost(glanceShown) == 0 && focus == null && reminders.isEmpty() && batteryCare == null) null else {
             {
@@ -318,6 +323,18 @@ fun DayLayout(
                     }
                     batteryCare?.let { b -> NudgeTag(batteryCareText(b, locale), noteFont, onOpen?.let { { batteryCareDismissed = true } }) }
                 }
+            }
+        }
+        // The weather over the sky and the desk clock under it, drifting together. [shown] of the weather's
+        // details and, with [hourly], the next hours, or with [slim] the weather on one line; [world] the
+        // world clock line.
+        fun deskClock(shown: Int, hourly: Boolean, world: Boolean, rangeX: Dp, rangeY: Dp, slim: Boolean = false): @Composable () -> Unit = {
+            Column(Modifier.drift(clockDrift, rangeX, rangeY), horizontalAlignment = Alignment.CenterHorizontally) {
+                skyWeather?.let { w ->
+                    SkyWeather(w, details.take(shown), hourly && settings.dayHourlyWeather, slim, now, settings, noteFont)
+                    Spacer(Modifier.height(SKY_GAP))
+                }
+                ClockPanel(clock, extras(shown), world = if (world) worldLine else null)
             }
         }
         val note: @Composable (Modifier) -> Unit = { m ->
@@ -333,15 +350,17 @@ fun DayLayout(
                         // when its greeting and at least one event fit under it.
                         ClockOverNote(
                             gap = 32.dp,
-                            // Fullest first: without the world clock line, then with one glance item, then none,
-                            // then without the next hours, for when they leave no room for the note.
+                            // Fullest first: without the world clock line, then with one weather detail and one
+                            // countdown, then none, then without the next hours, for when they leave no room for the note.
                             clocks = buildList {
-                                add { ClockPanel(clock, extras(glance.size), Modifier.drift(clockDrift, 28.dp, 14.dp), worldLine) }
-                                if (worldLine != null) add { ClockPanel(clock, extras(glance.size), Modifier.drift(clockDrift, 28.dp, 14.dp)) }
-                                if (glance.size > 1) add { ClockPanel(clock, extras(1), Modifier.drift(clockDrift, 28.dp, 14.dp)) }
-                                if (glance.isNotEmpty()) add { ClockPanel(clock, extras(0), Modifier.drift(clockDrift, 28.dp, 14.dp)) }
-                                // Last of all, the next hours' weather.
-                                add { ClockPanel(clock, extras(0), Modifier.drift(clockDrift, 28.dp, 14.dp), compact = true) }
+                                val most = maxOf(details.size, glance.size)
+                                add(deskClock(most, hourly = true, world = true, 28.dp, 14.dp))
+                                if (worldLine != null) add(deskClock(most, hourly = true, world = false, 28.dp, 14.dp))
+                                if (most > 1) add(deskClock(1, hourly = true, world = false, 28.dp, 14.dp))
+                                if (most > 0) add(deskClock(0, hourly = true, world = false, 28.dp, 14.dp))
+                                // Then the next hours' weather, and last of all the weather shrinks to one line.
+                                add(deskClock(0, hourly = false, world = false, 28.dp, 14.dp))
+                                if (skyWeather != null) add(deskClock(0, hourly = false, world = false, 28.dp, 14.dp, slim = true))
                             },
                             note = if (!showNote) null else {
                                 { note(Modifier.widthIn(max = 380.dp).drift(noteDrift, 28.dp, 14.dp)) }
@@ -368,8 +387,8 @@ fun DayLayout(
                     val clockEnd = @Composable {
                         Column(Modifier.padding(vertical = 16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                             PortraitDeskClock(
-                                full = { ClockPanel(clock, extras(glance.size), Modifier.drift(clockDrift, 24.dp, 8.dp), worldLine) },
-                                bare = worldLine?.let { { ClockPanel(clock, extras(glance.size), Modifier.drift(clockDrift, 24.dp, 8.dp)) } },
+                                full = deskClock(Int.MAX_VALUE, hourly = true, world = true, 24.dp, 8.dp),
+                                bare = worldLine?.let { deskClock(Int.MAX_VALUE, hourly = true, world = false, 24.dp, 8.dp) },
                             )
                             // Without the note (the day view), the countdown hangs under the desk clock.
                             if (!showNote && upcoming != null) {
@@ -458,11 +477,10 @@ private fun ClockOverNote(
  */
 @Composable
 private fun ClockPanel(
-    clock: @Composable (compact: Boolean) -> Unit,
+    clock: @Composable () -> Unit,
     below: (@Composable () -> Unit)?,
     modifier: Modifier = Modifier,
     world: (@Composable () -> Unit)? = null,
-    compact: Boolean = false,
 ) {
     val shape = RoundedCornerShape(28.dp)
     Box(
@@ -473,7 +491,7 @@ private fun ClockPanel(
             .padding(horizontal = 28.dp, vertical = 12.dp)
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            clock(compact)
+            clock()
             world?.invoke()
             below?.invoke()
         }
@@ -616,6 +634,9 @@ private fun FocusChime(focus: FocusTimer?, now: Long, lengths: FocusLengths, onF
 }
 
 private val DeskClockNavy = listOf(Color(0xFF2B3A55), Color(0xFF1C263A))
+
+/** Space between the weather over the sky and the desk clock under it. */
+private val SKY_GAP = 12.dp
 
 /** Space between the desk clock and the countdown hung under it. */
 private val COUNTDOWN_GAP = 10.dp

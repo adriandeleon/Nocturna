@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -64,7 +63,6 @@ import com.adl.nocturna.day.CalendarLink
 import com.adl.nocturna.day.DayBackground
 import com.adl.nocturna.day.DayLayout
 import com.adl.nocturna.day.FocusTimer
-import com.adl.nocturna.day.HourlyStrip
 import com.adl.nocturna.day.focusTimerFromSaved
 import com.adl.nocturna.day.holidayOn
 import com.adl.nocturna.day.sceneWeather
@@ -259,8 +257,7 @@ fun ClockScreen(
         val clockSize = with(density) { clockFontDp.toSp() }
         val infoSize = with(density) { infoFontDp.toSp() }
 
-        // [compact] leaves out day mode's next hours, for when the sticky note needs the room.
-        val clock = @Composable { compact: Boolean ->
+        val clock = @Composable {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.alpha(contentAlpha),
@@ -270,11 +267,7 @@ fun ClockScreen(
                     ClockStyle.ANALOG -> AnalogClock(now, settings.showSeconds, color, analogSize)
                 }
                 Spacer(Modifier.height(infoFontDp * 0.6f))
-                InfoBlock(
-                    settings, now, color, infoSize, infoFontDp, shadow,
-                    hourlyWidth = if (day && !compact) clockWidth else null,
-                    night = !day,
-                )
+                InfoBlock(settings, now, color, infoSize, infoFontDp, shadow, night = !day)
             }
         }
 
@@ -299,7 +292,7 @@ fun ClockScreen(
                 onFocus = if (interactive) { f -> focus = f } else null,
                 clock = clock,
             )
-            else clock(false)
+            else clock()
         }
 
         if (interactive) {
@@ -328,9 +321,7 @@ private fun InfoBlock(
     fontSize: androidx.compose.ui.unit.TextUnit,
     glyphSize: Dp,
     shadow: Shadow? = null,
-    /** Day mode's width for the next hours' weather under the weather line; null leaves it out. */
-    hourlyWidth: Dp? = null,
-    /** The night clock, not Day mode, which draws its own moon. */
+    /** The night clock, not Day mode, which draws its own moon and shows the weather over the sky. */
     night: Boolean = true,
 ) {
     val style = TextStyle(color = color.copy(alpha = if (shadow != null) 1f else 0.85f), fontSize = fontSize, shadow = shadow)
@@ -356,7 +347,7 @@ private fun InfoBlock(
         itemVerticalAlignment = Alignment.CenterVertically,
     ) {
         val w = weather
-        if (settings.showWeather && w != null) {
+        if (settings.showWeather && w != null && night) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Item(w.glyph, w.temperatureText(settings.weatherFahrenheit), color, style, glyphSize)
                 val pick = if (settings.showForecast) pickForecast(w.days, now.local) else null
@@ -403,16 +394,6 @@ private fun InfoBlock(
                 Text(MoonPhase.of(cycle).label(locale), style = style, softWrap = false)
             }
         }
-    }
-
-    val hours = weather?.hours.orEmpty()
-    if (hourlyWidth != null && settings.showWeather && settings.dayHourlyWeather && hours.isNotEmpty()) {
-        Spacer(Modifier.height(glyphSize * 0.4f))
-        HourlyStrip(
-            hours, now, settings.use24h, settings.weatherFahrenheit, locale,
-            style.copy(color = style.color.copy(alpha = style.color.alpha * 0.75f), fontSize = fontSize * 0.85f),
-            glyphSize * 0.85f, Modifier.widthIn(max = hourlyWidth),
-        )
     }
 
     if (radioTitle != null) {
