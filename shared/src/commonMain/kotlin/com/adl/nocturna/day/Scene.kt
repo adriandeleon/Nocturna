@@ -258,19 +258,7 @@ fun SceneBackground(
                     }
                 }
             }
-            if (holiday == Holiday.EASTER || holiday == Holiday.DIWALI) {
-                repeat(10) { i ->
-                    val id = arrangement * 7 + 300 + i
-                    val (dx, dy) = plantWander(seconds, id)
-                    val fx = travel(rnd.nextFloat() + dx, seconds)
-                    val top = nearHillY(fx, seconds)
-                    val depth = (rnd.nextFloat() + dy).coerceIn(0f, 1f)
-                    val spot = Offset(fx * w, (top + 0.03f + depth * (1f - top - 0.06f)) * h)
-                    val r = minOf(w, h) * (0.014f + 0.012f * depth) * plantGrowth(seconds, id)
-                    if (holiday == Holiday.EASTER) egg(spot, r, i, alpha)
-                    else diya(spot, r, seconds + i * 1.7f, alpha)
-                }
-            }
+            if (holiday == Holiday.EASTER) hillSpots(arrangement, seconds, w, h) { i, spot, r -> egg(spot, r, i, alpha) }
             if (holiday == Holiday.HALLOWEEN) {
                 repeat(8) { i ->
                     val id = arrangement * 7 + 200 + i
@@ -314,6 +302,14 @@ fun SceneBackground(
         if (sky.shade.alpha > 0f) drawRect(sky.shade, blendMode = BlendMode.SrcAtop)
         drawIntoCanvas { it.restore() }
 
+        // Diwali's oil lamps go over the dusk and night shade, so they glow in the dark.
+        if (holiday == Holiday.DIWALI) {
+            fun lamps(arrangement: Int, alpha: Float) =
+                hillSpots(arrangement, seconds, w, h) { i, spot, r -> diya(spot, r, seconds + i * 1.7f, alpha) }
+            if (planted.grown < 1f) lamps(planted.before, 1f - planted.grown)
+            lamps(planted.now, planted.grown)
+        }
+
         // Fog: soft bands of mist drifting slowly over the hills.
         if (weather == SceneWeather.FOG) {
             for (i in 0 until 4) {
@@ -334,6 +330,23 @@ private val CLOUDS = listOf(
 )
 
 private val MARIGOLDS = listOf(c(0xFFFF8C00), c(0xFFFFA726), c(0xFFFFC107))
+
+/**
+ * Ten spots on the near hill for a holiday's things (Easter eggs, oil lamps) in [arrangement], wandering and
+ * growing like the flowers, each drawn by [draw] with its index, where it stands and its size.
+ */
+private fun hillSpots(arrangement: Int, seconds: Float, w: Float, h: Float, draw: (Int, Offset, Float) -> Unit) {
+    val rnd = Random(arrangement * 977 + 41)
+    repeat(10) { i ->
+        val id = arrangement * 7 + 300 + i
+        val (dx, dy) = plantWander(seconds, id)
+        val fx = travel(rnd.nextFloat() + dx, seconds)
+        val top = nearHillY(fx, seconds)
+        val depth = (rnd.nextFloat() + dy).coerceIn(0f, 1f)
+        val spot = Offset(fx * w, (top + 0.03f + depth * (1f - top - 0.06f)) * h)
+        draw(i, spot, minOf(w, h) * (0.014f + 0.012f * depth) * plantGrowth(seconds, id))
+    }
+}
 
 /** Mother's Day roses and carnations. */
 private val ROSES = listOf(c(0xFFE8335A), c(0xFFFF6F91), c(0xFFC2185B), c(0xFFFFB3C7), c(0xFFFFFFFF))
