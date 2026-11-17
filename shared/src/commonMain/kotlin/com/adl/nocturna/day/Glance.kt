@@ -19,8 +19,9 @@ import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Instant
 
 /*
- * The glance line under day mode's desk clock: rain on the way, sunset, the UV index, the air quality and
- * the days counted down to. Each is worked out here from data the clock already has.
+ * Day mode's glance line: rain on the way, sunset, the UV index and the air quality, with the weather over
+ * the sky, and the days counted down to, under the desk clock. Each is worked out here from data the clock
+ * already has.
  */
 
 /** How far ahead the rain alert looks. */
@@ -136,16 +137,14 @@ fun countdownDays(countdowns: List<Countdown>, daysOff: DaysOff?, today: LocalDa
 fun countdownText(day: CountdownDay, locale: PlatformLocale): String = strings(locale).daysUntil(day.label, day.days)
 
 /**
- * The glance line's items at [now], in order: rain on the way, the sun, the UV index (while the sun is up and
- * it rounds to 1 or more),
- * the air quality and the countdowns, each as its setting asks. The weather ones need the weather on.
- * Times are read in [zone] and written with [time].
+ * The weather's details at [now], in order: rain on the way, the sun, the UV index (while the sun is up and
+ * it rounds to 1 or more) and the air quality, each as its setting asks, and none with the weather off.
+ * Day mode shows them with the weather, over the sky. Times are read in [zone] and written with [time].
  */
-fun glanceItems(
+fun weatherGlanceItems(
     settings: Settings,
     weather: Weather?,
     air: AirQuality?,
-    daysOff: DaysOff?,
     now: Instant,
     zone: TimeZone,
     time: DateTimePattern,
@@ -158,6 +157,9 @@ fun glanceItems(
         if (settings.dayUvIndex && weather.isDay) weather.uvIndex?.takeIf { it >= 0.5 }?.let { add(uvText(it, locale)) }
     }
     if (settings.showWeather && settings.dayAirQuality && air != null) add(airQualityText(air, locale))
-    countdownDays(settings.countdowns, if (settings.countdownDaysOff) daysOff else null, now.toLocalDateTime(zone).date)
-        .forEach { add(countdownText(it, locale)) }
 }
+
+/** The countdowns at [now], nearest first: the glance line that stays in the desk clock. */
+fun countdownItems(settings: Settings, daysOff: DaysOff?, now: Instant, zone: TimeZone, locale: PlatformLocale): List<String> =
+    countdownDays(settings.countdowns, if (settings.countdownDaysOff) daysOff else null, now.toLocalDateTime(zone).date)
+        .map { countdownText(it, locale) }

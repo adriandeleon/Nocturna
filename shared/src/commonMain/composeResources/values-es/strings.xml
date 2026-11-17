@@ -146,7 +146,7 @@
     <string name="daypage_birthdays">Cumpleaños</string>
     <string name="daypage_birthdays_detail">Un pastel en los cumpleaños: eventos de todo el día con cumpleaños en el título, como los de tus contactos</string>
     <string name="daypage_rain_alert">Aviso de lluvia</string>
-    <string name="daypage_rain_alert_detail">Bajo el reloj: Lluvia desde las 15:00, o hasta cuándo si ya llueve, en las próximas seis horas</string>
+    <string name="daypage_rain_alert_detail">Con el clima, sobre el reloj: Lluvia desde las 15:00, o hasta cuándo si ya llueve, en las próximas seis horas</string>
     <string name="daypage_sun_times">Amanecer y atardecer</string>
     <string name="daypage_sun_times_detail">Atardecer 17:48 · 2 h 10 min de luz, y el próximo amanecer ya de noche</string>
     <string name="daypage_uv">Índice UV</string>

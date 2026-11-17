@@ -96,7 +96,7 @@ interface Strings {
     /** "Focus · 18:42 left", "Break paused · 3:10 left". */
     fun focusLabel(phase: String, paused: Boolean, left: String): String
 
-    /** The rain alert under the desk clock: "Rain from 15:00". */
+    /** The rain alert with day mode's weather, over the desk clock: "Rain from 15:00". */
     fun rainFrom(time: String): String
     fun rainUntil(time: String): String
     fun snowFrom(time: String): String

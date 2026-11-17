@@ -121,17 +121,23 @@ class GlanceTest {
         val time = DateTimePattern("HH:mm", testLocale)
         val air = AirQuality(42, 0L, 0.0, 0.0)
         assertEquals(
-            listOf("Rain from 15:00", "Sunset 17:48 · 5 h 38 m of light", "UV 7 · High", "Air: good (42)", "Trip in 4 days"),
-            glanceItems(all, weather, air, null, now, zone, time, testLocale),
+            listOf("Rain from 15:00", "Sunset 17:48 · 5 h 38 m of light", "UV 7 · High", "Air: good (42)"),
+            weatherGlanceItems(all, weather, air, now, zone, time, testLocale),
         )
-        // With the weather off, only the countdowns are left.
-        assertEquals(listOf("Trip in 4 days"), glanceItems(all.copy(showWeather = false), weather, air, null, now, zone, time, testLocale))
+        // With the weather off, none of them.
+        assertEquals(emptyList(), weatherGlanceItems(all.copy(showWeather = false), weather, air, now, zone, time, testLocale))
         // Nothing turned on, nothing to show.
-        assertEquals(emptyList(), glanceItems(Settings(), weather, air, null, now, zone, time, testLocale))
+        assertEquals(emptyList(), weatherGlanceItems(Settings(), weather, air, now, zone, time, testLocale))
         // No UV of 0.
-        assertEquals(false, glanceItems(all, weather.copy(uvIndex = 0.2), null, null, now, zone, time, testLocale).any { it.startsWith("UV") })
+        assertEquals(false, weatherGlanceItems(all, weather.copy(uvIndex = 0.2), null, now, zone, time, testLocale).any { it.startsWith("UV") })
         // No UV after dark.
         val night = weather.copy(isDay = false)
-        assertEquals(false, glanceItems(all, night, null, null, now, zone, time, testLocale).any { it.startsWith("UV") })
+        assertEquals(false, weatherGlanceItems(all, night, null, now, zone, time, testLocale).any { it.startsWith("UV") })
+    }
+
+    @Test fun countdownsStayWithTheWeatherOff() {
+        val settings = Settings(showWeather = false, countdowns = listOf(Countdown("Trip", "2026-11-20")))
+        assertEquals(listOf("Trip in 4 days"), countdownItems(settings, null, now, zone, testLocale))
+        assertEquals(emptyList(), countdownItems(Settings(), null, now, zone, testLocale))
     }
 }

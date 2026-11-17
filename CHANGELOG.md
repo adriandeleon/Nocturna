@@ -227,6 +227,11 @@ one-line summary written for users.
 
 ### Changed
 
+- **Day mode's weather moves out of the desk clock, onto the sky above it:** the conditions, temperature,
+  today's high and low, the next hours and the rain, sun, UV and air quality line now sit on a pane of
+  see-through navy glass over the background, just above the clock, and drift and swap sides with it. The desk
+  clock keeps the time, date, battery, next alarm and countdowns. Where the sticky note needs the room, the
+  weather shrinks to one line of the temperature and the day's high and low. The night clock is unchanged.
 - **Clearer buttons on the clock and the wake-up screen:** each button on the clock has an icon beside its
   name and is taller, so it's easier to hit in the dark. Dimming, the radio, the sleep timer and Day mode's
   focus timer light up while they're on, instead of changing their wording, and TalkBack reads them as
