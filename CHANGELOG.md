@@ -10,6 +10,10 @@ one-line summary written for users.
 
 ### Added
 
+- **See how much battery the night clock uses:** Settings › Brightness and night mode › *Battery at night*
+  shows the last night's use (*Sun 15 Nov: 12% in 7 h 40 m*) and what 8 hours take on average over the last
+  seven nights (*About 13% for 8 hours*). It counts only while the night clock shows and the phone isn't
+  charging, so a phone left on its charger all night adds nothing. It stays on the phone and isn't backed up.
 - **Ambient music and your own music for falling asleep, all without the internet:** Settings › Radio
   stations has three pieces of *Ambient music*: *Slow chords* (warm chords drifting from one to the next),
   *Night chimes* (bells here and there over a low hum) and *Deep drone* (a low hum that swells and fades).

@@ -21,17 +21,24 @@ import com.adl.nocturna.clock.DigitalClock
 import com.adl.nocturna.clock.LocalClockPlatform
 import com.adl.nocturna.clock.clockColor
 import com.adl.nocturna.clock.label
+import com.adl.nocturna.clock.nightBatterySummary
 import com.adl.nocturna.clock.rememberNow
 import com.adl.nocturna.clock.selectedSwatch
 import com.adl.nocturna.data.ClockFont
 import com.adl.nocturna.data.ClockStyle
 import com.adl.nocturna.data.Settings
+import com.adl.nocturna.data.NightBatteryStore
 import com.adl.nocturna.data.SettingsStore
 import com.adl.nocturna.resources.*
+import com.adl.nocturna.text.DateTimePattern
+import com.adl.nocturna.text.PlatformLocale
+import com.adl.nocturna.text.bestDateTimePattern
 import com.adl.nocturna.text.formatNumber
 import com.adl.nocturna.text.strings
 import com.adl.nocturna.ui.currentLocale
 import kotlin.math.roundToInt
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.atTime
 import org.jetbrains.compose.resources.stringResource
 
 private fun set(block: (Settings) -> Settings) = SettingsStore.update(block)
@@ -177,6 +184,11 @@ fun BrightnessPage(padding: PaddingValues) {
                     SliderRow(stringResource(Res.string.brightness_turn_on_below), s.nightModeLux, 0.5f..30f, { "${formatNumber(it.toDouble(), 1, locale)} lux" }) { v ->
                         set { it.copy(nightModeLux = v) }
                     }
+                    val nights by NightBatteryStore.uses.collectAsStateWithLifecycle()
+                    TextRow(
+                        stringResource(Res.string.brightness_night_battery),
+                        nightBatterySummary(nights, locale) { dayLabel(it, locale) } ?: stringResource(Res.string.brightness_night_battery_none),
+                    )
                 }
             }
         }
@@ -187,3 +199,7 @@ fun BrightnessPage(padding: PaddingValues) {
         }
     }
 }
+
+/** A night's date in the battery log: "Sun 15 Nov". */
+private fun dayLabel(date: LocalDate, locale: PlatformLocale): String =
+    DateTimePattern(bestDateTimePattern("EEEdMMM", locale), locale).format(date.atTime(0, 0))

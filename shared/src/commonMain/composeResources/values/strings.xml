@@ -102,6 +102,8 @@
     <string name="brightness_night_mode">Night mode</string>
     <string name="brightness_night_mode_detail">Dim red clock when the room is dark</string>
     <string name="brightness_turn_on_below">Turn on below</string>
+    <string name="brightness_night_battery">Battery at night</string>
+    <string name="brightness_night_battery_none">Measured while the night clock shows and the phone isn't charging. Nothing yet.</string>
     <string name="brightness_screen_care">Screen care</string>
     <string name="brightness_burn_in">Burn-in protection</string>
     <string name="brightness_burn_in_detail">Slowly moves the clock around the screen</string>

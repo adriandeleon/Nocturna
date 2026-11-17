@@ -77,6 +77,15 @@ fun SwitchRow(title: String, checked: Boolean, subtitle: String? = null, onChang
     }
 }
 
+/** A row that only tells: a title and, under it, [text]. */
+@Composable
+fun TextRow(title: String, text: String) {
+    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
+        Text(title, style = MaterialTheme.typography.bodyLarge)
+        Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+    }
+}
+
 @Composable
 fun NavRow(title: String, subtitle: String? = null, onClick: () -> Unit) {
     Column(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 12.dp)) {

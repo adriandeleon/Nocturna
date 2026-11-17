@@ -7,13 +7,14 @@ import com.adl.nocturna.alarm.AlarmScheduler
 
 object Storage {
     /**
-     * Loads (or reloads) the settings and alarms. Both live in device-protected storage, so alarms
-     * still ring after an overnight reboot, before the phone is unlocked.
+     * Loads (or reloads) the settings, alarms and the battery used at night. They live in device-protected
+     * storage, so alarms still ring after an overnight reboot, before the phone is unlocked.
      */
     fun loadStores(context: Context) {
         val app = context.applicationContext
         SettingsStore.init(SharedPreferencesStore(prefs(app, "nocturna")))
         AlarmStore.init(SharedPreferencesStore(prefs(app, "nocturna_alarms"))) { AlarmScheduler.reschedule(app) }
+        NightBatteryStore.init(SharedPreferencesStore(prefs(app, "nocturna_nights")))
     }
 
     /**

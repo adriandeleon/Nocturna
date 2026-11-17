@@ -88,6 +88,9 @@ object SpanishStrings : Strings {
     override val reminderWater = "Hora de un vaso de agua"
     override val reminderBoth = "Hora de estirarte y tomar agua"
     override fun batteryCare(percent: Int) = "Cargado al $percent% · ya puedes desconectarlo"
+    override fun nightBatteryNight(day: String, percent: Int, time: String) = "$day: $percent% en $time"
+    override fun nightBatteryEstimate(percent: Int, hours: Int, nights: Int) =
+        "Unos $percent% en $hours horas, " + if (nights == 1) "según una noche" else "según las últimas $nights noches"
     override val happyBirthday = "¡Feliz cumpleaños!"
     override val happyNewYear = "¡Feliz Año Nuevo!"
     override val happyValentines = "¡Feliz Día del Amor y la Amistad!"

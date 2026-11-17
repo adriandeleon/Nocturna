@@ -4,9 +4,11 @@
     <cloud-backup>
         <exclude domain="sharedpref" path="nocturna_local.xml" />
         <exclude domain="device_sharedpref" path="nocturna_dnd.xml" />
+        <exclude domain="device_sharedpref" path="nocturna_nights.xml" />
     </cloud-backup>
     <device-transfer>
         <exclude domain="sharedpref" path="nocturna_local.xml" />
         <exclude domain="device_sharedpref" path="nocturna_dnd.xml" />
+        <exclude domain="device_sharedpref" path="nocturna_nights.xml" />
     </device-transfer>
 </data-extraction-rules>

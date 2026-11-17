@@ -3,4 +3,5 @@
 <full-backup-content>
     <exclude domain="sharedpref" path="nocturna_local.xml" />
     <exclude domain="device_sharedpref" path="nocturna_dnd.xml" />
+    <exclude domain="device_sharedpref" path="nocturna_nights.xml" />
 </full-backup-content>
