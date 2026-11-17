@@ -102,6 +102,8 @@
     <string name="brightness_night_mode">Modo noche</string>
     <string name="brightness_night_mode_detail">Reloj rojo y tenue cuando el cuarto está oscuro</string>
     <string name="brightness_turn_on_below">Activar por debajo de</string>
+    <string name="brightness_night_battery">Batería de noche</string>
+    <string name="brightness_night_battery_none">Se mide mientras se ve el reloj de noche y el teléfono no se está cargando. Aún no hay datos.</string>
     <string name="brightness_screen_care">Cuidado de la pantalla</string>
     <string name="brightness_burn_in">Protección contra quemado</string>
     <string name="brightness_burn_in_detail">Mueve el reloj despacio por la pantalla</string>

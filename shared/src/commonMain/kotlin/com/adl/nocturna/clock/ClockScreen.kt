@@ -25,12 +25,14 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -55,6 +57,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.adl.nocturna.alarm.alarmCountdownLabel
 import com.adl.nocturna.data.AlarmStore
 import com.adl.nocturna.data.ClockStyle
+import com.adl.nocturna.data.NightBatteryStore
 import com.adl.nocturna.data.Settings
 import com.adl.nocturna.data.SettingsStore
 import com.adl.nocturna.day.CalendarLink
@@ -83,6 +86,7 @@ import com.adl.nocturna.ui.NightRed
 import com.adl.nocturna.ui.currentLocale
 import com.adl.nocturna.weather.WeatherRepository
 import com.adl.nocturna.weather.pickForecast
+import kotlin.math.roundToInt
 import kotlin.random.Random
 import kotlin.time.Clock
 import kotlin.time.Instant
@@ -151,6 +155,7 @@ fun ClockScreen(
         else -> currentLux < settings.nightModeLux
     }
     LaunchedEffect(night) { onNight(night) }
+    NightBatteryEffect(night, platform.battery(), now.zone)
 
     val room = screenBrightness(
         currentLux, night, day, settings.dimEnabled, settings.autoBrightness,
@@ -561,5 +566,28 @@ private fun DriftLayout(enabled: Boolean, modifier: Modifier = Modifier, content
             val y = slackY / 2 + (slackY / 2 * 0.7f * fy).toInt()
             placeable.place(x, y)
         }
+    }
+}
+
+/**
+ * Logs the battery used while the night clock shows and the phone isn't charging (see [NightBatteryStore]).
+ * Leaving the screen, or this clock going away, ends the stretch there and then, since a stopped screen may
+ * not recompose.
+ */
+@Composable
+private fun NightBatteryEffect(night: Boolean, battery: BatteryInfo?, zone: TimeZone) {
+    var started by remember { mutableStateOf(true) }
+    val level = battery?.let { (it.level * 100).roundToInt() }
+    val tracking = night && started && battery != null && !battery.charging
+    LaunchedEffect(tracking, level) { NightBatteryStore.track(tracking, level, Clock.System.now(), zone) }
+    val currentLevel by rememberUpdatedState(level)
+    val currentZone by rememberUpdatedState(zone)
+    LifecycleEventEffect(Lifecycle.Event.ON_START) { started = true }
+    LifecycleEventEffect(Lifecycle.Event.ON_STOP) {
+        started = false
+        NightBatteryStore.track(false, currentLevel, Clock.System.now(), currentZone)
+    }
+    DisposableEffect(Unit) {
+        onDispose { NightBatteryStore.track(false, currentLevel, Clock.System.now(), currentZone) }
     }
 }

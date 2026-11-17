@@ -135,6 +135,14 @@ interface Strings {
     /** "Charged to 85% · you can unplug". */
     fun batteryCare(percent: Int): String
 
+    // Battery at night, in Settings
+
+    /** The latest night: "Sun 15 Nov: 12% in 7 h 40 m". */
+    fun nightBatteryNight(day: String, percent: Int, time: String): String
+
+    /** What a night takes on average: "About 13% for 8 hours, over the last 5 nights". */
+    fun nightBatteryEstimate(percent: Int, hours: Int, nights: Int): String
+
     val happyBirthday: String
     val happyNewYear: String
     val happyValentines: String
@@ -318,6 +326,9 @@ object EnglishStrings : Strings {
     override val reminderWater = "Time for a glass of water"
     override val reminderBoth = "Time to stretch and drink some water"
     override fun batteryCare(percent: Int) = "Charged to $percent% · you can unplug"
+    override fun nightBatteryNight(day: String, percent: Int, time: String) = "$day: $percent% in $time"
+    override fun nightBatteryEstimate(percent: Int, hours: Int, nights: Int) =
+        "About $percent% for $hours hours, " + if (nights == 1) "from one night" else "over the last $nights nights"
     override val happyBirthday = "Happy birthday!"
     override val happyNewYear = "Happy New Year!"
     override val happyValentines = "Happy Valentine's Day!"
