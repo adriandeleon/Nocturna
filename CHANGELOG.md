@@ -260,7 +260,7 @@ one-line summary written for users.
 
 - **The calendar's day view keeps up with the day:** instead of the day's first few events, even long after
   they're over, it lists the all-day events and then the last event to have finished with the next three. Before
-  the first event ends it shows the next four, and late in the day the last four.
+  the first event ends it shows the next four.
 - **Day mode's sticky note no longer shrinks to a thin yellow strip** on a phone held sideways. When there
   isn't room under the clock for its hello and at least one event, the note is left out; your events still
   show as dots on the month page and in the week and day views.
