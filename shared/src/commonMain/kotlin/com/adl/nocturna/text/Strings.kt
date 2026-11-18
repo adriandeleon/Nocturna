@@ -150,6 +150,19 @@ interface Strings {
     val happyHalloween: String
     val happyDayOfTheDead: String
     val merryChristmas: String
+    val happyPosadas: String
+    val happyThreeKings: String
+    val happyChildrensDay: String
+    val happyMothersDay: String
+    val happyFathersDay: String
+    val happyEaster: String
+    val happyStPatricks: String
+    val happyFourthOfJuly: String
+    val happyCanadaDay: String
+    val happyThanksgiving: String
+    val happyLunarNewYear: String
+    val happyDiwali: String
+    val happyHanukkah: String
 
     // Settings summaries
 
@@ -336,6 +349,19 @@ object EnglishStrings : Strings {
     override val happyHalloween = "Happy Halloween!"
     override val happyDayOfTheDead = "Happy Day of the Dead!"
     override val merryChristmas = "Merry Christmas!"
+    override val happyPosadas = "Happy Posadas!"
+    override val happyThreeKings = "Happy Three Kings' Day!"
+    override val happyChildrensDay = "Happy Children's Day!"
+    override val happyMothersDay = "Happy Mother's Day!"
+    override val happyFathersDay = "Happy Father's Day!"
+    override val happyEaster = "Happy Easter!"
+    override val happyStPatricks = "Happy St Patrick's Day!"
+    override val happyFourthOfJuly = "Happy Fourth of July!"
+    override val happyCanadaDay = "Happy Canada Day!"
+    override val happyThanksgiving = "Happy Thanksgiving!"
+    override val happyLunarNewYear = "Happy Lunar New Year!"
+    override val happyDiwali = "Happy Diwali!"
+    override val happyHanukkah = "Happy Hanukkah!"
 
     override val styleDigital = "Digital"
     override val styleAnalog = "Analog"

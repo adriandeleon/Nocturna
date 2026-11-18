@@ -10,6 +10,28 @@ one-line summary written for users.
 
 ### Added
 
+- **Day mode's scene feels the cold:** with *Weather in the scene* on (Settings › Day mode › *Weather*), the
+  monthly pictures frost over when it's cold outside. Below 20 °C the hills start to turn white with rime
+  along their tops and glints of frost, the sky goes a paler, icy blue and fewer flowers are out; by 5 °C
+  the frost is complete. A photo background is left as it is.
+- **Day mode's sky follows the real sunrise and sunset:** dawn now breaks around sunrise and night falls 45
+  minutes after sunset, from the times in the weather forecast, so in winter the scene darkens with the real
+  evening instead of at 20:00, and the sun and moon cross the sky on the same times. Without the forecast it
+  keeps the fixed day it had (dawn 05:30–07:00, dusk 18:30–20:00).
+- **Holidays last longer in Day mode:** the decorations start before the day itself, more lightly and
+  without the sticky note's greeting: hearts from 10 February, papel picado from 1 September in Mexico, bats
+  and pumpkins from 24 October, and Christmas lights all December until New Year's Eve.
+- **More holidays in Day mode, with fireworks after dark:** with the phone's region set to Mexico, piñatas
+  under the lights for Las Posadas (16–23 December), the Christmas lights until 5 January, paper crowns on Día
+  de Reyes, balloons on Día del Niño and roses and falling petals on Día de las Madres. Everywhere, painted
+  eggs on the hills at Easter, and in their countries kites on Father's Day, roses on Mother's Day, shamrocks
+  on St Patrick's Day, falling leaves at Thanksgiving, red lanterns for Lunar New Year, oil lamps and warm
+  lights for Diwali and blue and white bunting with stars for Hanukkah. Once the sky is dark, fireworks go off
+  on New Year's Eve and Day, the Fourth of July, Canada Day, the night of Mexico's *Grito*, Lunar New Year and
+  Diwali. Each holiday has its greeting on the sticky note.
+- **A truer night sky in Day mode:** the moon now shows its real phase, from a thin crescent to full, and on
+  the peak nights of the main meteor showers (the Perseids in August, the Geminids in December and five
+  more) shooting stars streak across the sky now and then.
 - **See how much battery the night clock uses:** Settings › Brightness and night mode › *Battery at night*
   shows the last night's use (*Sun 15 Nov: 12% in 7 h 40 m*) and what 8 hours take on average over the last
   seven nights (*About 13% for 8 hours*). It counts only while the night clock shows and the phone isn't
