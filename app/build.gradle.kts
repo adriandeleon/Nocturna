@@ -1,3 +1,5 @@
+import com.android.build.api.variant.BuildConfigField
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -34,6 +36,25 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true // the version on the About screen
+    }
+}
+
+/**
+ * When the APK was built, to the minute, in milliseconds since the epoch. Gradle reads it when the
+ * BuildConfig is generated rather than when the build is configured, so the configuration cache doesn't
+ * keep an old time; rounded to the minute, builds within one minute leave BuildConfig, and everything
+ * compiled from it, up to date.
+ */
+abstract class BuildMinute : ValueSource<Long, ValueSourceParameters.None> {
+    override fun obtain(): Long = System.currentTimeMillis() / 60_000 * 60_000
+}
+
+androidComponents {
+    onVariants { variant ->
+        variant.buildConfigFields?.put(
+            "BUILD_TIME",
+            providers.of(BuildMinute::class.java) {}.map { BuildConfigField("long", "${it}L", "When this APK was built (the About screen)") },
+        )
     }
 }
 
