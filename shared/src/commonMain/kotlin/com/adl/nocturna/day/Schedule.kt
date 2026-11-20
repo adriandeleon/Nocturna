@@ -51,14 +51,19 @@ fun nextDayScheduleEdge(settings: Settings, now: Instant, zone: TimeZone): Insta
 /**
  * The settings after the clock's Day mode / Clock only button is pressed at [now]. Off and on swap. On a
  * schedule the button flips day mode until the schedule's next edge, or ends a flip already running.
+ * Going to Clock only turns dimming back on, so a bright Day mode doesn't keep the bedside clock bright;
+ * the clock's moon/sun button can still turn it off afterwards.
  */
-fun Settings.withDayModeToggled(now: Instant, zone: TimeZone): Settings = when (dayMode) {
-    DayMode.OFF -> copy(dayMode = DayMode.ON)
-    DayMode.ON -> copy(dayMode = DayMode.OFF)
-    DayMode.SCHEDULED -> copy(
-        dayModeOverrideUntil = if (isOverridden(this, now)) 0L
-        else nextDayScheduleEdge(this, now, zone)?.toEpochMilliseconds() ?: Long.MAX_VALUE,
-    )
+fun Settings.withDayModeToggled(now: Instant, zone: TimeZone): Settings {
+    val toggled = when (dayMode) {
+        DayMode.OFF -> copy(dayMode = DayMode.ON)
+        DayMode.ON -> copy(dayMode = DayMode.OFF)
+        DayMode.SCHEDULED -> copy(
+            dayModeOverrideUntil = if (isOverridden(this, now)) 0L
+            else nextDayScheduleEdge(this, now, zone)?.toEpochMilliseconds() ?: Long.MAX_VALUE,
+        )
+    }
+    return if (isDayModeActive(toggled, now, zone)) toggled else toggled.copy(dimEnabled = true)
 }
 
 private fun isOverridden(settings: Settings, now: Instant) = now.toEpochMilliseconds() < settings.dayModeOverrideUntil

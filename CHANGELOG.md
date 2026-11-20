@@ -257,6 +257,9 @@ one-line summary written for users.
 
 ### Changed
 
+- **Clock only turns dimming back on:** pressing *Clock only* on the clock's buttons to leave Day mode
+  switches dimming on again, so a Day mode left at full brightness doesn't keep the bedside clock bright at
+  night. The moon/sun button still turns it off afterwards, until the next switch to Clock only.
 - **The screen dims behind the clock's buttons:** while Settings, Alarms, Radio, Day mode or Focus and the
   other buttons show, the clock (and Day mode's photo, calendar and notes) fades to a darker shade, so the
   buttons stand out. A tap on the dimmed part hides the buttons, as before; it no longer opens a calendar event
