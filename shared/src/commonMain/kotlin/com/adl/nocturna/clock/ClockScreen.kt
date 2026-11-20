@@ -10,6 +10,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -296,6 +297,21 @@ fun ClockScreen(
         }
 
         if (interactive) {
+            // While the buttons show, the clock (or Day mode) behind them dims, so the buttons stand out.
+            // A tap on the dimmed part hides them, rather than reaching what is under it.
+            val scrim by animateFloatAsState(if (controlsVisible) ControlsScrimAlpha else 0f, label = "scrim")
+            if (scrim > 0f) Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = scrim))
+                    .then(
+                        if (controlsVisible) Modifier.clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = { controlsVisible = false },
+                        ) else Modifier
+                    )
+            )
             AnimatedVisibility(
                 visible = controlsVisible,
                 enter = fadeIn(),
@@ -312,6 +328,9 @@ fun ClockScreen(
         }
     }
 }
+
+/** How dark the screen behind the clock's buttons gets while they show. */
+private const val ControlsScrimAlpha = 0.6f
 
 @Composable
 private fun InfoBlock(

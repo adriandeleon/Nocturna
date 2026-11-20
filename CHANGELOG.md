@@ -227,6 +227,10 @@ one-line summary written for users.
 
 ### Changed
 
+- **The screen dims behind the clock's buttons:** while Settings, Alarms, Radio, Day mode or Focus and the
+  other buttons show, the clock (and Day mode's photo, calendar and notes) fades to a darker shade, so the
+  buttons stand out. A tap on the dimmed part hides the buttons, as before; it no longer opens a calendar event
+  under them.
 - **Day mode's weather moves out of the desk clock, onto the sky above it:** the conditions, temperature,
   today's high and low, the next hours and the rain, sun, UV and air quality line now sit on a pane of
   see-through navy glass over the background, just above the clock, and drift and swap sides with it. The desk
