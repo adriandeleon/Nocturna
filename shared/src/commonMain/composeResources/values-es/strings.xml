@@ -154,7 +154,7 @@
     <string name="daypage_air">Calidad del aire</string>
     <string name="daypage_air_detail">El índice de calidad del aire de EE. UU., de Copernicus (CAMS) a través de Open-Meteo: una consulta más cada hora</string>
     <string name="daypage_weather_scene">El clima en el paisaje</string>
-    <string name="daypage_weather_scene_detail">Las imágenes del mes se nublan, llueven, nievan o se llenan de niebla según el clima de afuera</string>
+    <string name="daypage_weather_scene_detail">Las imágenes del mes se nublan, llueven, nievan, se llenan de niebla o se escarchan según el clima de afuera</string>
     <string name="daypage_countdowns">Cuentas regresivas</string>
     <string name="daypage_countdown_add">Agregar una cuenta regresiva</string>
     <string name="daypage_countdown_add_another">Agregar otra</string>
@@ -180,7 +180,7 @@
     <string name="daypage_wave_focus">Agita la mano para iniciar o pausar</string>
     <string name="daypage_wave_focus_detail">Pasar la mano sobre la parte de arriba del teléfono inicia el temporizador, y lo pausa o lo reanuda</string>
     <string name="daypage_holidays">Días festivos</string>
-    <string name="daypage_holidays_detail">Confeti, corazones, papel picado, luces y un saludo en algunos días del año</string>
+    <string name="daypage_holidays_detail">Adornos y un saludo en los días festivos (algunos solo en tu región), con fuegos artificiales al anochecer y algo más discreto en los días previos</string>
     <string name="daypage_birthday">Tu cumpleaños</string>
     <string name="daypage_birthday_not_set">Sin fecha. Tócalo para elegirla y tener confeti ese día</string>
     <string name="daypage_birthday_clear">Borrar tu cumpleaños</string>

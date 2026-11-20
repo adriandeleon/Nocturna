@@ -66,6 +66,8 @@ import com.adl.nocturna.day.DayLayout
 import com.adl.nocturna.day.FocusTimer
 import com.adl.nocturna.day.focusTimerFromSaved
 import com.adl.nocturna.day.holidayOn
+import com.adl.nocturna.day.sceneCold
+import com.adl.nocturna.day.skyDay
 import com.adl.nocturna.day.sceneWeather
 import com.adl.nocturna.day.waveFocus
 import com.adl.nocturna.day.isDayModeActive
@@ -275,9 +277,15 @@ fun ClockScreen(
         if (day) {
             val weather by WeatherRepository.weather.collectAsStateWithLifecycle()
             val locale = currentLocale()
+            val outside = weather?.takeIf { settings.dayWeatherScene && settings.showWeather }
+            // Dawn and dusk come with the real sunrise and sunset, which the forecast brings.
+            val days = weather?.takeIf { settings.showWeather }?.days.orEmpty()
+            val skyDay = remember(days, now.date, now.zone) { skyDay(days, now.date, now.zone) }
             DayBackground(
                 now, settings.dayPhotoVersion, Modifier.fillMaxSize(),
-                weather = weather?.takeIf { settings.dayWeatherScene && settings.showWeather }?.let { sceneWeather(it.code) },
+                weather = outside?.let { sceneWeather(it.code) },
+                cold = outside?.let { sceneCold(it.temperatureC) } ?: 0f,
+                skyDay = skyDay,
                 holiday = if (settings.dayHolidays) holidayOn(now.date, settings.birthday, locale.countryCode) else null,
             )
         }

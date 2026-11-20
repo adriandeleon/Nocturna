@@ -190,21 +190,22 @@ class CalendarTest {
         assertEquals(listOf("Holiday", "A", "B", "C", "D"), dayView(busyDay, 7))
     }
 
-    @Test fun dayViewFillsWithFinishedEventsLateInTheDay() {
-        assertEquals(listOf("Holiday", "D", "E", "F", "G"), dayView(busyDay, 16, 30))
-        assertEquals(listOf("Holiday", "D", "E", "F", "G"), dayView(busyDay, 20))
+    @Test fun dayViewShowsOnlyOneFinishedEventLateInTheDay() {
+        assertEquals(listOf("Holiday", "E", "F", "G"), dayView(busyDay, 15, 30))
+        assertEquals(listOf("Holiday", "F", "G"), dayView(busyDay, 17, 30))
+        assertEquals(listOf("Holiday", "G"), dayView(busyDay, 20))
     }
 
-    @Test fun dayViewKeepsShortDaysWhole() {
+    @Test fun dayViewOnShortDays() {
         val day = listOf(timed("Stand-up", 9, 10), timed("Lunch", 13, 14))
         assertEquals(listOf("Stand-up", "Lunch"), dayView(day, 11))
-        assertEquals(listOf("Stand-up", "Lunch"), dayView(day, 20))
+        assertEquals(listOf("Lunch"), dayView(day, 20))
     }
 
     @Test fun dayViewPicksTheEventThatFinishedLastAsThePreviousOne() {
         // The long meeting started first but finished after the short one.
         val day = listOf(timed("Long", 8, 11), timed("Short", 9, 10), timed("Next", 12, 13))
-        assertEquals(listOf("Long", "Short", "Next"), dayView(day, 11, 30))
+        assertEquals(listOf("Long", "Next"), dayView(day, 11, 30))
         assertEquals(listOf("Long", "Next"), dayViewEvents(day, today, monterrey, Instant.fromEpochMilliseconds(at(11, 30)), timed = 2).map { it.title })
     }
 
