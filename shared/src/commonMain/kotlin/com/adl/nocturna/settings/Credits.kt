@@ -3,6 +3,10 @@ package com.adl.nocturna.settings
 import com.adl.nocturna.resources.*
 import com.adl.nocturna.text.PlatformLocale
 import com.adl.nocturna.text.strings
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.format
+import kotlinx.datetime.format.char
 import org.jetbrains.compose.resources.StringResource
 
 /** Where the code lives; the About screen links to it, its issues and its licence. */
@@ -52,6 +56,18 @@ val SOUND_CREDITS = listOf(
     Credit("Drink Pouring by Antwash", Res.string.credit_sound_water, "CC0 1.0", "https://freesound.org/people/Antwash/sounds/118559/"),
 )
 
-/** "Version 0.1.0 (1)", with "· debug" for a debug build. */
-fun versionLabel(versionName: String, versionCode: Int, debug: Boolean, locale: PlatformLocale): String =
-    strings(locale).version(versionName, versionCode) + if (debug) " · debug" else ""
+/** How [versionLabel] writes when the APK was built: "2026-11-19 21:05", the same in every language. */
+private val BUILT_FORMAT = LocalDateTime.Format {
+    date(LocalDate.Formats.ISO)
+    char(' ')
+    hour()
+    char(':')
+    minute()
+}
+
+/**
+ * "Version 0.1.0 (1) · 2026-11-19 21:05", with "· debug" for a debug build. [built] is when the APK was built,
+ * in the phone's time zone.
+ */
+fun versionLabel(versionName: String, versionCode: Int, built: LocalDateTime, debug: Boolean, locale: PlatformLocale): String =
+    strings(locale).version(versionName, versionCode) + " · " + BUILT_FORMAT.format(built) + if (debug) " · debug" else ""
