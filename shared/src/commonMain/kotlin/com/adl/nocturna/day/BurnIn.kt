@@ -48,11 +48,11 @@ fun sunWobble(seconds: Float): Pair<Float, Float> {
 
 private const val DAY = 86_400f
 
-/** The sun is up from dawn (05:30) to dusk (20:00), as the sky's looks have it (see [skyMix]). */
+/** With the default sun ([SunTimes.DEFAULT]) the sun is up from dawn (05:30) to dusk (20:00), as the sky's looks have it (see [skyMix]). */
 const val SUNRISE = 5.5f * 3600
 const val SUNSET = 20f * 3600
 
-/** The moon is up from early dusk (18:30) to after dawn (07:00), so it fades in and out with the night. */
+/** With the default sun the moon is up from early dusk (18:30) to after dawn (07:00), so it fades in and out with the night. */
 const val MOONRISE = 18.5f * 3600
 const val MOONSET = 7f * 3600
 

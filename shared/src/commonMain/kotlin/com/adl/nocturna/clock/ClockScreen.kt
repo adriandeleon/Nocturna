@@ -67,6 +67,8 @@ import com.adl.nocturna.day.focusTimerFromSaved
 import com.adl.nocturna.day.holidayOn
 import com.adl.nocturna.day.sceneWeather
 import com.adl.nocturna.day.waveFocus
+import com.adl.nocturna.day.SunTimes
+import com.adl.nocturna.day.sunTimes
 import com.adl.nocturna.day.isDayModeActive
 import com.adl.nocturna.day.toSaved
 import com.adl.nocturna.day.withDayModeToggled
@@ -278,6 +280,7 @@ fun ClockScreen(
                 now, settings.dayPhotoVersion, Modifier.fillMaxSize(),
                 weather = weather?.takeIf { settings.dayWeatherScene && settings.showWeather }?.let { sceneWeather(it.code) },
                 holiday = if (settings.dayHolidays) holidayOn(now.date, settings.birthday, locale.countryCode) else null,
+                sunTimes = weather?.let { sunTimes(it.days, now.date, now.zone) } ?: SunTimes.DEFAULT,
             )
         }
 

@@ -133,6 +133,8 @@ fun DayBackground(
     weather: SceneWeather? = null,
     /** The holiday whose decorations go over the background, or null. */
     holiday: Holiday? = null,
+    /** Today's sunrise and sunset, which set the illustrated sky's dawn and dusk. */
+    sunTimes: SunTimes = SunTimes.DEFAULT,
 ) {
     val platform = LocalClockPlatform.current
     val photo by produceState<ImageBitmap?>(null, photoVersion) {
@@ -163,7 +165,7 @@ fun DayBackground(
         } else {
             SceneBackground(
                 monthTheme(now.local.month), now.time, seed = now.local.year * 12 + now.local.month.number,
-                modifier = Modifier.fillMaxSize(), weather = weather, holiday = holiday,
+                modifier = Modifier.fillMaxSize(), weather = weather, holiday = holiday, sunTimes = sunTimes,
             )
         }
         // Rain falls over the illustration only; a holiday's decorations go over a photo too.

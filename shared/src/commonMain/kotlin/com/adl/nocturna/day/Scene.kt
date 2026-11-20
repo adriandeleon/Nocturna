@@ -107,7 +107,7 @@ private fun mix(a: Sky, b: Sky, t: Float) = Sky(
 /**
  * A cheerful, flat illustration for day mode: sky, sun, drifting clouds and rolling hills in [theme]'s
  * colours. [time] sets the look of the sky: dawn, midday, golden afternoon or a starry night (see
- * [skyMix]), and keeps everything moving so no pixel is lit the same all day (see BurnIn.kt): the sun
+ * [skyMix]), with dawn and dusk at [sunTimes], today's sunrise and sunset, and keeps everything moving so no pixel is lit the same all day (see BurnIn.kt): the sun
  * and the moon cross the sky, the stars turn, the clouds float along, the hills swell, scroll and
  * change shape, and the flowers and trees sway, wander, grow and shrink, and are replanted every hour.
  * With [weather] the sky clouds over, greys and snows or fogs up to match (the rain itself falls in
@@ -121,12 +121,13 @@ fun SceneBackground(
     modifier: Modifier = Modifier,
     weather: SceneWeather? = null,
     holiday: Holiday? = null,
+    sunTimes: SunTimes = SunTimes.DEFAULT,
 ) {
     Canvas(modifier) {
         val w = size.width
         val h = size.height
         val seconds = time.toSecondOfDay().toFloat()
-        val skyMix = skyMix(time)
+        val skyMix = skyMix(time, sunTimes)
         val night = skyMix.weight(TimeOfDay.NIGHT)
         val overcast = weather?.overcast() ?: 0f
         val sky = mix(sky(skyMix.from, theme), sky(skyMix.to, theme), skyMix.t).overcast(overcast, night)
@@ -162,7 +163,7 @@ fun SceneBackground(
             val (ax, ay) = skyArc(skyTrip(seconds, rise, set))
             return Offset(ax * w + wx * sunR, (ay + wy) * sunR)
         }
-        val sun = body(SUNRISE, SUNSET)
+        val sun = body(sunTimes.dawnStart * 60, sunTimes.duskEnd * 60)
         val day = (1f - night) * clear
         if (day > 0f) {
             drawCircle(Brush.radialGradient(listOf(sky.glow, Color.Transparent), sun, sunR * 2.6f), sunR * 2.6f, sun, alpha = day)
@@ -177,7 +178,7 @@ fun SceneBackground(
             drawCircle(sky.sun, sunR, sun, alpha = day)
         }
         if (night > 0f) {
-            val moonAt = body(MOONRISE, MOONSET)
+            val moonAt = body(sunTimes.duskStart * 60, sunTimes.dawnEnd * 60)
             rotate(seconds / 20f % 360f, moonAt) { moon(moonAt, sunR * 0.85f, night * clear) }
         }
 

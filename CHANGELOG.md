@@ -247,6 +247,10 @@ one-line summary written for users.
 
 ### Fixed
 
+- **Day mode's sky now follows the real sunrise and sunset:** with the weather on, dawn and dusk come when the sun
+  rises and sets where you are, so on a short winter day the scene turns golden in the afternoon and starry once
+  it's dark outside, instead of staying sunny until 18:30. The sun and the moon cross the sky in step. Without
+  the weather it keeps the old hours, dawn 05:30–07:00 and dusk 18:30–20:00.
 - **The calendar's day view keeps up with the day:** instead of the day's first few events, even long after
   they're over, it lists the all-day events and then the last event to have finished with the next three. Before
   the first event ends it shows the next four, and late in the day the last four.
