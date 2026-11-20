@@ -74,7 +74,7 @@ interface SettingsPlatform {
     /** The app's version name, "0.1.0", which backups record. */
     val versionName: String
 
-    /** "Version 0.1.0 (1)", as [versionLabel] writes it. */
+    /** "Version 0.1.0 (1) · 2026-11-19 21:05", as [versionLabel] writes it. */
     val versionLabel: String
 }
 

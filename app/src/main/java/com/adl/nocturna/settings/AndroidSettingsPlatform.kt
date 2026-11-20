@@ -39,6 +39,9 @@ import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Instant
 
 /**
  * The Settings pages' view of an Android phone: its permissions, system settings pages, photo and file
@@ -204,5 +207,9 @@ class AndroidSettingsPlatform(private val activity: Context) : SettingsPlatform 
 
     // Read each time, so it follows a change of the phone's language.
     override val versionLabel: String
-        get() = versionLabel(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE, BuildConfig.DEBUG, Locale.getDefault())
+        get() = versionLabel(
+            BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE,
+            Instant.fromEpochMilliseconds(BuildConfig.BUILD_TIME).toLocalDateTime(TimeZone.currentSystemDefault()),
+            BuildConfig.DEBUG, Locale.getDefault(),
+        )
 }
