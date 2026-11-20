@@ -12,6 +12,8 @@ import com.adl.nocturna.day.CalendarEvent
 import com.adl.nocturna.day.CalendarEvents
 import com.adl.nocturna.day.DayPhoto
 import com.adl.nocturna.day.MeetingChime
+import com.adl.nocturna.day.ReminderKind
+import com.adl.nocturna.day.ReminderSound
 import com.adl.nocturna.day.rememberCalendarEvents
 import com.adl.nocturna.notify.NotificationIconService
 import com.adl.nocturna.radio.AndroidRadioControl
@@ -55,6 +57,8 @@ class AndroidClockPlatform(context: Context) : ClockPlatform {
     override suspend fun loadDayPhoto(): ImageBitmap? = DayPhoto.load(app)
 
     override fun playMeetingChime() = MeetingChime.play(app)
+
+    override fun playReminderSound(kinds: Set<ReminderKind>) = ReminderSound.play(app, kinds)
 
     @Composable
     override fun wallpaperColor(): Int? = rememberWallpaperColor()

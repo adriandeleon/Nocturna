@@ -10,6 +10,11 @@ one-line summary written for users.
 
 ### Added
 
+- **Reminders that sound like what they ask:** Day mode's reminder to stand up and stretch now plays a few
+  footsteps on gravel, and the one to drink some water a few drops falling into a glass, instead of the meeting
+  chime's beep. Two coming due together play both, one after the other. Like the sleep sounds, Nocturna makes
+  them on your phone; they keep the chime's rules: the notification volume, and nothing on silent, vibrate or
+  Do Not Disturb.
 - **See how much battery the night clock uses:** Settings › Brightness and night mode › *Battery at night*
   shows the last night's use (*Sun 15 Nov: 12% in 7 h 40 m*) and what 8 hours take on average over the last
   seven nights (*About 13% for 8 hours*). It counts only while the night clock shows and the phone isn't

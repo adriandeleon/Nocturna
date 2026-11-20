@@ -6,7 +6,7 @@ import com.adl.nocturna.text.strings
 
 /*
  * Day mode's gentle nudges: to stand up and stretch, to drink some water, and to take the phone off the
- * charger once it's charged enough. They show as a tag in the desk clock; the first two also chime.
+ * charger once it's charged enough. They show as a tag in the desk clock; the first two also play a sound (footsteps, drops of water).
  */
 
 /** What a reminder is for. */

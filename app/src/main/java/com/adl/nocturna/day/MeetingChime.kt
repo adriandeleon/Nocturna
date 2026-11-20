@@ -18,13 +18,18 @@ object MeetingChime {
     private const val DURATION_MS = 300
 
     fun play(context: Context) {
-        val audio = context.getSystemService(AudioManager::class.java) ?: return
-        if (audio.ringerMode != AudioManager.RINGER_MODE_NORMAL) return
-        val notifications = context.getSystemService(NotificationManager::class.java)
-        if (notifications != null && notifications.currentInterruptionFilter > NotificationManager.INTERRUPTION_FILTER_ALL) return
+        if (!mayPlay(context)) return
         // The constructor throws when the audio system can't give it a track.
         val tone = runCatching { ToneGenerator(AudioManager.STREAM_NOTIFICATION, VOLUME) }.getOrNull() ?: return
         tone.startTone(ToneGenerator.TONE_PROP_PROMPT, DURATION_MS)
         Handler(Looper.getMainLooper()).postDelayed({ tone.release() }, DURATION_MS + 200L)
+    }
+
+    /** Whether day mode may make a sound now: not on silent or vibrate, nor in Do Not Disturb. */
+    fun mayPlay(context: Context): Boolean {
+        val audio = context.getSystemService(AudioManager::class.java) ?: return false
+        if (audio.ringerMode != AudioManager.RINGER_MODE_NORMAL) return false
+        val notifications = context.getSystemService(NotificationManager::class.java)
+        return notifications == null || notifications.currentInterruptionFilter <= NotificationManager.INTERRUPTION_FILTER_ALL
     }
 }
