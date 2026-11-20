@@ -131,7 +131,11 @@ fun DayBackground(
     /** The weather the illustrated scene shows; null for its own fair weather. */
     weather: SceneWeather? = null,
     /** The holiday whose decorations go over the background, or null. */
-    holiday: Holiday? = null,
+    holiday: HolidayDay? = null,
+    /** How cold the illustrated scene looks, 0..1 (see [sceneCold]). */
+    cold: Float = 0f,
+    /** When the illustrated scene's dawn, day, dusk and night are (see [skyDay]). */
+    skyDay: SkyDay = FIXED_SKY_DAY,
 ) {
     val platform = LocalClockPlatform.current
     val photo by produceState<ImageBitmap?>(null, photoVersion) {
@@ -162,11 +166,15 @@ fun DayBackground(
         } else {
             SceneBackground(
                 monthTheme(now.local.month), now.time, seed = now.local.year * 12 + now.local.month.number,
-                modifier = Modifier.fillMaxSize(), weather = weather, holiday = holiday,
+                modifier = Modifier.fillMaxSize(), weather = weather, holiday = holiday?.holiday, cold = cold, skyDay = skyDay,
+                moonPhase = moonPhase(now.instant),
             )
         }
-        // Rain falls over the illustration only; a holiday's decorations go over a photo too.
-        DayOverlay(if (p == null) weather else null, holiday, Modifier.fillMaxSize())
+        // Rain and shooting stars go over the illustration only; a holiday's decorations go over a photo too,
+        // with fireworks once the sky is dark.
+        val night = skyMix(now.time, skyDay).weight(TimeOfDay.NIGHT)
+        val meteors = p == null && (weather == null || weather.showsSun()) && meteorNight(now.date, now.time)
+        DayOverlay(if (p == null) weather else null, holiday, Modifier.fillMaxSize(), night, meteors)
     }
 }
 
@@ -276,7 +284,7 @@ fun DayLayout(
     val onTodo: ((Int) -> Unit)? = onOpen?.let { { i -> SettingsStore.update { s -> s.copy(todos = toggleTodo(todosForDay(s.todos, today), i, today)) } } }
     val onAddTodo: ((String) -> Unit)? = onOpen?.let { { text -> SettingsStore.update { s -> s.copy(todos = addTodo(s.todos, text, today)) } } }
     val holiday = if (settings.dayHolidays) holidayOn(today, settings.birthday, locale.countryCode) else null
-    val greetingText = holiday?.let { holidayGreeting(it, locale) } ?: greeting(now.hour, locale)
+    val greetingText = holiday?.takeIf { it.theDay }?.let { holidayGreeting(it.holiday, locale) } ?: greeting(now.hour, locale)
 
     // The page starts on the view chosen in Settings; a swipe (or the switch under the page)
     // changes it for as long as the clock stays open. The screen saver can't be swiped.

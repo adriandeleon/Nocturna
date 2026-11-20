@@ -117,20 +117,18 @@ fun eventsOnDay(events: List<CalendarEvent>, day: LocalDate, zone: TimeZone): Li
         .sortedWith(compareByDescending<CalendarEvent> { it.allDay }.thenBy { it.begin }.thenBy { it.title })
 
 /**
- * What the calendar's Day view lists for [day] at [now]: every all-day event, then [timed] timed events
- * around the time. That is the last event to have finished, then the ones in progress or still to come,
- * each part by start time. When fewer are left to come, more finished ones fill in, and before any has
- * finished the window is all upcoming ones, so the list stays [timed] long while the day has that many.
+ * What the calendar's Day view lists for [day] at [now]: every all-day event, then the timed events
+ * around the time. That is the last event to have finished, then the ones in progress or still to come
+ * by start time, [timed] timed events in all. Older finished events never fill in, so late in the day the
+ * list gets shorter; before any event has finished, all [timed] are ones still to come.
  */
 fun dayViewEvents(events: List<CalendarEvent>, day: LocalDate, zone: TimeZone, now: Instant, timed: Int = 4): List<CalendarEvent> {
     val all = eventsOnDay(events, day, zone)
     val nowMillis = now.toEpochMilliseconds()
     val (allDay, scheduled) = all.partition { it.allDay }
     val (finished, left) = scheduled.partition { it.end <= nowMillis }
-    val pastCount = maxOf(1, timed - left.size).coerceAtMost(finished.size)
-    val past = finished.sortedWith(compareBy<CalendarEvent> { it.end }.thenBy { it.begin }).takeLast(pastCount)
-        .sortedWith(compareBy<CalendarEvent> { it.begin }.thenBy { it.title })
-    return allDay + past + left.take(timed - past.size)
+    val previous = finished.maxWithOrNull(compareBy<CalendarEvent> { it.end }.thenBy { it.begin })
+    return allDay + listOfNotNull(previous) + left.take(timed - if (previous == null) 0 else 1)
 }
 
 /**

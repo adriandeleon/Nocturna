@@ -34,3 +34,20 @@ fun SceneWeather.cloudCount(): Int = when (this) {
 
 /** Whether the sun or moon shows through: not behind a full cover of cloud. */
 fun SceneWeather.showsSun(): Boolean = this == SceneWeather.CLEAR || this == SceneWeather.PARTLY
+
+/** At this temperature (°C) and above, the scene doesn't show the cold at all. */
+const val CHILLY_FROM_C = 20.0
+
+/** At this temperature (°C) and below, the scene is fully frosted over. */
+const val FROSTED_AT_C = 5.0
+
+/**
+ * How cold the scene looks at [temperatureC]: 0 from [CHILLY_FROM_C] up, rising to 1 (fully frosted) at
+ * [FROSTED_AT_C] and below, quickly at first so a chilly day already shows. The hills frost over, the sky
+ * turns icy and the flowers thin out.
+ */
+fun sceneCold(temperatureC: Double): Float {
+    if (temperatureC.isNaN()) return 0f
+    val x = ((CHILLY_FROM_C - temperatureC) / (CHILLY_FROM_C - FROSTED_AT_C)).coerceIn(0.0, 1.0)
+    return (1 - (1 - x) * (1 - x)).toFloat()
+}

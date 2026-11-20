@@ -241,43 +241,94 @@ internal fun AddTodoDialog(onDismiss: () -> Unit, onAdd: (String) -> Unit) {
 
 /**
  * What moves over day mode's background, behind the clock and the page: rain for the scene's weather,
- * and the holiday's confetti, hearts, papel picado or lights. Drawn on a canvas of its own, so the scene
- * under it isn't redrawn every frame; nothing is drawn, and no frames run, when there is nothing to show.
+ * shooting stars on a meteor shower's night ([meteors], as the [night] comes), and the holiday's
+ * decorations (see [decorations]), with fireworks once it's dark. Drawn on a canvas of its own, so the
+ * scene under it isn't redrawn every frame; nothing is drawn, and no frames run, when there is nothing to
+ * show.
  */
 @Composable
-internal fun DayOverlay(weather: SceneWeather?, holiday: Holiday?, modifier: Modifier = Modifier) {
+internal fun DayOverlay(
+    weather: SceneWeather?,
+    holiday: HolidayDay?,
+    modifier: Modifier = Modifier,
+    /** How far into the night the sky is, 0..1 (see [SkyMix.weight]). */
+    night: Float = 0f,
+    meteors: Boolean = false,
+) {
     val rain = weather == SceneWeather.RAIN || weather == SceneWeather.STORM
-    val decoration = holiday?.decoration()
-    if (!rain && decoration == null) return
+    val decorations = holiday?.decorations(dark = night >= 0.5f).orEmpty()
+    val shootingStars = meteors && night > 0f
+    if (!rain && decorations.isEmpty() && !shootingStars) return
+    val full = holiday?.theDay ?: true
     val transition = rememberInfiniteTransition(label = "overlay")
     // One slow clock for everything: a minute round, in seconds.
     val t by transition.animateFloat(0f, OVERLAY_LOOP_SECONDS, infiniteRepeatable(tween((OVERLAY_LOOP_SECONDS * 1000).toInt(), easing = LinearEasing), RepeatMode.Restart), label = "t")
     Canvas(modifier) {
+        if (shootingStars) shootingStars(t, night)
         if (rain) rain(t, heavy = weather == SceneWeather.STORM)
-        when (decoration) {
+        for (decoration in decorations) when (decoration) {
             Decoration.CONFETTI -> confetti(t)
-            Decoration.HEARTS -> hearts(t)
+            Decoration.HEARTS -> hearts(t, if (full) 18 else 7)
             Decoration.PAPEL_PICADO_MEXICO -> papelPicado(t, listOf(Color(0xFF006847), Color.White, Color(0xFFCE1126)))
             Decoration.PAPEL_PICADO_MUERTOS -> papelPicado(t, listOf(Color(0xFFE6007E), Color(0xFFFF8C00), Color(0xFF7B2CBF), Color(0xFFFFD000), Color(0xFF00A86B)))
-            Decoration.LIGHTS -> lights(t)
-            Decoration.BATS -> bats(t)
-            null -> Unit
+            Decoration.BUNTING_US -> papelPicado(t, listOf(Color(0xFFB22234), Color.White, Color(0xFF3C3B6E)), holes = false)
+            Decoration.BUNTING_CANADA -> papelPicado(t, listOf(Color(0xFFD80621), Color.White), holes = false)
+            Decoration.BUNTING_HANUKKAH -> papelPicado(t, listOf(Color(0xFF1F5FBF), Color.White, Color(0xFF8DB8F2)), holes = false)
+            Decoration.LIGHTS -> lights(t, LightColors)
+            Decoration.WARM_LIGHTS -> lights(t, WarmLightColors)
+            Decoration.BATS -> bats(t, if (full) 6 else 2)
+            Decoration.FIREWORKS -> fireworks(t)
+            Decoration.PINATAS -> pinatas(t)
+            Decoration.CROWNS -> crowns(t)
+            Decoration.BALLOONS -> balloons(t)
+            Decoration.PETALS -> petals(t)
+            Decoration.KITES -> kites(t)
+            Decoration.SHAMROCKS -> shamrocks(t)
+            Decoration.LEAVES -> leaves(t)
+            Decoration.LANTERNS -> lanterns(t, if (full) 9 else 6)
+            Decoration.STARS -> sixPointStars(t)
         }
     }
 }
 
-private const val OVERLAY_LOOP_SECONDS = 60f
+internal const val OVERLAY_LOOP_SECONDS = 60f
 
 /** What a holiday puts over the background. */
-internal enum class Decoration { CONFETTI, HEARTS, PAPEL_PICADO_MEXICO, PAPEL_PICADO_MUERTOS, LIGHTS, BATS }
+internal enum class Decoration {
+    CONFETTI, HEARTS, PAPEL_PICADO_MEXICO, PAPEL_PICADO_MUERTOS, BUNTING_US, BUNTING_CANADA, BUNTING_HANUKKAH,
+    LIGHTS, WARM_LIGHTS, BATS, FIREWORKS, PINATAS, CROWNS, BALLOONS, PETALS, KITES, SHAMROCKS, LEAVES, LANTERNS, STARS,
+}
 
-internal fun Holiday.decoration(): Decoration = when (this) {
-    Holiday.BIRTHDAY, Holiday.NEW_YEAR -> Decoration.CONFETTI
-    Holiday.VALENTINES -> Decoration.HEARTS
-    Holiday.MEXICAN_INDEPENDENCE -> Decoration.PAPEL_PICADO_MEXICO
-    Holiday.DAY_OF_THE_DEAD -> Decoration.PAPEL_PICADO_MUERTOS
-    Holiday.CHRISTMAS -> Decoration.LIGHTS
-    Holiday.HALLOWEEN -> Decoration.BATS
+/**
+ * What this holiday puts over the background, [dark] or not. Fireworks go off only after dark: on New
+ * Year's Eve and Day (confetti by day), the Fourth of July and Canada Day (bunting by day), and on the
+ * night of Mexico's Independence (the *Grito*), Lunar New Year and Diwali. Easter puts its eggs in the
+ * scene itself and nothing over it.
+ */
+internal fun HolidayDay.decorations(dark: Boolean): List<Decoration> {
+    val fireworks = Decoration.FIREWORKS.takeIf { dark && theDay }
+    return when (holiday) {
+        Holiday.BIRTHDAY -> listOf(Decoration.CONFETTI)
+        Holiday.NEW_YEAR -> listOf(if (dark) Decoration.FIREWORKS else Decoration.CONFETTI)
+        Holiday.VALENTINES -> listOf(Decoration.HEARTS)
+        Holiday.MEXICAN_INDEPENDENCE -> listOfNotNull(Decoration.PAPEL_PICADO_MEXICO, fireworks)
+        Holiday.HALLOWEEN -> listOf(Decoration.BATS)
+        Holiday.DAY_OF_THE_DEAD -> listOf(Decoration.PAPEL_PICADO_MUERTOS)
+        Holiday.CHRISTMAS -> listOf(Decoration.LIGHTS)
+        Holiday.POSADAS -> listOf(Decoration.LIGHTS, Decoration.PINATAS)
+        Holiday.THREE_KINGS -> listOf(Decoration.CROWNS)
+        Holiday.CHILDRENS_DAY -> listOf(Decoration.BALLOONS)
+        Holiday.MOTHERS_DAY -> listOf(Decoration.PETALS)
+        Holiday.FATHERS_DAY -> listOf(Decoration.KITES)
+        Holiday.EASTER -> emptyList()
+        Holiday.ST_PATRICKS -> listOf(Decoration.SHAMROCKS)
+        Holiday.US_INDEPENDENCE -> listOf(if (dark) Decoration.FIREWORKS else Decoration.BUNTING_US)
+        Holiday.CANADA_DAY -> listOf(if (dark) Decoration.FIREWORKS else Decoration.BUNTING_CANADA)
+        Holiday.THANKSGIVING -> listOf(Decoration.LEAVES)
+        Holiday.LUNAR_NEW_YEAR -> listOfNotNull(Decoration.LANTERNS, fireworks)
+        Holiday.DIWALI -> listOfNotNull(Decoration.WARM_LIGHTS, fireworks)
+        Holiday.HANUKKAH -> listOf(Decoration.BUNTING_HANUKKAH, Decoration.STARS)
+    }
 }
 
 /** Slanted streaks falling across the screen, more of them in a storm. */
@@ -317,10 +368,10 @@ private fun DrawScope.confetti(t: Float) {
     }
 }
 
-/** Hearts floating up slowly from the bottom. */
-private fun DrawScope.hearts(t: Float) {
+/** [count] hearts floating up slowly from the bottom. */
+private fun DrawScope.hearts(t: Float, count: Int) {
     val rnd = Random(37)
-    repeat(18) {
+    repeat(count) {
         val x0 = rnd.nextFloat()
         val phase = rnd.nextFloat()
         val r = size.minDimension * (0.012f + rnd.nextFloat() * 0.012f)
@@ -342,8 +393,8 @@ private fun DrawScope.heart(c: Offset, r: Float, color: Color) {
     drawPath(p, color, alpha = 0.8f)
 }
 
-/** A string of papel picado across the top, swaying in the breeze and drifting along. */
-private fun DrawScope.papelPicado(t: Float, colors: List<Color>) {
+/** A string of papel picado (or, without [holes], bunting) across the top, swaying in the breeze and drifting along. */
+private fun DrawScope.papelPicado(t: Float, colors: List<Color>, holes: Boolean = true) {
     val flagW = size.width / 9f
     val flagH = flagW * 1.1f
     val top = size.height * 0.02f
@@ -376,16 +427,19 @@ private fun DrawScope.papelPicado(t: Float, colors: List<Color>) {
             }
             drawPath(flag, color, alpha = 0.85f)
             // Cut-out holes, as in the real paper.
-            for (h in 0 until 3) drawCircle(Color.Black.copy(alpha = 0.18f), flagW * 0.07f, Offset(x + flagW * (0.28f + h * 0.22f), y + flagH * 0.35f))
-            drawCircle(Color.Black.copy(alpha = 0.18f), flagW * 0.1f, Offset(x + flagW * 0.5f, y + flagH * 0.6f))
+            if (holes) for (h in 0 until 3) drawCircle(Color.Black.copy(alpha = 0.18f), flagW * 0.07f, Offset(x + flagW * (0.28f + h * 0.22f), y + flagH * 0.35f))
+            if (holes) drawCircle(Color.Black.copy(alpha = 0.18f), flagW * 0.1f, Offset(x + flagW * 0.5f, y + flagH * 0.6f))
         }
     }
 }
 
 private val LightColors = listOf(Color(0xFFFF4040), Color(0xFFFFD23F), Color(0xFF3DDC84), Color(0xFF4DA3FF), Color(0xFFFF8AD8))
 
-/** A garland of coloured lights swooping along the top, twinkling one after another and drifting along. */
-private fun DrawScope.lights(t: Float) {
+/** Diwali's lights: warm golds and oranges. */
+private val WarmLightColors = listOf(Color(0xFFFFC94A), Color(0xFFFF9F1C), Color(0xFFFFE38A), Color(0xFFFF7A3D))
+
+/** A garland of lights in [colors] swooping along the top, twinkling one after another and drifting along. */
+private fun DrawScope.lights(t: Float, colors: List<Color>) {
     val gap = size.width / 14f
     val top = size.height * 0.03f
     fun wireY(x: Float): Float {
@@ -397,22 +451,22 @@ private fun DrawScope.lights(t: Float) {
         for (i in 1..42) lineTo(size.width * i / 42f, wireY(size.width * i / 42f))
     }
     drawPath(wire, Color(0xFF2E5E3A), style = Stroke(3f))
-    val shift = (t / OVERLAY_LOOP_SECONDS) * gap * LightColors.size
-    for (i in -LightColors.size..15) {
+    val shift = (t / OVERLAY_LOOP_SECONDS) * gap * colors.size
+    for (i in -colors.size..15) {
         val x = i * gap + shift
         if (x < -gap || x > size.width + gap) continue
         val y = wireY(x)
-        val color = LightColors[((i % LightColors.size) + LightColors.size) % LightColors.size]
+        val color = colors[((i % colors.size) + colors.size) % colors.size]
         val glow = 0.55f + 0.45f * sin((t * 2f + i * 1.3f).toDouble()).toFloat()
         drawCircle(color.copy(alpha = 0.25f * glow), gap * 0.22f, Offset(x, y + gap * 0.2f))
         drawRoundRect(color, Offset(x - gap * 0.07f, y + gap * 0.08f), Size(gap * 0.14f, gap * 0.22f), CornerRadius(gap * 0.07f), alpha = 0.6f + 0.4f * glow)
     }
 }
 
-/** A few bats flapping across the sky. */
-private fun DrawScope.bats(t: Float) {
+/** [count] bats flapping across the sky. */
+private fun DrawScope.bats(t: Float, count: Int) {
     val rnd = Random(53)
-    repeat(6) {
+    repeat(count) {
         val phase = rnd.nextFloat()
         val y0 = size.height * (0.08f + rnd.nextFloat() * 0.3f)
         val w = size.minDimension * (0.03f + rnd.nextFloat() * 0.02f)
