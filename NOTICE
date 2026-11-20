@@ -5,8 +5,8 @@ Nocturna is licensed under the MIT License (see LICENSE).
 
 This product includes the following third-party components, each under its own
 licence. Keep this list in step with gradle/libs.versions.toml,
-app/build.gradle.kts and shared/build.gradle.kts: every library the APK carries, and every outside service
-whose data the app shows, appears here.
+app/build.gradle.kts and shared/build.gradle.kts: every library the APK carries, every outside service
+whose data the app shows, and every recording it plays appears here.
 
 --------------------------------------------------------------------------------
 Android Jetpack (AndroidX) — https://developer.android.com/jetpack/androidx
@@ -81,6 +81,17 @@ made of the information it contains.
 
 Radio streams are played from the stations' own servers; Nocturna carries none
 of their content.
+
+--------------------------------------------------------------------------------
+Sounds. Day mode's reminder sounds are short excerpts of recordings from Freesound,
+dedicated to the public domain under CC0 1.0
+(https://creativecommons.org/publicdomain/zero/1.0/). No credit is required; it is given anyway.
+
+Stone Steps by Phil25 — https://freesound.org/people/Phil25/sounds/208103/
+The footsteps of the reminder to stand up and stretch (app/src/main/res/raw/reminder_steps.ogg).
+
+Drink Pouring by Antwash — https://freesound.org/people/Antwash/sounds/118559/
+The water of the reminder to drink some water (app/src/main/res/raw/reminder_water.ogg).
 
 --------------------------------------------------------------------------------
 Build-time only (not shipped): Android Gradle Plugin (Apache-2.0), Kotlin

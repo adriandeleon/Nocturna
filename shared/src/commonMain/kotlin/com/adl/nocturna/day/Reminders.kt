@@ -6,7 +6,7 @@ import com.adl.nocturna.text.strings
 
 /*
  * Day mode's gentle nudges: to stand up and stretch, to drink some water, and to take the phone off the
- * charger once it's charged enough. They show as a tag in the desk clock; the first two also chime.
+ * charger once it's charged enough. They show as a tag in the desk clock; the first two also play a sound (footsteps, water poured into a glass).
  */
 
 /** What a reminder is for. */
@@ -31,6 +31,9 @@ fun remindersHeld(focus: FocusStatus?, inMeeting: Boolean): Boolean =
 
 /** Whether a reminder shown at [shownAt] is still up at [now]. */
 fun reminderShowing(shownAt: Long?, now: Long): Boolean = shownAt != null && now - shownAt in 0 until REMINDER_SHOW_MILLIS
+
+/** The order the sounds of reminders coming due together play in: the footsteps, then the water. */
+fun reminderSoundOrder(kinds: Collection<ReminderKind>): List<ReminderKind> = ReminderKind.entries.filter { it in kinds }
 
 /** "Time to stand up and stretch", "Time for a glass of water", or both at once. */
 fun reminderText(kinds: Collection<ReminderKind>, locale: PlatformLocale): String {

@@ -59,6 +59,9 @@ fun AboutScreen(padding: PaddingValues) {
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             )
         }
+
+        item { SectionHeader(stringResource(Res.string.about_sounds)) }
+        items(SOUND_CREDITS) { CreditRow(it) }
         item { Spacer(Modifier.height(32.dp)) }
     }
 }
