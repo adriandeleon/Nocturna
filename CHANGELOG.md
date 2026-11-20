@@ -11,10 +11,10 @@ one-line summary written for users.
 ### Added
 
 - **Reminders that sound like what they ask:** Day mode's reminder to stand up and stretch now plays a few
-  footsteps on gravel, and the one to drink some water a few drops falling into a glass, instead of the meeting
-  chime's beep. Two coming due together play both, one after the other. Like the sleep sounds, Nocturna makes
-  them on your phone; they keep the chime's rules: the notification volume, and nothing on silent, vibrate or
-  Do Not Disturb.
+  footsteps, and the one to drink some water the sound of water poured into a glass, instead of the meeting
+  chime's beep. Two coming due together play both, one after the other. They keep the chime's rules: the
+  notification volume, and nothing on silent, vibrate or Do Not Disturb. The two short recordings are in the
+  public domain, from Freesound, and credited in Settings › About › *Sounds*.
 - **Day mode's scene feels the cold:** with *Weather in the scene* on (Settings › Day mode › *Weather*), the
   monthly pictures frost over when it's cold outside. Below 20 °C the hills start to turn white with rime
   along their tops and glints of frost, the sky goes a paler, icy blue and fewer flowers are out; by 5 °C

@@ -2,58 +2,62 @@ package com.adl.nocturna.day
 
 import android.content.Context
 import android.media.AudioAttributes
-import android.media.AudioFormat
-import android.media.AudioTrack
-import com.adl.nocturna.sound.ReminderSoundSynth
-import com.adl.nocturna.sound.Wav
-import java.util.concurrent.ConcurrentHashMap
-import kotlin.concurrent.thread
+import android.media.AudioManager
+import android.media.MediaPlayer
+import android.os.Handler
+import android.os.Looper
+import com.adl.nocturna.R
 
 /**
- * Day mode's reminder sounds, footsteps and drops of water from [ReminderSoundSynth], played on the
- * notification stream with the meeting chime's rules ([MeetingChime.mayPlay]): at the notification volume,
- * never the alarm's, and not on silent, vibrate or Do Not Disturb.
+ * Day mode's reminder sounds: a few footsteps on concrete to stand up and stretch, water poured into a glass to
+ * drink some. Short public-domain (CC0) recordings from Freesound, credited in `NOTICE` and on the About screen.
+ * They play on the notification stream with the meeting chime's rules ([MeetingChime.mayPlay]): at the
+ * notification volume, never the alarm's, and not on silent, vibrate or Do Not Disturb.
  */
 object ReminderSound {
-    /** Each sound is made once per process: it's the same every time. */
-    private val made = ConcurrentHashMap<Set<ReminderKind>, ShortArray>()
+    /** Silence between the sounds of two reminders coming due together. */
+    private const val GAP_MS = 250L
 
-    fun play(context: Context, kinds: Set<ReminderKind>) {
-        if (kinds.isEmpty() || !MeetingChime.mayPlay(context)) return
-        thread(name = "ReminderSound") {
-            val pcm = made.getOrPut(kinds) {
-                ReminderSoundSynth.render(kinds).let { s -> ShortArray(s.size) { Wav.toPcm16(s[it]).toShort() } }
-            }
-            // AudioTrack throws when the audio system can't give it a track; then there's no sound.
-            runCatching { playOnce(pcm) }
-        }
+    private val attributes = AudioAttributes.Builder()
+        .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+        .build()
+
+    /** The players still sounding, held so they aren't collected before they finish. Main thread only. */
+    private val playing = mutableSetOf<MediaPlayer>()
+
+    private fun soundOf(kind: ReminderKind): Int = when (kind) {
+        ReminderKind.STRETCH -> R.raw.reminder_steps
+        ReminderKind.WATER -> R.raw.reminder_water
     }
 
-    private fun playOnce(pcm: ShortArray) {
-        val track = AudioTrack.Builder()
-            .setAudioAttributes(
-                AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_NOTIFICATION)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                    .build(),
-            )
-            .setAudioFormat(
-                AudioFormat.Builder()
-                    .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                    .setSampleRate(ReminderSoundSynth.SAMPLE_RATE)
-                    .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
-                    .build(),
-            )
-            .setTransferMode(AudioTrack.MODE_STATIC)
-            .setBufferSizeInBytes(pcm.size * 2)
-            .build()
-        try {
-            track.write(pcm, 0, pcm.size)
-            track.play()
-            Thread.sleep(pcm.size * 1000L / ReminderSoundSynth.SAMPLE_RATE + 200L)
-            track.stop()
-        } finally {
-            track.release()
+    /** Called on the main thread, like the rest of the clock's sounds. */
+    fun play(context: Context, kinds: Set<ReminderKind>) {
+        if (!MeetingChime.mayPlay(context)) return
+        playInTurn(context.applicationContext, reminderSoundOrder(kinds).map(::soundOf))
+    }
+
+    /** Plays [sounds] one after the other, [GAP_MS] apart, each player released as it finishes. */
+    private fun playInTurn(context: Context, sounds: List<Int>) {
+        val sound = sounds.firstOrNull() ?: return
+        val rest = sounds.drop(1)
+        val next = { Handler(Looper.getMainLooper()).postDelayed({ playInTurn(context, rest) }, GAP_MS) }
+        // create() gives null, or throws, when the audio system can't play it; then that sound is skipped.
+        val player = runCatching {
+            MediaPlayer.create(context, sound, attributes, AudioManager.AUDIO_SESSION_ID_GENERATE)
+        }.getOrNull()
+        if (player == null) {
+            next()
+            return
         }
+        val done = { mp: MediaPlayer ->
+            playing -= mp
+            mp.release()
+            next()
+        }
+        player.setOnCompletionListener { done(it) }
+        player.setOnErrorListener { mp, _, _ -> done(mp); true }
+        playing += player
+        player.start()
     }
 }

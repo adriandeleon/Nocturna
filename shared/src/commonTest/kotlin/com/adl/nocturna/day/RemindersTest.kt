@@ -39,6 +39,12 @@ class RemindersTest {
         assertFalse(reminderShowing(shownAt = null, now = 0L))
     }
 
+    @Test fun theFootstepsPlayBeforeTheWater() {
+        assertEquals(listOf(ReminderKind.STRETCH, ReminderKind.WATER), reminderSoundOrder(setOf(ReminderKind.WATER, ReminderKind.STRETCH)))
+        assertEquals(listOf(ReminderKind.WATER), reminderSoundOrder(setOf(ReminderKind.WATER)))
+        assertEquals(emptyList(), reminderSoundOrder(emptySet()))
+    }
+
     @Test fun reminderWords() {
         assertEquals("Time to stand up and stretch", reminderText(listOf(ReminderKind.STRETCH), testLocale))
         assertEquals("Time for a glass of water", reminderText(listOf(ReminderKind.WATER), testLocale))

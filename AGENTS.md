@@ -54,6 +54,8 @@ The debug build installs as `com.adl.nocturna.debug`, beside a release build.
 - [ ] A new dependency goes in `gradle/libs.versions.toml` and gets a `NOTICE` entry with its licence.
 - [ ] A new outside service whose data the app shows gets a `NOTICE` entry and whatever attribution its
       licence asks for.
+- [ ] A new recording the app plays gets a `NOTICE` entry and a line in `SOUND_CREDITS` (About screen), even
+      when its licence asks for none.
 
 ## Things that will bite you
 

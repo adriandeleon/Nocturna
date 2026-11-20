@@ -125,7 +125,7 @@ object SleepSoundSynth {
         return out
     }
 
-    internal fun white(random: SeededRandom): () -> Float = { random.nextSigned() }
+    private fun white(random: SeededRandom): () -> Float = { random.nextSigned() }
 
     /** Paul Kellet's pink noise filter: within 0.05 dB of -3 dB per octave above 9 Hz at 44.1 kHz. */
     private fun pink(random: SeededRandom): () -> Float {
@@ -169,7 +169,7 @@ object SleepSoundSynth {
         }
     }
 
-    internal fun lowPass(source: () -> Float, sampleRate: Int, cutoffHz: Double): () -> Float {
+    private fun lowPass(source: () -> Float, sampleRate: Int, cutoffHz: Double): () -> Float {
         val a = exp(-2 * PI * cutoffHz / sampleRate)
         var y = 0.0
         return {
@@ -178,7 +178,7 @@ object SleepSoundSynth {
         }
     }
 
-    internal fun highPass(source: () -> Float, sampleRate: Int, cutoffHz: Double): () -> Float {
+    private fun highPass(source: () -> Float, sampleRate: Int, cutoffHz: Double): () -> Float {
         val a = exp(-2 * PI * cutoffHz / sampleRate)
         var low = 0.0
         return {

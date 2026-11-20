@@ -14,7 +14,7 @@ class CreditsTest {
     /** Gradle runs unit tests from the module directory; the repository root is one up. */
     private val notice: String = listOf(File("../NOTICE"), File("NOTICE")).first { it.isFile }.readText()
 
-    private val credits = LIBRARY_CREDITS + DATA_CREDITS
+    private val credits = LIBRARY_CREDITS + DATA_CREDITS + SOUND_CREDITS
 
     @Test fun everyCreditIsInNotice() = credits.forEach { c ->
         assertTrue("${c.name}: ${c.url} is not in NOTICE", c.url in notice)
