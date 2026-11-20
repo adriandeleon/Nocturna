@@ -38,11 +38,12 @@ val LIBRARY_CREDITS = listOf(
     Credit("Kotlin standard library", Res.string.credit_kotlin, "Apache License 2.0", "https://kotlinlang.org"),
 )
 
-/** Outside services whose data the app shows. Their CC BY 4.0 licence asks for this credit. */
+/** Outside services whose data the app shows. The CC BY 4.0 ones ask for this credit; Radio Browser is credited anyway. */
 val DATA_CREDITS = listOf(
     Credit("Open-Meteo", Res.string.credit_open_meteo, "CC BY 4.0", "https://open-meteo.com"),
     Credit("GeoNames", Res.string.credit_geonames, "CC BY 4.0", "https://www.geonames.org"),
     Credit("Copernicus Atmosphere Monitoring Service", Res.string.credit_cams, "CC BY 4.0", "https://atmosphere.copernicus.eu"),
+    Credit("Radio Browser", Res.string.credit_radio_browser, "Public domain", "https://www.radio-browser.info"),
 )
 
 /** Recordings the app plays, all public domain (CC0); credited anyway. */

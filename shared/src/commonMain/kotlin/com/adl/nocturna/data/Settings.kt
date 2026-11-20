@@ -1,5 +1,7 @@
 package com.adl.nocturna.data
 
+import com.adl.nocturna.radio.RADIO_VOLUME_STEPS
+
 import com.adl.nocturna.alarm.DEFAULT_DAY_OFF_KEYWORDS
 import com.adl.nocturna.alarm.SUM_COUNTS
 import com.adl.nocturna.sound.SleepSound
@@ -173,6 +175,10 @@ data class Settings(
      * button, the *Sleep radio* tile or the widget: one of [RADIO_SLEEP_MINUTES]; 0 plays until stopped.
      */
     val radioSleepMinutes: Int = 30,
+    /** URLs of the starred stations: the tuner's presets. With none starred, every station is one. */
+    val favoriteStations: Set<String> = emptySet(),
+    /** The clock radio's own volume, 1 to [RADIO_VOLUME_STEPS], on top of the phone's media volume. */
+    val radioVolume: Int = RADIO_VOLUME_STEPS,
 ) {
     val hasWeatherLocation: Boolean get() = !weatherLat.isNaN() && !weatherLon.isNaN()
     val currentSleepSound: SleepSound? get() = SleepSound.byId(selectedSound)

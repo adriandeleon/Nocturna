@@ -10,6 +10,16 @@ one-line summary written for users.
 
 ### Added
 
+- **The radio works like a clock radio:** find stations instead of typing their address. Settings › Radio
+  stations › *Find stations* searches Radio Browser, a free directory of internet radio, by name, genre or
+  country, and *Near me* lists the popular stations around your weather's place or your phone; tap one to
+  listen and *Add* to keep it. Star your favourites to make them presets. While the radio plays, the clock's
+  buttons show ◀ and ▶ either side of the station's name to step through the presets, and a quiet-to-loud
+  volume from 1 to 10 that is Nocturna's own, so a whisper at night doesn't change the phone's media volume;
+  the sleep timer keeps its time when you change station and fades out from that volume. Hold *Radio*, or tap
+  the station's name, for the tuner: the presets along a dial like the FM band, a needle to tap or drag to
+  the next one, and the power, arrows and volume. Under the station's name, the clock now shows the song
+  playing when the station says.
 - **Reminders that sound like what they ask:** Day mode's reminder to stand up and stretch now plays a few
   footsteps, and the one to drink some water the sound of water poured into a glass, instead of the meeting
   chime's beep. Two coming due together play both, one after the other. They keep the chime's rules: the

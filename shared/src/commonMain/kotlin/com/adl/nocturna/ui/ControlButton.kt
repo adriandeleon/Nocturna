@@ -16,6 +16,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.toggleableState
+import androidx.compose.ui.state.ToggleableState
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -99,11 +105,23 @@ fun ControlButton(
     shape: Shape = ControlDefaults.Shape,
     fontSize: TextUnit = 15.sp,
     glyphSize: Dp = 20.dp,
+    /** What a screen reader says instead of [label], for a label that is only a symbol such as "◀". */
+    description: String? = null,
+    /** A long press, for a second action such as opening the radio's tuner; [onLongClickLabel] names it. */
+    onLongClick: (() -> Unit)? = null,
+    onLongClickLabel: String? = null,
 ) {
     val on = checked == true
     val content = if (on) colors.onContent else colors.content
     val border = if (on) colors.onBorder else colors.border
-    val action = if (checked != null) {
+    val action = if (onLongClick != null) {
+        Modifier
+            .combinedClickable(
+                enabled = enabled, role = if (checked != null) Role.Switch else Role.Button,
+                onLongClickLabel = onLongClickLabel, onLongClick = onLongClick, onClick = onClick,
+            )
+            .then(if (checked != null) Modifier.semantics { toggleableState = ToggleableState(checked) } else Modifier)
+    } else if (checked != null) {
         Modifier.toggleable(value = checked, enabled = enabled, role = Role.Switch) { onClick() }
     } else {
         Modifier.clickable(enabled = enabled, role = Role.Button, onClick = onClick)
@@ -116,10 +134,16 @@ fun ControlButton(
             .background(if (on) colors.onContainer else colors.container)
             .then(if (border.alpha > 0f) Modifier.border(1.dp, border, shape) else Modifier)
             .then(action)
+            .then(if (description != null) Modifier.semantics { contentDescription = description } else Modifier)
             .padding(horizontal = 16.dp, vertical = 8.dp),
         contentAlignment = Alignment.Center,
     ) {
-        val text = @Composable { Text(label, color = content, fontSize = fontSize, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+        val text = @Composable {
+            Text(
+                label, color = content, fontSize = fontSize, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                modifier = if (description != null) Modifier.clearAndSetSemantics {} else Modifier,
+            )
+        }
         if (stacked) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 glyph?.let { GlyphIcon(it, content, glyphSize) }
