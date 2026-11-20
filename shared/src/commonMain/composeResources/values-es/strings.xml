@@ -210,6 +210,7 @@
     <string name="about_made_by">Hecho por Adrián De León</string>
     <string name="about_libraries">Bibliotecas de código abierto</string>
     <string name="about_data">Datos</string>
+    <string name="about_sounds">Sonidos</string>
     <string name="about_radio_note">Las estaciones de radio se reproducen desde sus propios servidores; Nocturna no incluye nada de su contenido.</string>
 
     <!-- Credits -->
@@ -225,6 +226,8 @@
     <string name="credit_open_meteo">Clima y búsqueda de ciudades</string>
     <string name="credit_cams">La calidad del aire del modo día, a través de Open-Meteo</string>
     <string name="credit_geonames">Nombres de lugares para la búsqueda de ciudades</string>
+    <string name="credit_sound_steps">El recordatorio del modo día para levantarte y estirarte</string>
+    <string name="credit_sound_water">El recordatorio del modo día para tomar agua</string>
 
     <!-- Do Not Disturb at night -->
     <string name="dnd_not_allowed">No permitido: Nocturna no tiene acceso a No molestar</string>

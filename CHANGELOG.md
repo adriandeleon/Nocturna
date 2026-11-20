@@ -10,6 +10,11 @@ one-line summary written for users.
 
 ### Added
 
+- **Reminders that sound like what they ask:** Day mode's reminder to stand up and stretch now plays a few
+  footsteps, and the one to drink some water the sound of water poured into a glass, instead of the meeting
+  chime's beep. Two coming due together play both, one after the other. They keep the chime's rules: the
+  notification volume, and nothing on silent, vibrate or Do Not Disturb. The two short recordings are in the
+  public domain, from Freesound, and credited in Settings › About › *Sounds*.
 - **The version shows when the app was built:** Settings › *About* now reads like "Version 0.1.0 (1) ·
   2026-11-19 21:05", the date and time the APK was built in the phone's time zone, so two builds of the same
   version can be told apart.

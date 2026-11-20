@@ -20,7 +20,7 @@ const val COPYRIGHT = "Copyright © 2026 Adrián Arturo De León Saldivar"
 /** One line of credit on the About screen. [url] matches the one in `NOTICE`. */
 data class Credit(val name: String, val detail: StringResource, val licence: String, val url: String)
 
-/** Every library the APK carries. Kept in step with `NOTICE` (a unit test checks it). */
+/** Every library the APK carries. Kept in step with `NOTICE`, like the other credits (a unit test checks it). */
 val LIBRARY_CREDITS = listOf(
     Credit(
         "Android Jetpack (AndroidX)", Res.string.credit_androidx, "Apache License 2.0",
@@ -47,6 +47,12 @@ val DATA_CREDITS = listOf(
     Credit("Open-Meteo", Res.string.credit_open_meteo, "CC BY 4.0", "https://open-meteo.com"),
     Credit("GeoNames", Res.string.credit_geonames, "CC BY 4.0", "https://www.geonames.org"),
     Credit("Copernicus Atmosphere Monitoring Service", Res.string.credit_cams, "CC BY 4.0", "https://atmosphere.copernicus.eu"),
+)
+
+/** Recordings the app plays, all public domain (CC0); credited anyway. */
+val SOUND_CREDITS = listOf(
+    Credit("Stone Steps by Phil25", Res.string.credit_sound_steps, "CC0 1.0", "https://freesound.org/people/Phil25/sounds/208103/"),
+    Credit("Drink Pouring by Antwash", Res.string.credit_sound_water, "CC0 1.0", "https://freesound.org/people/Antwash/sounds/118559/"),
 )
 
 /** How [versionLabel] writes when the APK was built: "2026-11-19 21:05", the same in every language. */

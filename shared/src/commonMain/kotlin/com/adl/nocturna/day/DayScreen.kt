@@ -38,7 +38,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -228,22 +227,23 @@ fun DayLayout(
     val focusLengths = FocusLengths(settings.focusMinutes, settings.focusBreakMinutes, settings.focusLongBreakMinutes)
     FocusChime(focus, now.epochMillis, focusLengths, onFocus)
 
-    // Reminders to stretch and drink some water, held during focus blocks and meetings. Two coming due
-    // together chime once.
+    // Reminders to stretch and drink some water, held during focus blocks and meetings. Each plays its own
+    // sound; two coming due together play theirs one after the other, once.
     val held = remindersHeld(
         focus?.status(now.epochMillis, focusLengths),
         inMeeting = settings.showCalendarEvents && events?.any { it.isOngoing(now.instant) } == true,
     )
-    var lastNudgeChime by remember { mutableLongStateOf(0L) }
-    val nudgeChime = {
-        val t = Clock.System.now().toEpochMilliseconds()
-        if (t - lastNudgeChime > 10_000L) {
-            lastNudgeChime = t
-            platform.playReminderChime()
+    var dueSounds by remember { mutableStateOf(emptySet<ReminderKind>()) }
+    LaunchedEffect(dueSounds) {
+        if (dueSounds.isNotEmpty()) {
+            // Another one coming due meanwhile restarts the wait, and joins this one.
+            delay(REMINDER_SOUND_GATHER_MILLIS)
+            platform.playReminderSound(dueSounds)
+            dueSounds = emptySet()
         }
     }
-    val stretch = rememberReminder(settings.stretchReminderMinutes, held, now.epochMillis, nudgeChime)
-    val water = rememberReminder(settings.waterReminderMinutes, held, now.epochMillis, nudgeChime)
+    val stretch = rememberReminder(settings.stretchReminderMinutes, held, now.epochMillis) { dueSounds += ReminderKind.STRETCH }
+    val water = rememberReminder(settings.waterReminderMinutes, held, now.epochMillis) { dueSounds += ReminderKind.WATER }
     val reminders = buildList {
         if (stretch.showing) add(ReminderKind.STRETCH)
         if (water.showing) add(ReminderKind.WATER)
@@ -640,6 +640,9 @@ private fun FocusChime(focus: FocusTimer?, now: Long, lengths: FocusLengths, onF
         }
     }
 }
+
+/** How long day mode waits for another reminder coming due before playing the sound of those that have. */
+private const val REMINDER_SOUND_GATHER_MILLIS = 1_500L
 
 private val DeskClockNavy = listOf(Color(0xFF2B3A55), Color(0xFF1C263A))
 

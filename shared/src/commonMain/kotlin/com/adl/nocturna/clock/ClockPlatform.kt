@@ -5,6 +5,8 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.ImageBitmap
 import com.adl.nocturna.data.Station
 import com.adl.nocturna.day.CalendarEvent
+import com.adl.nocturna.day.ReminderKind
+import com.adl.nocturna.day.reminderSoundOrder
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -54,8 +56,12 @@ interface ClockPlatform {
     /** The focus timer's chime as it switches between focus and a break: the meeting chime's soft tone. */
     fun playFocusChime() = playMeetingChime()
 
-    /** Day mode's reminders to stretch and drink some water: the meeting chime's soft tone. */
-    fun playReminderChime() = playMeetingChime()
+    /**
+     * Day mode's reminders that just came due, once for those coming due together, in [reminderSoundOrder]:
+     * footsteps to stand up and stretch, water poured into a glass to drink some, with the meeting chime's
+     * rules. Where a platform has no such sounds, the meeting chime's soft tone.
+     */
+    fun playReminderSound(kinds: Set<ReminderKind>) = playMeetingChime()
 
     /**
      * A light accent from the phone's wallpaper palette (Material You) as ARGB, kept current as the
