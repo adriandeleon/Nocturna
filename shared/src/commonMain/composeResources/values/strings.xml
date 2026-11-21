@@ -224,6 +224,7 @@
     <string name="credit_atomicfu">Safe changes to the settings</string>
     <string name="credit_kotlin">JetBrains and Kotlin contributors</string>
     <string name="credit_open_meteo">Weather and city search</string>
+    <string name="credit_radio_browser">Station search</string>
     <string name="credit_cams">Day mode's air quality, through Open-Meteo</string>
     <string name="credit_geonames">Place names behind the city search</string>
     <string name="credit_sound_steps">Day mode's reminder to stand up and stretch</string>
@@ -390,4 +391,28 @@
     <string name="day_todo_new">New to-do</string>
     <string name="day_todo_placeholder">Call the bank</string>
     <string name="day_todo_add_button">Add</string>
+    <string name="tuner_title">Tuner</string>
+    <string name="tuner_previous">Previous station</string>
+    <string name="tuner_next">Next station</string>
+    <string name="tuner_open">%1$s, open the tuner</string>
+    <string name="tuner_volume">Volume %1$d of %2$d</string>
+    <string name="tuner_quieter">Quieter</string>
+    <string name="tuner_louder">Louder</string>
+    <string name="tuner_no_station">No station</string>
+    <string name="tuner_off">Radio off: tap a station on the dial to play it</string>
+    <string name="tuner_close">Close</string>
+    <string name="tuner_dial">Tuning dial, on %1$s</string>
+    <string name="search_title">Find stations</string>
+    <string name="search_hint">Name, genre or country</string>
+    <string name="search_go">Search</string>
+    <string name="search_nearby">Near me</string>
+    <string name="search_failed">Couldn't reach the station directory. Check the connection and try again.</string>
+    <string name="search_no_location">Nocturna doesn't know where you are. Allow location, or set a place for the weather, and try again.</string>
+    <string name="search_none">No stations found</string>
+    <string name="search_credit">Tap a station to listen. From Radio Browser (radio-browser.info), a free directory kept by its listeners.</string>
+    <string name="search_added">Added</string>
+    <string name="stations_saved">Your stations</string>
+    <string name="stations_presets_hint">Star stations to make them presets: the clock's ◀ ▶ buttons and the tuner (hold Radio) step through them. With none starred, they step through all of them.</string>
+    <string name="stations_star">Make %1$s a preset</string>
+    <string name="stations_unstar">Stop %1$s being a preset</string>
 </resources>

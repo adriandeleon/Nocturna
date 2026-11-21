@@ -224,6 +224,7 @@
     <string name="credit_atomicfu">Cambios seguros a los ajustes</string>
     <string name="credit_kotlin">JetBrains y colaboradores de Kotlin</string>
     <string name="credit_open_meteo">Clima y búsqueda de ciudades</string>
+    <string name="credit_radio_browser">Búsqueda de estaciones</string>
     <string name="credit_cams">La calidad del aire del modo día, a través de Open-Meteo</string>
     <string name="credit_geonames">Nombres de lugares para la búsqueda de ciudades</string>
     <string name="credit_sound_steps">El recordatorio del modo día para levantarte y estirarte</string>
@@ -391,4 +392,28 @@
     <string name="day_todo_new">Nuevo pendiente</string>
     <string name="day_todo_placeholder">Llamar al banco</string>
     <string name="day_todo_add_button">Agregar</string>
+    <string name="tuner_title">Sintonizador</string>
+    <string name="tuner_previous">Estación anterior</string>
+    <string name="tuner_next">Estación siguiente</string>
+    <string name="tuner_open">%1$s, abrir el sintonizador</string>
+    <string name="tuner_volume">Volumen %1$d de %2$d</string>
+    <string name="tuner_quieter">Más bajo</string>
+    <string name="tuner_louder">Más alto</string>
+    <string name="tuner_no_station">Sin estación</string>
+    <string name="tuner_off">Radio apagado: toca una estación en el dial para oírla</string>
+    <string name="tuner_close">Cerrar</string>
+    <string name="tuner_dial">Dial, en %1$s</string>
+    <string name="search_title">Buscar estaciones</string>
+    <string name="search_hint">Nombre, género o país</string>
+    <string name="search_go">Buscar</string>
+    <string name="search_nearby">Cerca de mí</string>
+    <string name="search_failed">No se pudo conectar con el directorio de estaciones. Revisa la conexión e inténtalo de nuevo.</string>
+    <string name="search_no_location">Nocturna no sabe dónde estás. Permite la ubicación, o elige un lugar para el clima, e inténtalo de nuevo.</string>
+    <string name="search_none">No se encontraron estaciones</string>
+    <string name="search_credit">Toca una estación para escucharla. De Radio Browser (radio-browser.info), un directorio gratuito que mantienen sus oyentes.</string>
+    <string name="search_added">Agregada</string>
+    <string name="stations_saved">Tus estaciones</string>
+    <string name="stations_presets_hint">Marca estaciones con estrella para hacerlas presintonías: los botones ◀ ▶ del reloj y el sintonizador (mantén Radio) pasan por ellas. Sin ninguna marcada, pasan por todas.</string>
+    <string name="stations_star">Hacer de %1$s una presintonía</string>
+    <string name="stations_unstar">Quitar %1$s de las presintonías</string>
 </resources>

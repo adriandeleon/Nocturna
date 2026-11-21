@@ -5,9 +5,12 @@ import androidx.annotation.OptIn
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Metadata
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.extractor.metadata.icy.IcyInfo
+import com.adl.nocturna.data.SettingsStore
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import com.google.common.util.concurrent.Futures
@@ -22,6 +25,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 /**
@@ -47,6 +53,17 @@ class RadioService : MediaSessionService() {
                 val on = player.playWhenReady && player.playbackState != Player.STATE_IDLE &&
                     player.playbackState != Player.STATE_ENDED
                 playing.value = if (on) player.mediaMetadata.title?.toString().orEmpty() else null
+                if (!on || events.contains(Player.EVENT_MEDIA_ITEM_TRANSITION)) songState.value = null
+            }
+
+            // Internet radio sends the song as ICY "StreamTitle" metadata; the item's own title stays the station's.
+            // Metadata entries and IcyInfo are still marked unstable, though they have been there since Media3 1.0.
+            @OptIn(UnstableApi::class)
+            override fun onMetadata(metadata: Metadata) {
+                for (i in 0 until metadata.length()) {
+                    val icy = metadata[i] as? IcyInfo ?: continue
+                    songState.value = cleanStreamTitle(icy.title, player.mediaMetadata.title?.toString())
+                }
             }
         })
 
@@ -80,21 +97,23 @@ class RadioService : MediaSessionService() {
             })
             .build()
 
+        // The clock radio's volume, and the sleep timer's fade from it down to silence.
+        val gain = SettingsStore.settings.map { radioGain(it.radioVolume) }.distinctUntilChanged()
         scope.launch {
-            Radio.sleepAt.collectLatest { at ->
-                player.volume = 1f
+            combine(Radio.sleepAt, gain) { at, g -> at to g }.collectLatest { (at, g) ->
+                player.volume = g
                 if (at == null) return@collectLatest
                 delay((at - FADE_MS - System.currentTimeMillis()).coerceAtLeast(0))
                 try {
                     val steps = 40
                     for (i in steps downTo 0) {
-                        player.volume = i / steps.toFloat()
+                        player.volume = g * i / steps
                         delay(FADE_MS / steps)
                     }
                     player.stop()
                     player.clearMediaItems()
                 } finally {
-                    player.volume = 1f
+                    player.volume = g
                 }
                 Radio.sleepAt.value = null
             }
@@ -130,6 +149,7 @@ class RadioService : MediaSessionService() {
 
     override fun onDestroy() {
         playing.value = null
+        songState.value = null
         scope.cancel()
         session?.run {
             player.release()
@@ -148,5 +168,10 @@ class RadioService : MediaSessionService() {
          * tile and the widget see the real state without connecting a controller.
          */
         val nowPlaying: StateFlow<String?> = playing.asStateFlow()
+
+        private val songState = MutableStateFlow<String?>(null)
+
+        /** The song the station says is playing, tidied by [cleanStreamTitle]; null when it doesn't say. */
+        val song: StateFlow<String?> = songState.asStateFlow()
     }
 }
