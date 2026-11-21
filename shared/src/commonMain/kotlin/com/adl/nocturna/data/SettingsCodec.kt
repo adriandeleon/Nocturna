@@ -1,10 +1,13 @@
 package com.adl.nocturna.data
 
 import com.adl.nocturna.alarm.SUM_COUNTS
+import com.adl.nocturna.radio.RADIO_VOLUME_STEPS
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonObject
@@ -104,6 +107,8 @@ object SettingsCodec {
         put("selectedStation", s.selectedStation)
         put("selectedSound", s.selectedSound)
         put("radioSleepMinutes", s.radioSleepMinutes)
+        put("favoriteStations", buildJsonArray { s.favoriteStations.sorted().forEach { add(JsonPrimitive(it)) } })
+        put("radioVolume", s.radioVolume)
         put("stationsVersion", Settings.STATIONS_VERSION)
     }
 
@@ -210,6 +215,11 @@ object SettingsCodec {
             selectedSound = j.optString("selectedSound", d.selectedSound),
             radioSleepMinutes = j.optInt("radioSleepMinutes", d.radioSleepMinutes)
                 .let { if (it in Settings.RADIO_SLEEP_MINUTES) it else d.radioSleepMinutes },
+            // Stars on stations no longer in the list are dropped.
+            favoriteStations = j.optArray("favoriteStations")
+                ?.mapNotNull { (it as? JsonPrimitive)?.contentOrNull?.takeIf { url -> stations.any { st -> st.url == url } } }
+                ?.toSet() ?: d.favoriteStations,
+            radioVolume = j.optInt("radioVolume", d.radioVolume).coerceIn(1, RADIO_VOLUME_STEPS),
         )
     }
 

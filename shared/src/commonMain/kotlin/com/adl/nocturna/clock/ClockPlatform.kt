@@ -3,6 +3,8 @@ package com.adl.nocturna.clock
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.ImageBitmap
+import com.adl.nocturna.data.Settings
+import com.adl.nocturna.data.SettingsStore
 import com.adl.nocturna.data.Station
 import com.adl.nocturna.day.CalendarEvent
 import com.adl.nocturna.day.ReminderKind
@@ -10,6 +12,7 @@ import com.adl.nocturna.day.reminderSoundOrder
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
+import kotlin.time.Clock
 
 /**
  * What the clock and day mode need from the phone they run on. Each app provides one through
@@ -89,6 +92,9 @@ interface RadioControl {
     val title: StateFlow<String?>
     val error: StateFlow<String?>
 
+    /** The song the stream says is playing, already tidied by `cleanStreamTitle`; null when it doesn't say. */
+    val song: StateFlow<String?>
+
     /** Epoch millis at which playback fades out and stops, or null. */
     val sleepAt: StateFlow<Long?>
 
@@ -104,4 +110,19 @@ interface RadioControl {
 
     /** Stops the radio in [minutes]; 0 turns the timer off. */
     fun setSleepTimer(minutes: Int)
+
+    /**
+     * Applies [change] to the settings (tuning to another station) and, when [start] or the radio is on,
+     * plays the station it leaves selected, keeping the sleep timer's time left.
+     */
+    fun tune(start: Boolean = false, change: (Settings) -> Settings) {
+        SettingsStore.update(change)
+        val station = SettingsStore.current.currentStation ?: return
+        if (!start && !isOn.value) return
+        val left = sleepAt.value?.let { minutesLeft(it, Clock.System.now().toEpochMilliseconds()) } ?: 0
+        play(station, if (isOn.value) left else SettingsStore.current.radioSleepMinutes)
+    }
 }
+
+/** Whole minutes from [nowMillis] to [atMillis], rounded up, at least 1. */
+fun minutesLeft(atMillis: Long, nowMillis: Long): Int = (((atMillis - nowMillis).coerceAtLeast(0) + 59_999) / 60_000).toInt().coerceAtLeast(1)

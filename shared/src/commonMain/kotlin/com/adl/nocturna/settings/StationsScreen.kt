@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -24,6 +25,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import com.adl.nocturna.radio.withFavoriteToggled
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.adl.nocturna.clock.LocalClockPlatform
 import com.adl.nocturna.clock.RadioControl
@@ -59,6 +64,7 @@ fun StationsScreen(padding: PaddingValues) {
     val web = s.stations.withIndex().filter { !it.value.isOnPhone }
     val onPhone = s.stations.withIndex().filter { it.value.isOnPhone }
     val here = stringResource(Res.string.stations_on_phone)
+    val search = rememberStationSearch()
 
     LazyColumn(Modifier.fillMaxSize(), contentPadding = padding) {
         item {
@@ -69,17 +75,22 @@ fun StationsScreen(padding: PaddingValues) {
             )
         }
         error?.let { item { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(horizontal = 16.dp)) } }
+        stationSearch(search, s, onTry = { radio.play(it.station) })
+        item { SectionHeader(stringResource(Res.string.stations_saved)) }
+        item { Hint(stringResource(Res.string.stations_presets_hint)) }
         items(web, key = { "web-${it.index}" }) { (i, station) ->
-            StationRow(station, station.url, s.currentSleepSound == null && i == s.selectedStation, { select(radio, i, station, radioOn) }) {
-                remove(platform, i)
-            }
+            StationRow(
+                station, station.url, s.currentSleepSound == null && i == s.selectedStation, station.url in s.favoriteStations,
+                { select(radio, i, station, radioOn) }, { star(station) },
+            ) { remove(platform, i) }
         }
         item { SectionHeader(stringResource(Res.string.stations_phone_music)) }
         item { Hint(stringResource(Res.string.stations_phone_music_hint)) }
         items(onPhone, key = { "phone-${it.index}" }) { (i, station) ->
-            StationRow(station, here, s.currentSleepSound == null && i == s.selectedStation, { select(radio, i, station, radioOn) }) {
-                remove(platform, i)
-            }
+            StationRow(
+                station, here, s.currentSleepSound == null && i == s.selectedStation, station.url in s.favoriteStations,
+                { select(radio, i, station, radioOn) }, { star(station) },
+            ) { remove(platform, i) }
         }
         item {
             Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
@@ -140,9 +151,17 @@ private fun Hint(text: String) {
     Text(text, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
 }
 
-/** A station in the list: its name, [detail] under it, and a button to remove it. */
+/** A station in the list: its name, [detail] under it, a star that makes it a preset, and a button to remove it. */
 @Composable
-private fun StationRow(station: Station, detail: String, selected: Boolean, onSelect: () -> Unit, onRemove: () -> Unit) {
+private fun StationRow(
+    station: Station,
+    detail: String,
+    selected: Boolean,
+    starred: Boolean,
+    onSelect: () -> Unit,
+    onStar: () -> Unit,
+    onRemove: () -> Unit,
+) {
     Row(
         Modifier.fillMaxWidth().clickable(onClick = onSelect).padding(horizontal = 8.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -155,9 +174,18 @@ private fun StationRow(station: Station, detail: String, selected: Boolean, onSe
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
             )
         }
+        val starLabel = stringResource(if (starred) Res.string.stations_unstar else Res.string.stations_star, station.name)
+        IconToggleButton(checked = starred, onCheckedChange = { onStar() }, modifier = Modifier.semantics { contentDescription = starLabel }) {
+            Text(
+                if (starred) "★" else "☆", fontSize = 22.sp,
+                color = if (starred) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+            )
+        }
         TextButton(onClick = onRemove) { Text(stringResource(Res.string.zones_remove), color = MaterialTheme.colorScheme.error) }
     }
 }
+
+private fun star(station: Station) = SettingsStore.update { it.withFavoriteToggled(station.url) }
 
 @Composable
 private fun SoundRow(sound: SleepSound, selected: Boolean, locale: PlatformLocale, onSelect: () -> Unit) {
@@ -189,7 +217,11 @@ private fun remove(platform: SettingsPlatform, index: Int) {
             it.selectedStation == index -> 0
             else -> it.selectedStation
         }
-        it.copy(stations = list, selectedStation = sel.coerceAtMost((list.size - 1).coerceAtLeast(0)))
+        it.copy(
+            stations = list,
+            selectedStation = sel.coerceAtMost((list.size - 1).coerceAtLeast(0)),
+            favoriteStations = if (list.any { s -> s.url == removed.url }) it.favoriteStations else it.favoriteStations - removed.url,
+        )
     }
     val stillUsed = SettingsStore.current.stations.any { it.url == removed.url } ||
         AlarmStore.alarms.value.any { it.station?.url == removed.url }

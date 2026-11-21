@@ -36,6 +36,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -358,6 +359,7 @@ private fun InfoBlock(
     val weather by WeatherRepository.weather.collectAsStateWithLifecycle()
     val notifications = platform.notificationIcons()
     val radioTitle by platform.radio.title.collectAsStateWithLifecycle()
+    val radioSong by platform.radio.song.collectAsStateWithLifecycle()
 
     val locale = currentLocale()
     if (settings.showDate) {
@@ -425,7 +427,14 @@ private fun InfoBlock(
 
     if (radioTitle != null) {
         Spacer(Modifier.height(glyphSize * 0.4f))
-        Text("♪ $radioTitle", style = style.copy(fontSize = fontSize * 0.8f))
+        Text("♪ $radioTitle", style = style.copy(fontSize = fontSize * 0.8f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+        // The song, fainter and smaller, when the station says what it is.
+        radioSong?.let {
+            Text(
+                it, style = style.copy(fontSize = fontSize * 0.65f, color = style.color.copy(alpha = style.color.alpha * 0.6f)),
+                maxLines = 1, overflow = TextOverflow.Ellipsis,
+            )
+        }
     }
 
     if (settings.showNotifications && notifications.isNotEmpty()) {
@@ -481,8 +490,14 @@ private fun Controls(
     val sleepAt by radio.sleepAt.collectAsStateWithLifecycle()
     val error by radio.error.collectAsStateWithLifecycle()
     val colors = if (day) ControlDefaults.Day else ControlDefaults.night(color)
+    var tunerOpen by rememberSaveable { mutableStateOf(false) }
 
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    if (tunerOpen) {
+        TunerPanel(settings, day, color, colors, onInteract, onClose = { onInteract(); tunerOpen = false })
+        return
+    }
+
+    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         error?.let {
             Text(
                 it,
@@ -493,6 +508,8 @@ private fun Controls(
                     .then(if (day) Modifier.background(DeskNavy, RoundedCornerShape(12.dp)).padding(horizontal = 12.dp, vertical = 6.dp) else Modifier),
             )
         }
+        // Also after a station fails to play, so the arrows can tune past it.
+        if (radioOn || error != null) RadioStrip(settings, colors, onInteract, onOpenTuner = { tunerOpen = true })
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
             verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -526,6 +543,8 @@ private fun Controls(
                 stringResource(Res.string.clock_radio), colors,
                 glyph = Glyph.RADIO, checked = radioOn,
                 onClick = { onInteract(); radio.toggle(settings.currentStation, settings.radioSleepMinutes) },
+                onLongClick = { onInteract(); tunerOpen = true },
+                onLongClickLabel = stringResource(Res.string.tuner_title),
             )
             if (radioOn) {
                 val remaining = sleepAt?.let { ((it - Clock.System.now().toEpochMilliseconds()) / 60_000L).coerceAtLeast(0) + 1 }
