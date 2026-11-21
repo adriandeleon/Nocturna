@@ -10,11 +10,24 @@ one-line summary written for users.
 
 ### Added
 
+- **The radio works like a clock radio:** find stations instead of typing their address. Settings › Radio
+  stations › *Find stations* searches Radio Browser, a free directory of internet radio, by name, genre or
+  country, and *Near me* lists the popular stations around your weather's place or your phone; tap one to
+  listen and *Add* to keep it. Star your favourites to make them presets. While the radio plays, the clock's
+  buttons show ◀ and ▶ either side of the station's name to step through the presets, and a quiet-to-loud
+  volume from 1 to 10 that is Nocturna's own, so a whisper at night doesn't change the phone's media volume;
+  the sleep timer keeps its time when you change station and fades out from that volume. Hold *Radio*, or tap
+  the station's name, for the tuner: the presets along a dial like the FM band, a needle to tap or drag to
+  the next one, and the power, arrows and volume. Under the station's name, the clock now shows the song
+  playing when the station says.
 - **Reminders that sound like what they ask:** Day mode's reminder to stand up and stretch now plays a few
   footsteps, and the one to drink some water the sound of water poured into a glass, instead of the meeting
   chime's beep. Two coming due together play both, one after the other. They keep the chime's rules: the
   notification volume, and nothing on silent, vibrate or Do Not Disturb. The two short recordings are in the
   public domain, from Freesound, and credited in Settings › About › *Sounds*.
+- **The version shows when the app was built:** Settings › *About* now reads like "Version 0.1.0 (1) ·
+  2026-11-19 21:05", the date and time the APK was built in the phone's time zone, so two builds of the same
+  version can be told apart.
 - **Day mode's scene feels the cold:** with *Weather in the scene* on (Settings › Day mode › *Weather*), the
   monthly pictures frost over when it's cold outside. Below 20 °C the hills start to turn white with rime
   along their tops and glints of frost, the sky goes a paler, icy blue and fewer flowers are out; by 5 °C

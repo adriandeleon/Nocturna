@@ -350,4 +350,27 @@ class SettingsJsonTest {
         assertEquals(listOf(Countdown("Trip", "2026-12-20")), loaded.countdowns)
         assertEquals(listOf(TodoItem("Milk")), loaded.todos)
     }
+
+    @Test fun presetsAndVolumeSurviveRoundTrip() {
+        val settings = Settings(favoriteStations = setOf(Settings.DEFAULT_STATIONS[1].url), radioVolume = 3)
+        assertEquals(settings, roundTrip(settings))
+    }
+
+    @Test fun settingsSavedBeforePresetsHaveNoStarsAndFullVolume() {
+        val loaded = SettingsCodec.decode(stored(remove = listOf("favoriteStations", "radioVolume")))
+        assertTrue(loaded.favoriteStations.isEmpty())
+        assertEquals(10, loaded.radioVolume)
+    }
+
+    @Test fun starsOnStationsNoLongerSavedAreDropped() {
+        val loaded = SettingsCodec.decode(
+            stored(put = mapOf("favoriteStations" to JsonArray(listOf(JsonPrimitive(Settings.DEFAULT_STATIONS[0].url), JsonPrimitive("https://gone.example/")))))
+        )
+        assertEquals(setOf(Settings.DEFAULT_STATIONS[0].url), loaded.favoriteStations)
+    }
+
+    @Test fun outOfRangeRadioVolumeIsClamped() {
+        assertEquals(1, SettingsCodec.decode(stored(put = mapOf("radioVolume" to JsonPrimitive(0)))).radioVolume)
+        assertEquals(10, SettingsCodec.decode(stored(put = mapOf("radioVolume" to JsonPrimitive(99)))).radioVolume)
+    }
 }
