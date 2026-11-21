@@ -134,4 +134,20 @@ class ScheduleTest {
         assertEquals(DayMode.ON, Settings().withDayModeToggled(now, monterrey).dayMode)
         assertEquals(DayMode.OFF, Settings(dayMode = DayMode.ON).withDayModeToggled(now, monterrey).dayMode)
     }
+
+    @Test fun clockOnlyTurnsDimmingOn() {
+        val now = at("2026-11-13T10:00")
+        val clock = Settings(dayMode = DayMode.ON, dimEnabled = false).withDayModeToggled(now, monterrey)
+        assertEquals(DayMode.OFF, clock.dayMode)
+        assertTrue(clock.dimEnabled)
+        // On a schedule, flipping out of day mode does it too.
+        assertTrue(office.copy(dimEnabled = false).withDayModeToggled(now, monterrey).dimEnabled)
+    }
+
+    @Test fun dayModeLeavesDimmingAsItWas() {
+        val now = at("2026-11-13T10:00")
+        assertFalse(Settings(dimEnabled = false).withDayModeToggled(now, monterrey).dimEnabled)
+        val saturday = at("2026-11-14T11:00")
+        assertFalse(office.copy(dimEnabled = false).withDayModeToggled(saturday, monterrey).dimEnabled)
+    }
 }
