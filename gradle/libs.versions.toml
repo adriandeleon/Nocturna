@@ -1,7 +1,7 @@
 [versions]
 agp = "9.5.1"
 kotlin = "2.4.21"
-composeBom = "2026.09.00"
+composeBom = "2026.11.01"
 # Compose Multiplatform for the shared module; 1.12.2 is built on Jetpack Compose 1.12.1, the BOM's version.
 composeMultiplatform = "1.12.2"
 # Material 3 for Compose Multiplatform has its own versions; 1.9.0 is its latest stable release.
