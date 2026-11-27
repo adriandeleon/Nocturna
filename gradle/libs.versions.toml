@@ -1,5 +1,5 @@
 [versions]
-agp = "9.5.1"
+agp = "9.5.3"
 kotlin = "2.4.21"
 composeBom = "2026.09.00"
 # Compose Multiplatform for the shared module; 1.12.2 is built on Jetpack Compose 1.12.1, the BOM's version.
